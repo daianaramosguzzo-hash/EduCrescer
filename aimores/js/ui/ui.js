@@ -285,9 +285,8 @@ export class UI {
     const m = $('#ctxmenu');
     m.innerHTML = '';
     for (const o of opts) {
-      const noAp = typeof o.ap === 'number' && o.ap > u.ap;
       m.append(h('button', { class: o.danger ? 'danger' : '', disabled: o.disabled, onclick: () => { this.hideCtx(); o.fn(); } },
-        h('span', {}, o.label), h('span', { class: 'ap' + (noAp ? ' no' : '') }, o.ap === 0 ? '' : `${o.ap} PA`)));
+        h('span', {}, o.label)));
     }
     m.classList.remove('hidden');
     const r = m.getBoundingClientRect();
@@ -329,12 +328,12 @@ export class UI {
         const state = vu.kind === 'zombie' ? (vu.ai.state === 'hunt' ? '<span class="bad">caçando vocês</span>' : vu.ai.state === 'investigate' ? 'desconfiado' : 'distraído (ataque surpresa!)') : 'hostil';
         lines.push(`<div class="h">${vu.name}</div>`, `❤ ${Math.max(0, Math.round(vu.hp))}/${vu.maxHp} · ${state}`);
         if (Z) lines.push(`<small>${Z.desc}</small>`);
-        lines.push(`Chance de acerto: <span class="ap">${ch}%</span> · dano ${w.dano[0]}–${w.dano[1]} · <span class="ap">${w.pa} PA</span>${w.tipo !== 'corpo' && !rng ? ' <span class="bad">(fora de alcance)</span>' : ''}`);
+        lines.push(`Chance de acerto: <span class="ap">${ch}%</span> · dano ${w.dano[0]}–${w.dano[1]}${w.tipo !== 'corpo' && !rng ? ' <span class="bad">(fora de alcance)</span>' : ''}`);
         this.S.showTarget(vu.x, vu.z, '#ff4040');
         curColor = '#ff4040';
       } else {
         lines.push(`<div class="h">${vu.name}</div>`);
-        if (vu.kind === 'hero') lines.push(`❤ ${Math.round(vu.hp)}/${vu.maxHp} · PA ${Math.floor(vu.ap)}${vu.st.downed ? ' · <span class="bad">caiu! precisa de ajuda</span>' : ''}`);
+        if (vu.kind === 'hero') lines.push(`❤ ${Math.round(vu.hp)}/${vu.maxHp}${vu.st.downed ? ' · <span class="bad">caiu! precisa de ajuda</span>' : ''}`);
         else lines.push(vu.faction === 'ally' ? 'Aliado — segue o grupo' : 'Clique para conversar');
         this.S.showTarget(vu.x, vu.z, vu.kind === 'hero' ? '#4aff8a' : '#ffe04a');
         curColor = '#ffe04a';
@@ -359,19 +358,15 @@ export class UI {
         const path = g.pathTo(u, cell.x, cell.z);
         if (path) {
           const cost = g.moveCost(u, path, g.input.run);
-          let acc = 0;
-          path.forEach(([x, z], k) => {
-            acc += g.moveCost(u, [[x, z]], false) === 2 ? 1 : 0;
-            const c = g.moveCost(u, path.slice(0, k + 1), g.input.run);
-            pathDots.push({ x, z, color: c <= u.ap ? (g.input.run ? '#ffb040' : '#8aff5a') : '#ff5a5a' });
-          });
-          const turns = Math.ceil(Math.max(0, cost - u.ap) / Math.max(1, u.maxAp));
-          lines.push(`${g.input.run ? '🏃 Correr' : '🚶 Andar'}: <span class="${cost <= u.ap ? 'ap' : 'bad'}">${cost} PA</span>${cost > u.ap ? (g.state.mode === 'explore' ? ` (viagem: +${turns} turno${turns > 1 ? 's' : ''})` : ' — longe demais') : ''}`);
-          curColor = cost <= u.ap ? '#8aff5a' : '#ff5a5a';
+          const dotColor = g.input.run ? '#ffb040' : '#8aff5a';
+          for (const [x, z] of path) pathDots.push({ x, z, color: dotColor });
+          lines.push(`${g.input.run ? '🏃 Correr' : '🚶 Andar'} até aqui <small>(${path.length} casa${path.length > 1 ? 's' : ''})</small>`);
+          if (g.state.mode === 'combat' && cost > u.ap) lines.push('<small>⚠️ Longe: os zumbis vão agir enquanto você anda.</small>');
+          curColor = dotColor;
         } else { lines.push('<span class="bad">Sem caminho</span>'); curColor = '#ff5a5a'; }
       } else {
         const opts = g.optionsAt(u, cell.x, cell.z, null);
-        if (opts[0] && !(cell.x === u.x && cell.z === u.z)) lines.push(`🖱️ ${opts[0].label} <span class="ap">${opts[0].ap ? opts[0].ap + ' PA' : ''}</span>`);
+        if (opts[0] && !(cell.x === u.x && cell.z === u.z)) lines.push(`🖱️ ${opts[0].label}`);
         if (opts.length > 1) lines.push('<small>Clique direito: mais opções</small>');
       }
     }
@@ -389,15 +384,8 @@ export class UI {
     const g = this.g;
     if (!this.rangeDirty) return;
     this.rangeDirty = false;
-    const u = g.selected;
-    if (!u || g.phase !== 'player' || g.busy || u.ap < 1 || this.dialogOpen) { this.S.showRange([]); return; }
-    const walk = g.reach(u, u.ap);
-    const cells = [];
-    for (const [i, c] of walk) {
-      if (c === 0) continue;
-      cells.push({ x: i % g.map.W, z: (i / g.map.W) | 0, color: '#4aff6a' });
-    }
-    this.S.showRange(cells);
+    // sem Pontos de Ação não há "alcance do turno" para desenhar
+    this.S.showRange([]);
   }
   // pontos de objetivo (minimapa e mapa)
   objectivePoints() {
@@ -436,7 +424,7 @@ export class UI {
       ['pablicio', 'Se for o que eu tô pensando, eu vou ficar MUITO nervoso.'],
       ['arthur', 'É exatamente o que você tá pensando.'],
       ['carol', 'Calma. Primeiro a gente se junta. Depois a gente pensa. E todo mundo bebe água.'],
-      ['narr', '💡 <b>Como jogar:</b> clique no chão para andar e nos móveis para vasculhar. Cada ação gasta <b>Pontos de Ação</b> (as bolinhas amarelas). Quando acabarem, clique em <b>Passar turno</b>. O <b>clique direito</b> mostra todas as opções. Teclas <b>1–4</b> trocam de personagem.'],
+      ['narr', '💡 <b>Como jogar:</b> escolha qualquer personagem (clique no retrato ou use <b>1–4</b>) e clique no chão para andar até onde quiser. Clique nos móveis para vasculhar e nos zumbis para atacar. O <b>clique direito</b> mostra todas as opções. Enquanto vocês agem, o tempo passa e os zumbis também se mexem. Use <b>⏳ Esperar</b> para deixar o tempo correr.'],
     ], {});
   }
   async gameOver() {

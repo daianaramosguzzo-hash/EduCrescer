@@ -313,7 +313,7 @@ export class Game {
     const mode = threat ? 'combat' : 'explore';
     if (mode !== this.state.mode) {
       this.state.mode = mode;
-      if (mode === 'combat') { this.log('⚔️ Perigo por perto! Modo de combate: cada turno vale 1 minuto.', 'alerta'); bus.emit('music', 'combat'); }
+      if (mode === 'combat') { this.log('⚔️ Perigo por perto! Modo de combate: cada um age separado e os zumbis reagem.', 'alerta'); bus.emit('music', 'combat'); }
       else { this.log('🌿 A área parece calma. Modo de exploração.', 'info'); bus.emit('music', 'explore'); }
       bus.emit('mode', mode);
     }
@@ -323,11 +323,12 @@ export class Game {
   // ------------------------------------------------------------ turnos
   async endTurn() {
     if (this.phase !== 'player' || this.busy) return;
+    this.turnDue = false;
     this.phase = 'ai';
     bus.emit('hud');
     for (const h of this.liveHeroes) {
       if (h.st.downed) continue;
-      // descanso com PA sobrando
+      // descanso com fôlego sobrando
       if (h.ap > 0) h.need.energia = Math.min(100, h.need.energia + h.ap * 0.25);
     }
     try { await runAI(this); } catch (e) { console.error(e); }
@@ -420,7 +421,7 @@ export class Game {
         if (!target.st.downed) {
           target.hp = 0; target.st.downed = 3; target.ap = 0;
           view.play(target, 'die').then(() => {});
-          this.log(`💀 <b>${target.name}</b> caiu! Leve atadura ou kit médico até ${target.name} em até 3 turnos.`, 'perigo');
+          this.log(`💀 <b>${target.name}</b> caiu! Leve atadura ou kit médico até ${target.name} antes que os zumbis ajam 3 vezes.`, 'perigo');
           this.toast(`${target.name} caiu!`, 'perigo');
           Story.onHeroDown(this, target);
           if (this.selected === target) this.selectNext();

@@ -43,7 +43,7 @@ export function tickSurvival(g, minutes) {
         let rate = 0.11 * (u.hasPerk('imune') ? 0.7 : 1) * (1 - (u.stats.resistencia - 5) * 0.05);
         const before = n.infeccao;
         n.infeccao = clamp(n.infeccao + rate * minutes, 0, 100);
-        for (const [lim, msg] of [[25, 'está com febre (−1 PA).'], [50, 'está delirando. A infecção avança!'], [75, 'está em estado grave! Precisa do Soro R-7 ou de antibióticos, urgente.']]) {
+        for (const [lim, msg] of [[25, 'está com febre (fica mais lento).'], [50, 'está delirando. A infecção avança!'], [75, 'está em estado grave! Precisa do Soro R-7 ou de antibióticos, urgente.']]) {
           if (before < lim && n.infeccao >= lim) { g.log(`🦠 <b>${u.name}</b> ${msg}`, 'perigo'); g.toast(`${u.name}: infecção ${lim}%`, 'perigo'); }
         }
         if (n.infeccao >= 75) u.hp -= combat ? 1 : 2;

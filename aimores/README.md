@@ -1,6 +1,6 @@
 # Aimorés dos Mortos
 
-Jogo de sobrevivência zumbi em **2,5D com câmera isométrica**, que se passa em **Aimorés, Minas Gerais**. Mistura exploração, combate por turnos com Pontos de Ação, gerenciamento de recursos, narrativa e escolhas. O visual é de desenho animado adulto e irreverente, com traço grosso, olhos grandes e humor, e todo o estilo é original.
+Jogo de sobrevivência zumbi em **2,5D com câmera isométrica**, que se passa em **Aimorés, Minas Gerais**. Mistura exploração com movimento livre, combate tático, gerenciamento de recursos, narrativa e escolhas. O visual é de desenho animado adulto e irreverente, com traço grosso, olhos grandes e humor, e todo o estilo é original.
 
 Os quatro protagonistas, **Arthur, Carol, Daiana e Pablício**, foram desenhados a partir das ilustrações de referência. Cada um mantém o próprio rosto, cabelo, tom de pele, corpo e roupas, e dá para reconhecer todos durante o jogo.
 
@@ -32,7 +32,7 @@ O instalador é gerado sozinho pelo GitHub Actions (fluxo *Instalador Windows �
 ```bash
 npm install
 npm run start:aimores      # abre o jogo numa janela de desktop
-npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-1.0.1.exe
+npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-1.1.0.exe
 ```
 
 No Linux e no Mac, o último passo precisa do Wine.
@@ -42,13 +42,13 @@ No Linux e no Mac, o último passo precisa do Wine.
 | Ação | Mouse / teclado | Toque |
 |---|---|---|
 | Andar, atacar, vasculhar, abrir porta, conversar | Clique esquerdo | Toque para ver a prévia e toque de novo para confirmar |
-| Todas as opções da célula, com o custo em PA | Clique direito | Segurar o dedo |
+| Todas as opções da célula | Clique direito | Segurar o dedo |
 | Mover a câmera | Arrastar ou setas | Arrastar |
 | Zoom | Rodinha, `+` e `-` | Pinça |
 | Girar a câmera (90°) | `Q` / `E` | Botões ⟲ ⟳ |
 | Paredes baixas (ver o lado de dentro) | `V` ou 🧱. Passar o mouse sobre um prédio também mostra o interior | 🧱 |
 | Trocar de personagem | `1`–`4`, `Tab` | Retratos à esquerda |
-| Passar o turno | `Enter` / `T` | Passar turno |
+| Esperar (deixar o tempo passar) | `Enter` / `T` | ⏳ Esperar |
 | Atacar / mirar / defender / esconder / recarregar | `A` / `G` / `X` / `H` / `R` | Barra de ações |
 | Correr (liga e desliga) | `Shift` | 🏃 |
 | Lanterna | `F` | 🔦 |
@@ -58,23 +58,9 @@ No Linux e no Mac, o último passo precisa do Wine.
 
 ## Sistemas
 
-**Turnos e Pontos de Ação.** Na sua vez, cada personagem gasta PA; depois os zumbis e as outras pessoas agem. Longe do perigo o jogo fica no **modo exploração**, em que o grupo segue quem você move, dá para clicar longe e cada turno vale 5 minutos. Quando aparece um inimigo, o jogo passa para o **modo combate**, em que cada um age separado e cada turno vale 1 minuto.
+**Movimento livre e tempo.** Não há Pontos de Ação na tela. Escolha qualquer personagem (retratos à esquerda ou teclas 1–4) e clique onde quiser: ele anda até lá, a qualquer distância, e vasculha, ataca ou conversa ao chegar. Enquanto vocês agem, o tempo corre, e de tempos em tempos os zumbis e as outras pessoas se mexem. Atacar e correr gastam mais tempo do que andar. Personagens com mais Velocidade fazem mais coisas antes de os zumbis reagirem.
 
-| Ação | PA |
-|---|---|
-| Andar uma casa | 1 |
-| Correr | 2 a cada 3 casas (faz barulho) |
-| Faca / estilingue | 2 |
-| Taco, facão, martelo… | 3 |
-| Revólver / pistola | 3 |
-| Espingarda / rifle | 4 |
-| Vasculhar | 1–3 (depende do móvel) |
-| Abrir ou fechar porta | 1 |
-| Comer / beber | 1 |
-| Remédio | 1 (kit médico 2) |
-| Conversar | 0 na exploração, 1 no combate |
-| Arrombar porta | 3–4 (barulho) |
-| Barricar | 3 |
+Longe do perigo o jogo fica no **modo exploração**: o grupo segue quem você move, e cada rodada vale 5 minutos. Quando aparece um inimigo, o jogo passa para o **modo combate**: cada personagem age separado, cada rodada vale 1 minuto, e a caminhada para se surgir um zumbi novo, se um inimigo chegar colado ou se o personagem levar dano. O botão **⏳ Esperar** deixa o tempo passar de propósito.
 
 **Combate.** A chance de acerto considera distância, precisão, cobertura (muros, carros, balcões), arma, luz, condição do personagem e se o alvo percebeu você. Ataque furtivo contra um zumbi distraído é crítico. Armas brancas gastam durabilidade, armas de fogo gastam munição e fazem muito barulho. Tem também mirar, defender, esconder, distrair com pedrinhas e arremessar molotov ou rojão.
 
@@ -83,7 +69,7 @@ No Linux e no Mac, o último passo precisa do Wine.
 | Tipo | Destaque |
 |---|---|
 | Comum | Lento e fraco, mas nunca anda sozinho |
-| Corredor | Muitos PA por turno |
+| Corredor | Muito rápido |
 | Bombado | Muita vida, empurra e derruba portas |
 | Espreitador | Fica invisível no escuro e embosca |
 | Pamonheiro | O megafone chama todos os zumbis da região |

@@ -131,8 +131,8 @@ export const QUESTS = {
       if (inField.length && inField.length === g.liveHeroes.filter(h => !h.st.downed).length) {
         s.vars.t = (s.vars.t || 0) + 1;
         const left = 10 - s.vars.t;
-        if (s.vars.t === 1) { g.log('🚁 Estão todos no campinho. O helicóptero chega em 10 turnos. Aguentem!', 'alerta'); spawnHorde(g, 114, 12, 6); }
-        if (left > 0 && s.vars.t % 3 === 0) { g.log(`🚁 O barulho das hélices se aproxima... faltam ${left} turnos.`, 'alerta'); spawnHorde(g, 114, 12, 3); }
+        if (s.vars.t === 1) { g.log('🚁 Estão todos no campinho. O helicóptero chega em 10 rodadas. Aguentem!', 'alerta'); spawnHorde(g, 114, 12, 6); }
+        if (left > 0 && s.vars.t % 3 === 0) { g.log(`🚁 O barulho das hélices se aproxima... faltam ${left} rodadas.`, 'alerta'); spawnHorde(g, 114, 12, 3); }
         if (left <= 0) { flag(g, 'fim', 'helicoptero'); bus.emit('ending', 'helicoptero'); }
       }
     },
@@ -211,7 +211,7 @@ export const QUESTS = {
   defesa: {
     nome: 'Noite na Matriz', tipo: 'secundaria', xp: 200,
     resumo: 'Uma horda está vindo para a igreja, onde estão os refugiados.',
-    passos: [{ id: 'defender', desc: 'Defenda a Igreja Matriz: sobreviva por 8 turnos perto da igreja e não deixe os refugiados morrerem.' }],
+    passos: [{ id: 'defender', desc: 'Defenda a Igreja Matriz: sobreviva por 8 rodadas perto da igreja e não deixe os refugiados morrerem.' }],
     turno(g) {
       if (questStep(g, 'defesa') !== 'defender') return;
       const s = Q(g, 'defesa');

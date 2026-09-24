@@ -42,15 +42,12 @@ export class Hud {
       const n = u.need;
       const warn = v => v < 25 ? 'warn' : '';
       const badges = [u.st.bleed ? '🩸' : '', u.st.infected ? '🦠' : '', u.st.hidden ? '🥷' : '', u.st.defend ? '🛡️' : '', u.st.panic ? '😱' : '', u.st.stun ? '💫' : '', u.st.downed ? '💀' : '', u.dead ? '⚰️' : ''].join('');
-      const pips = h('div', { class: 'pips' });
-      for (let i = 0; i < Math.max(u.maxAp, Math.ceil(u.ap)); i++) pips.append(h('span', { class: 'pip' + (i < u.ap ? ' on' : '') }));
       const card = h('div', { class: 'hero-card' + (u.selected ? ' sel' : '') + (u.st.downed ? ' down' : '') + (u.dead ? ' dead' : ''), title: `${u.name} — clique para selecionar (${g.heroes.indexOf(u) + 1})`,
         onclick: () => { if (!u.dead) { g.select(u); } } },
         h('div', { class: 'pic', style: { backgroundImage: `url(${portraitOf(u)})`, borderColor: HEROES[u.id].cor } }),
         h('div', { class: 'info' },
           h('div', { class: 'nm' }, u.name, h('small', {}, `Nv ${u.lvl}${u.pts || u.spts || u.perkPts ? ' ⭐' : ''}`)),
           bar('hp', u.hp, u.maxHp),
-          u.dead ? null : pips,
           u.dead ? h('div', { class: 'mini-needs' }, 'Morreu') : h('div', { class: 'mini-needs' },
             h('span', { class: warn(n.fome), title: 'Fome' }, '🍗' + Math.round(n.fome)),
             h('span', { class: warn(n.sede), title: 'Sede' }, '💧' + Math.round(n.sede)),
@@ -76,10 +73,9 @@ export class Hud {
       h('span', { title: hs.nome }, `${night ? '🌙' : g.state.weather.chuva ? '🌧️' : hs.icon} ${hs.t}°C`),
       h('span', { class: 'mode ' + g.state.mode }, g.state.mode === 'combat' ? '⚔️ Combate' : '🌿 Exploração'),
       prazo !== null ? h('span', { class: 'prazo', title: 'Tempo até o bombardeio' }, `⏰ ${fmtPrazo(Math.max(0, prazo))}`) : '',
-      h('span', { style: { color: '#b3a5c4', fontSize: '12px' } }, `Turno ${g.state.turn}`),
     );
     const banner = $('#phase-banner');
-    if (g.phase === 'ai') { banner.textContent = 'Turno dos zumbis...'; banner.classList.remove('hidden'); }
+    if (g.phase === 'ai') { banner.textContent = g.state.mode === 'combat' ? 'Os zumbis estão agindo...' : 'O tempo passa...'; banner.classList.remove('hidden'); }
     else banner.classList.add('hidden');
   }
   // ------------------------------------------------------------ barra de ações
@@ -91,15 +87,12 @@ export class Hud {
     if (!u) return;
     const n = u.need;
     const needEl = (ic, label, v, color, invert = false) => h('div', { class: 'need', title: `${label}: ${Math.round(v)}` }, ic, bar('', invert ? v : v, 100, color));
-    const pips = h('div', { class: 'pips' });
-    for (let i = 0; i < Math.max(u.maxAp, Math.ceil(u.ap)); i++) pips.append(h('span', { class: 'pip' + (i < u.ap ? ' on' : '') }));
     const me = h('div', { class: 'me' },
       h('div', { class: 'pic', style: { backgroundImage: `url(${portraitOf(u)})`, borderColor: HEROES[u.id].cor }, onclick: () => ui.open('char') }),
       h('div', {},
         h('div', { class: 'nm' }, u.name),
-        h('div', { class: 'role' }, `${HEROES[u.id].papel} · PA ${Math.floor(u.ap)}/${u.maxAp} · ❤ ${Math.round(u.hp)}/${u.maxHp}`),
+        h('div', { class: 'role' }, `${HEROES[u.id].papel} · ❤ ${Math.round(u.hp)}/${u.maxHp}`),
         bar('hp', u.hp, u.maxHp),
-        pips,
         h('div', { class: 'needs' },
           needEl('🍗', 'Fome (cheio = satisfeito)', n.fome, 'linear-gradient(#ffd08a,#e08a2a)'),
           needEl('💧', 'Sede', n.sede, 'linear-gradient(#8ad8ff,#2a8ad8)'),
@@ -126,10 +119,10 @@ export class Hud {
     };
     const acts = h('div', { class: 'acts' },
       B('⚔️', 'Atacar: clique num inimigo', () => ui.setMode('attack'), 'A', ui.mode === 'attack' ? 'on' : ''),
-      B('🎯', 'Mirar (+15% de acerto, 1 PA)', () => g.aim(u), 'G'),
-      B('🛡️', 'Defender (gasta os PA restantes, −50% de dano)', () => g.defend(u), 'X'),
-      B('🥷', 'Esconder-se (2 PA)', () => g.hide(u), 'H'),
-      B('🏃', `Correr: ${g.input.run ? 'LIGADO' : 'desligado'} (3 casas por 2 PA, faz barulho)`, () => { g.input.run = !g.input.run; this.dirty = true; ui.refreshHover(); }, 'Shift', g.input.run ? 'on' : ''),
+      B('🎯', 'Mirar (+15% de acerto no próximo tiro)', () => g.aim(u), 'G'),
+      B('🛡️', 'Defender (−50% de dano; os zumbis agem em seguida)', () => g.defend(u), 'X'),
+      B('🥷', 'Esconder-se', () => g.hide(u), 'H'),
+      B('🏃', `Correr: ${g.input.run ? 'LIGADO' : 'desligado'} (mais rápido, mas faz barulho)`, () => { g.input.run = !g.input.run; this.dirty = true; ui.refreshHover(); }, 'Shift', g.input.run ? 'on' : ''),
       B('🔄', 'Recarregar', () => g.reload(u), 'R'),
       B('🎒', 'Inventário', () => ui.open('inv'), 'I'),
       B('🛠️', 'Fabricar e cozinhar', () => ui.open('craft'), 'B'),
@@ -144,8 +137,8 @@ export class Hud {
       else acts.append(h('button', { class: 'skill', title: title + ' (passiva)', disabled: true, style: { opacity: 0.75 } }, sk.icon));
     }
     const end = h('div', { class: 'end' },
-      h('button', { class: busy ? 'wait' : '', onclick: () => g.endTurn(), disabled: busy, title: 'Passar o turno (Enter)' }, busy ? 'Aguarde...' : 'Passar turno'),
-      h('small', {}, g.state.mode === 'combat' ? '1 turno = 1 minuto' : '1 turno = 5 minutos'));
+      h('button', { class: busy ? 'wait' : '', onclick: () => g.endTurn(), disabled: busy, title: 'Esperar: deixa o tempo passar e os zumbis agirem (Enter)' }, busy ? 'Aguarde...' : '⏳ Esperar'),
+      h('small', {}, g.state.mode === 'combat' ? 'os zumbis agem' : 'passa 5 minutos'));
     bar_.append(me, weapon, acts, end);
   }
   // ------------------------------------------------------------ missões

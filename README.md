@@ -3,7 +3,7 @@
 Um RPG 3D de capturar e treinar criaturas que roda no navegador. A história segue a estrutura clássica de **Pokémon FireRed**: você sai de casa, escolhe um parceiro no laboratório, enfrenta um rival, vence ginásios, derrota uma equipe vilã e desafia a Liga.
 Todas as criaturas, nomes, mapas e músicas são **originais**. O herói é o personagem da ilustração em `assets/heroi.webp`, modelado em 3D: cabelo castanho bagunçado, jaqueta marrom com forro bege, camiseta **CRESCER**, bermuda preta e meias listradas.
 
-> **Novo no repositório:** [**Aimorés dos Mortos**](aimores/README.md) é um jogo de sobrevivência zumbi em 2,5D isométrico, com turnos e Pontos de Ação, ambientado em Aimorés (MG) e estrelado por Arthur, Carol, Daiana e Pablício. Com o servidor rodando, abra `http://localhost:8000/aimores/`. Também tem **instalador para Windows** na página de [Releases](https://github.com/daianaramosguzzo-hash/EduCrescer/releases) (`Aimores-dos-Mortos-Setup-*.exe`).
+> **Novo no repositório:** [**Aimorés dos Mortos**](aimores/README.md) é um jogo de sobrevivência zumbi em 2,5D isométrico, com movimento livre e combate tático, ambientado em Aimorés (MG) e estrelado por Arthur, Carol, Daiana e Pablício. Com o servidor rodando, abra `http://localhost:8000/aimores/`. Também tem **instalador para Windows** na página de [Releases](https://github.com/daianaramosguzzo-hash/EduCrescer/releases) (`Aimores-dos-Mortos-Setup-*.exe`).
 
 ## Como jogar
 

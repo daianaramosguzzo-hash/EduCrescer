@@ -37,7 +37,7 @@ function heroTabs(g, cur, onPick) {
 }
 function weightLine(u) {
   const c = carried(u), cap = capacity(u);
-  return h('div', { class: 'weight' + (c > cap ? ' over' : '') }, `Peso: ${c.toFixed(1)} / ${cap} kg${c > cap ? ' — sobrecarga (−2 PA)' : ''}`, bar('', c, cap));
+  return h('div', { class: 'weight' + (c > cap ? ' over' : '') }, `Peso: ${c.toFixed(1)} / ${cap} kg${c > cap ? ' — sobrecarga (fica mais lento)' : ''}`, bar('', c, cap));
 }
 
 export class Panels {
@@ -104,7 +104,7 @@ export class Panels {
       for (const o of near) acts.append(h('button', { class: 'btn', onclick: async () => { await g.giveItem(u, o, this.invSel); this.invSel = null; this.invRender(); } }, `Entregar para ${o.name}`));
       if (!it.quest) acts.append(h('button', { class: 'btn danger', onclick: () => { g.dropItem(u, this.invSel); this.invSel = null; this.invRender(); } }, 'Largar no chão'));
       det.append(acts);
-    } else det.append(h('div', { class: 'd' }, 'Clique num item para ver detalhes. Comer, beber e usar remédios custam PA. Para dar itens a outra pessoa, fiquem lado a lado.'));
+    } else det.append(h('div', { class: 'd' }, 'Clique num item para ver detalhes. Comer, beber e usar remédios leva um tempinho. Para dar itens a outra pessoa, fiquem lado a lado.'));
     body.append(det);
     this.show(win(`Inventário — ${u.name}`, body, { close: () => this.close() }), 'inv');
   }
@@ -113,7 +113,7 @@ export class Panels {
     const parts = [];
     if (it.w) {
       const w = it.w;
-      parts.push(`Dano ${w.dano[0]}–${w.dano[1]}`, `Precisão ${w.prec}%`, `${w.pa} PA`, w.tipo === 'corpo' ? 'corpo a corpo' : `alcance ${w.alcance}`, `ruído ${w.ruido}`);
+      parts.push(`Dano ${w.dano[0]}–${w.dano[1]}`, `Precisão ${w.prec}%`, w.pa <= 2 ? 'ataque rápido' : w.pa >= 4 ? 'ataque lento' : 'ataque normal', w.tipo === 'corpo' ? 'corpo a corpo' : `alcance ${w.alcance}`, `ruído ${w.ruido}`);
       if (w.pente > 1) parts.push(`pente ${w.pente} (${ITEMS[w.municao].nome.toLowerCase()})`);
       if (w.furtivo) parts.push(`ataque surpresa ×${w.furtivo}`);
       if (w.atordoar) parts.push(`atordoa ${Math.round(w.atordoar * 100)}%`);
@@ -246,7 +246,7 @@ export class Panels {
           h('h3', {}, `${H.nome} — ${H.papel}`),
           h('div', { style: { fontSize: '13px', color: '#ddd0ea', lineHeight: 1.4 } }, H.bio),
           h('div', { style: { marginTop: '8px', fontWeight: 900 } }, `Nível ${u.lvl} · XP ${u.xp}/${next}`), bar('', u.xp - prev, Math.max(1, next - prev), 'linear-gradient(#9ad8ff,#2a8ad8)'),
-          h('div', { style: { marginTop: '6px', fontSize: '13px', fontWeight: 800 } }, `❤ ${Math.round(u.hp)}/${u.maxHp} · PA ${u.maxAp} · Carga ${carried(u)}/${capacity(u)} kg · Zumbis derrotados: ${u.kills}`))),
+          h('div', { style: { marginTop: '6px', fontSize: '13px', fontWeight: 800 } }, `❤ ${Math.round(u.hp)}/${u.maxHp} · Carga ${carried(u)}/${capacity(u)} kg · Zumbis derrotados: ${u.kills}`))),
       h('h3', { style: { marginTop: '10px' } }, `Atributos ${u.pts ? `(${u.pts} ponto${u.pts > 1 ? 's' : ''} para distribuir)` : ''}`));
     for (const [k, nome] of Object.entries(STAT_NAMES)) {
       left.append(h('div', { class: 'stat-row', title: STAT_DESC[k] }, nome, bar('', u.stats[k], 12), h('span', {}, u.stats[k]),
@@ -312,7 +312,7 @@ export class Panels {
       }
     } else {
       const s = g.state.stats;
-      body.append(h('div', { class: 'stats' }, h('p', {}, `Dias sobrevividos: ${g.day()}`), h('p', {}, `Turnos: ${s.turnos}`), h('p', {}, `Zumbis derrotados: ${s.kills}`), h('p', {}, `Pessoas salvas: ${g.state.saved.length}${g.state.saved.length ? ' (' + g.state.saved.join(', ') + ')' : ''}`)));
+      body.append(h('div', { class: 'stats' }, h('p', {}, `Dias sobrevividos: ${g.day()}`), h('p', {}, `Rodadas: ${s.turnos}`), h('p', {}, `Zumbis derrotados: ${s.kills}`), h('p', {}, `Pessoas salvas: ${g.state.saved.length}${g.state.saved.length ? ' (' + g.state.saved.join(', ') + ')' : ''}`)));
       for (const u of g.heroes) body.append(h('p', {}, `${u.name}: nível ${u.lvl}, ${u.kills} zumbis${u.dead ? ' — não sobreviveu' : ''}`));
     }
     this.show(win('Diário', body, { close: () => this.close() }), 'journal');
@@ -347,7 +347,7 @@ export class Panels {
       reqs.forEach((e, i) => { if (i) reqLine.append(' + '); reqLine.append(e); });
       if (r.fogao) reqLine.append(' + 🔥 fogo (fósforos)');
       body.append(h('div', { class: 'recipe' },
-        h('div', {}, h('div', { style: { fontWeight: 900 } }, `${r.nome} (${r.pa} PA)`), reqLine, h('div', { style: { fontSize: '12px' } }, out)),
+        h('div', {}, h('div', { style: { fontWeight: 900 } }, r.nome), reqLine, h('div', { style: { fontSize: '12px' } }, out)),
         h('button', { class: 'btn primary', disabled: !ok, onclick: async () => { await g.craft(u, r.id, this.crStove); this.craftRender(); } }, 'Fazer')));
     }
     this.show(win('Fabricar e cozinhar', body, { close: () => this.close() }), 'craft');
@@ -417,21 +417,21 @@ export class Panels {
 export const HELP_HTML = `
 <h3>Objetivo</h3>
 <p>Aimorés virou um apocalipse zumbi. Guie <b>Arthur</b>, <b>Carol</b>, <b>Daiana</b> e <b>Pablício</b>: descubram como o surto começou, ajudem (ou não) quem cruzar o caminho e encontrem uma saída antes do bombardeio. Cada recurso conta. Nem toda briga vale a pena.</p>
-<h3>Turnos e Pontos de Ação (PA)</h3>
-<p>Na sua vez, cada personagem tem PA (as bolinhas amarelas). Tudo custa PA: andar 1 por casa, correr 2 PA a cada 3 casas (com barulho), atacar 2–4, vasculhar 1–3, abrir porta 1, comer/beber 1, remédio 1–2, conversar 1 (em combate). Quando terminar, clique em <b>Passar turno</b>: os zumbis e as outras pessoas agem.</p>
-<p><b>Exploração</b> (sem perigo por perto): o grupo segue quem você move e dá para clicar longe — o jogo passa os turnos sozinho até chegar (ou até aparecer um zumbi). Cada turno vale 5 minutos. <b>Combate</b>: cada um age separado e cada turno vale 1 minuto.</p>
+<h3>Como o tempo passa</h3>
+<p>Escolha <b>qualquer personagem</b> (retratos à esquerda ou teclas <kbd>1</kbd>–<kbd>4</kbd>) e clique no chão para andar <b>até onde quiser</b>. Não há limite de distância: enquanto vocês andam, atacam, vasculham e comem, o tempo corre, e de tempos em tempos os zumbis e as outras pessoas se mexem. Atacar e correr "gastam" mais tempo do que andar devagar.</p>
+<p><b>Exploração</b> (sem perigo por perto): o grupo segue quem você move. <b>Combate</b> (zumbi à vista): cada um age separado, e a caminhada para se um inimigo chegar colado ou se você levar dano. <b>⏳ Esperar</b> (<kbd>Enter</kbd>) deixa o tempo passar de propósito — bom para atrair zumbis para uma porta ou esperar a noite acabar.</p>
 <h3>Mouse e toque</h3>
 <table>
 <tr><td><kbd>Clique esquerdo</kbd></td><td>ação principal: andar, atacar, vasculhar, abrir porta, conversar</td></tr>
-<tr><td><kbd>Clique direito</kbd> / segurar o dedo</td><td>menu com todas as opções e o custo em PA</td></tr>
+<tr><td><kbd>Clique direito</kbd> / segurar o dedo</td><td>menu com todas as opções</td></tr>
 <tr><td><kbd>Rodinha</kbd> / pinça</td><td>zoom</td></tr>
 <tr><td>Arrastar (botão do meio ou dedo)</td><td>mover a câmera</td></tr>
 </table>
 <h3>Teclado</h3>
 <table>
 <tr><td><kbd>1</kbd>–<kbd>4</kbd> / <kbd>Tab</kbd></td><td>escolher personagem</td></tr>
-<tr><td><kbd>Enter</kbd></td><td>passar turno</td></tr>
-<tr><td><kbd>WASD</kbd> / setas</td><td>mover a câmera · <kbd>Q</kbd> <kbd>E</kbd> girar · <kbd>Espaço</kbd> centralizar</td></tr>
+<tr><td><kbd>Enter</kbd></td><td>esperar (o tempo passa)</td></tr>
+<tr><td>Setas</td><td>mover a câmera · <kbd>Q</kbd> <kbd>E</kbd> girar · <kbd>Espaço</kbd> centralizar</td></tr>
 <tr><td><kbd>Shift</kbd></td><td>alternar correr</td></tr>
 <tr><td><kbd>I</kbd> <kbd>C</kbd> <kbd>J</kbd> <kbd>M</kbd> <kbd>B</kbd></td><td>inventário, ficha, diário, mapa, fabricar</td></tr>
 <tr><td><kbd>A</kbd> <kbd>G</kbd> <kbd>X</kbd> <kbd>H</kbd> <kbd>R</kbd> <kbd>F</kbd></td><td>atacar, mirar, defender, esconder, recarregar, lanterna</td></tr>
@@ -440,10 +440,10 @@ export const HELP_HTML = `
 </table>
 <h3>Sobrevivência</h3>
 <ul>
-<li><b>Fome, sede e energia</b> caem com o tempo (e mais rápido no calorão de Aimorés, ao sol). Baixas demais, tiram PA, mira e vida.</li>
-<li><b>Mordidas</b> infectam. A infecção sobe devagar: febre (−1 PA), delírio, estado grave... e em 100% a pessoa vira zumbi. Antibiótico segura por um tempo; só o <b>Soro R-7</b> cura.</li>
-<li><b>Sangramento</b> tira vida todo turno: use atadura ou kit médico.</li>
-<li>Com vida zerada o personagem <b>cai</b>: alguém precisa levantá-lo com atadura ou kit em até 3 turnos.</li>
+<li><b>Fome, sede e energia</b> caem com o tempo (e mais rápido no calorão de Aimorés, ao sol). Baixas demais, deixam o personagem mais lento, com a mira pior e perdendo vida.</li>
+<li><b>Mordidas</b> infectam. A infecção sobe devagar: febre (fica mais lento), delírio, estado grave... e em 100% a pessoa vira zumbi. Antibiótico segura por um tempo; só o <b>Soro R-7</b> cura.</li>
+<li><b>Sangramento</b> tira vida com o tempo: use atadura ou kit médico.</li>
+<li>Com vida zerada o personagem <b>cai</b>: alguém precisa levantá-lo com atadura ou kit antes que os zumbis ajam 3 vezes.</li>
 <li><b>Moral</b> baixo causa pânico. Comida boa, descanso, a fé da Carol e boas escolhas ajudam.</li>
 <li>Durma na <b>Casa da Turma</b> ou na <b>Igreja</b> (clique numa cama) para passar a noite e recuperar energia.</li>
 </ul>
