@@ -100,6 +100,9 @@ export class World {
     this.animated = [];
     this.wilds = [];
     this.camMode = 'terceira';
+    this.camPitch = 0.55;
+    this.camZoom = 1;
+    this.resetYawOnLoad = true;
     this.onWildContact = null;
   }
 
@@ -154,6 +157,7 @@ export class World {
     this.refreshNpcs(G);
     this.initWilds();
     this.snapCamera = true;
+    this.resetYawOnLoad = true;
   }
 
   addNpc(def, G) {
@@ -584,14 +588,18 @@ export class World {
         this.camera.position.copy(this.camPos);
         this.camera.lookAt(this.camPos.x, p.y + 0.4, this.camPos.z - off.z);
       } else {
-        // terceira pessoa: a câmera fica atrás do herói e acompanha para onde ele olha
-        const targetYaw = ROT[this.player.dir];
-        if (this.camYaw === undefined || this.snapCamera) this.camYaw = targetYaw;
-        let d = targetYaw - this.camYaw;
+        // terceira pessoa em órbita: o jogador gira a câmera com o mouse/dedo
+        if (this.camYaw === undefined || this.snapCamera) {
+          if (this.camYaw === undefined || this.resetYawOnLoad) this.camYaw = ROT[this.player.dir];
+          this.resetYawOnLoad = false;
+          this.camYawSmooth = this.camYaw;
+        }
+        let d = this.camYaw - this.camYawSmooth;
         while (d > Math.PI) d -= Math.PI * 2;
         while (d < -Math.PI) d += Math.PI * 2;
-        this.camYaw += d * Math.min(1, dt * 5);
-        const fx = Math.sin(this.camYaw), fz = Math.cos(this.camYaw);
+        this.camYawSmooth += d * Math.min(1, dt * 14);
+        const yaw = this.camYawSmooth;
+        const fx = Math.sin(yaw), fz = Math.cos(yaw);
         const interior = this.map && this.map.interior;
         // se houver árvore ou parede logo atrás, aproxima e eleva a câmera
         let wall = false;
@@ -600,23 +608,49 @@ export class World {
           const t = this.tile(tx, tz);
           if (t === 'T' || t === '#' || this.buildingAt(tx, tz)) { wall = true; break; }
         }
-        const dist = wall ? (interior ? 2.4 : 2.8) : (interior ? 3.4 : 4.6);
-        const h = wall ? 4.4 : (interior ? 3.6 : 3.4);
-        if (this.camDist === undefined || this.snapCamera) { this.camDist = dist; this.camH = h; }
-        const k = Math.min(1, dt * 4);
-        this.camDist += (dist - this.camDist) * k;
-        this.camH += (h - this.camH) * k;
-        // leve deslocamento lateral (visão por cima do ombro) para não esconder o que está à frente
-        const side = interior ? 0.4 : 0.8;
-        const target = new THREE.Vector3(p.x - fx * this.camDist + fz * side, p.y + this.camH, p.z - fz * this.camDist - fx * side);
+        const baseR = (interior ? 4.0 : 5.4) * this.camZoom;
+        const R = wall ? Math.min(baseR, interior ? 2.8 : 3.4) : baseR;
+        const pitch = wall ? Math.max(this.camPitch, 0.95) : this.camPitch;
+        if (this.camDist === undefined || this.snapCamera) { this.camDist = R; this.camPitchS = pitch; }
+        const k = Math.min(1, dt * 5);
+        this.camDist += (R - this.camDist) * k;
+        this.camPitchS += (pitch - this.camPitchS) * k;
+        const horiz = Math.cos(this.camPitchS) * this.camDist;
+        const up = Math.sin(this.camPitchS) * this.camDist + 0.6;
+        // leve deslocamento lateral (visão por cima do ombro)
+        const side = interior ? 0.35 : 0.7;
+        const target = new THREE.Vector3(p.x - fx * horiz + fz * side, p.y + up, p.z - fz * horiz - fx * side);
         if (this.snapCamera) { this.camPos.copy(target); this.snapCamera = false; }
-        this.camPos.lerp(target, Math.min(1, dt * 8));
+        this.camPos.lerp(target, Math.min(1, dt * 12));
         this.camera.position.copy(this.camPos);
-        this.camera.lookAt(p.x + fx * 2.4 + fz * 0.3, p.y + 0.5, p.z + fz * 2.4 - fx * 0.3);
+        const ahead = 2.2 * Math.max(0, 1 - this.camPitchS / 1.5);
+        this.camera.lookAt(p.x + fx * ahead + fz * 0.25, p.y + 0.6, p.z + fz * ahead - fx * 0.25);
       }
       this.sun.position.set(p.x + 6, 14, p.z + 5);
       this.sun.target.position.set(p.x, 0, p.z);
     }
+  }
+
+  // controle de câmera pelo mouse / toque
+  rotateCam(dx, dy) {
+    if (this.camMode === 'cima') return;
+    if (this.camYaw === undefined) this.camYaw = ROT[this.player.dir];
+    this.camYaw -= dx * 0.006;
+    this.camPitch = Math.max(0.12, Math.min(1.35, this.camPitch + dy * 0.005));
+  }
+  zoomCam(delta) {
+    if (this.camMode === 'cima') return;
+    this.camZoom = Math.max(0.5, Math.min(1.8, this.camZoom * (delta > 0 ? 1.1 : 1 / 1.1)));
+  }
+  // direção do mapa mais próxima de "para onde a câmera olha" (+ giro opcional)
+  camDir(offset = 0) {
+    let y = (this.camYaw === undefined ? ROT[this.player.dir] : this.camYaw) + offset;
+    let best = 'down', bestD = 9;
+    for (const [dir, r] of Object.entries(ROT)) {
+      let d = Math.abs(((y - r) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+      if (d < bestD) { bestD = d; best = dir; }
+    }
+    return best;
   }
 
   // ------------------------------------------------ Crescemon selvagens no mapa

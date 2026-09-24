@@ -43,6 +43,41 @@ function applyCamFov() {
   world.camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+
+// arrastar no mapa gira a câmera; a roda do mouse (ou pinça) aproxima
+{
+  const pts = new Map();
+  let pinch = 0;
+  canvas.addEventListener('pointerdown', e => {
+    if (mode !== 'world') return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    canvas.classList.add('dragging');
+  });
+  canvas.addEventListener('pointermove', e => {
+    const last = pts.get(e.pointerId);
+    if (!last) return;
+    if (pts.size === 2) {
+      last.x = e.clientX; last.y = e.clientY;
+      const [a, b] = [...pts.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch) world.zoomCam(pinch - d);
+      pinch = d;
+      return;
+    }
+    world.rotateCam(e.clientX - last.x, e.clientY - last.y);
+    last.x = e.clientX; last.y = e.clientY;
+  });
+  const end = e => {
+    pts.delete(e.pointerId);
+    if (pts.size < 2) pinch = 0;
+    if (!pts.size) canvas.classList.remove('dragging');
+  };
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+  canvas.addEventListener('wheel', e => { if (mode === 'world') { e.preventDefault(); world.zoomCam(e.deltaY); } }, { passive: false });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+}
 resize();
 
 // ------------------------------------------------ estado
@@ -484,30 +519,24 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-// Em terceira pessoa, as direções são relativas à câmera: cima = frente,
-// esquerda/direita = virar e andar, baixo = dar meia-volta.
-// A direção escolhida fica travada enquanto a tecla estiver pressionada.
-const CLOCK = ['up', 'right', 'down', 'left'];
-const REL_OFF = { up: 0, right: 1, down: 2, left: 3 };
-let lockKey = null, lockAbs = null;
+// Em terceira pessoa, as setas são relativas à câmera (que o jogador gira
+// arrastando o mouse ou o dedo): cima = para onde a câmera olha.
+const REL_YAW = { up: 0, down: Math.PI, left: Math.PI / 2, right: -Math.PI / 2 };
+let lockKey = null;
 function absDir(rel) {
   if (world.camMode === 'cima') return rel;
-  if (rel !== lockKey) {
-    lockKey = rel;
-    lockAbs = CLOCK[(CLOCK.indexOf(world.player.dir) + REL_OFF[rel]) % 4];
-  }
-  return lockAbs;
+  return world.camDir(REL_YAW[rel]);
 }
 
 function updateMovement(dt) {
   const p = world.player;
   if (busy || hasModal() || p.moving) return;
   const rel = heldDir();
-  if (!rel) { turnHold = 0; lockKey = null; return; }
+  if (!rel) { turnHold = 0; return; }
   const d = absDir(rel);
   if (p.dir !== d && !p.justMoved) {
     p.face(d);
-    turnHold = world.camMode === 'cima' ? 0.09 : 0.2;
+    turnHold = 0.09;
     return;
   }
   if (turnHold > 0) { turnHold -= dt; return; }
@@ -665,7 +694,7 @@ async function startGame(fromSave) {
   UI.showLocation('Vila Aurora');
   await runScript(async () => {
     await UI.say('Seu quarto em Vila Aurora. Hoje é o dia em que tudo começa!');
-    await UI.say('Controles: CIMA anda para frente, ESQUERDA/DIREITA viram, BAIXO dá meia-volta. Z/Espaço (A) interage, X (B) corre e ESC (☰) abre o menu.');
+    await UI.say('Controles: arraste o mouse (ou o dedo na tela) para girar a câmera e use a rodinha para aproximar. As setas andam na direção da câmera. Z/Espaço (A) interage, X (B) corre e ESC (☰) abre o menu.');
     await UI.say('Crescemon selvagens aparecem no mato alto. Chegue perto de um e toque em A (ou esbarre nele) para batalhar e tentar capturar! A câmera pode ser trocada no menu.');
   });
 }

@@ -17,7 +17,7 @@ Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch
 
 ### Controles
 
-A câmera fica atrás do herói, em terceira pessoa. **Cima** anda para frente, **esquerda/direita** viram e andam, **baixo** dá meia-volta. No menu dá para trocar para a câmera **de cima**, com setas fixas no mapa.
+A câmera fica atrás do herói, em terceira pessoa. **Arraste o mouse** (ou o dedo na tela) para girar a câmera para os lados e para cima/baixo, e use a **rodinha** (ou pinça com dois dedos) para aproximar. As setas andam na direção da câmera: **cima** vai para onde ela está olhando. No menu dá para trocar para a câmera **de cima**, com setas fixas no mapa.
 
 | Ação | Teclado | Celular |
 |---|---|---|
