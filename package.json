@@ -1,0 +1,59 @@
+{
+  "name": "crescemon-brasa-3d",
+  "productName": "Crescemon Brasa 3D",
+  "version": "1.0.0",
+  "description": "RPG 3D de capturar e treinar Crescemon",
+  "author": "EduCrescer",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis --x64 --publish never"
+  },
+  "build": {
+    "appId": "br.educrescer.crescemon",
+    "productName": "Crescemon Brasa 3D",
+    "copyright": "EduCrescer",
+    "directories": {
+      "output": "dist",
+      "buildResources": "desktop"
+    },
+    "files": [
+      "index.html",
+      "css/**",
+      "js/**",
+      "lib/**",
+      "assets/**",
+      "desktop/main.js",
+      "desktop/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "desktop/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Crescemon Brasa 3D",
+      "artifactName": "Crescemon-Brasa-3D-Setup-${version}.${ext}",
+      "installerIcon": "desktop/icon.ico",
+      "uninstallerIcon": "desktop/icon.ico",
+      "language": "1046"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  }
+}

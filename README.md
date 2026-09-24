@@ -15,6 +15,24 @@ python3 -m http.server 8000
 
 Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch e a pasta raiz `/`. Não há etapa de build: o Three.js já está incluído em `lib/`.
 
+### Versão para Windows (instalável)
+
+O projeto também vira um programa de desktop com **Electron**.
+
+- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.0.0.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
+- **Tela cheia:** aperte **F11**.
+- **Aviso do Windows:** como o instalador não é assinado digitalmente, o Windows pode mostrar *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
+
+Para gerar o instalador você mesmo:
+
+```bash
+npm install
+npm start            # abre o jogo numa janela de desktop
+npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.0.0.exe (no Linux precisa do Wine)
+```
+
+O fluxo do GitHub Actions `Instalador Windows` também gera o `.exe` numa máquina Windows. Rode-o pela aba **Actions** ou crie uma tag `v*` para publicar o instalador numa Release.
+
 ### Controles
 
 A câmera fica atrás do herói, em terceira pessoa. **Clique na tela** para prender o mouse: a partir daí, é só **mexer o mouse** para olhar em volta, sem segurar botão. **Botão esquerdo = Z** (interagir/confirmar), **botão direito = X** (voltar/correr) e a **rodinha** aproxima (nos menus, ela sobe e desce as opções). **Esc** solta o mouse. As setas andam para onde você está olhando. No celular, arraste o dedo na tela para girar e use a pinça para aproximar. No menu dá para trocar para a câmera **de cima**.
@@ -101,6 +119,7 @@ js/audio.js        efeitos e músicas
 js/input.js        teclado e toque
 lib/               Three.js (r170)
 assets/heroi.webp  ilustração do herói
+desktop/           versão de desktop (Electron): janela, ícone e instalador
 ```
 
 Jogo de fã sem fins comerciais. "Pokémon" e "FireRed" são marcas de seus respectivos donos. Este projeto só se inspira na estrutura da história e não usa nenhum personagem, nome, imagem ou música oficial.
