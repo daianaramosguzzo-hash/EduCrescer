@@ -353,7 +353,7 @@ export const DIALOGS = {
           { t: 'Vamos levar vocês até a Igreja Matriz. Fiquem colados na gente.', op: { carol: 2, daiana: 1, pablicio: -1 },
             do: g => { for (const u of g.units.filter(u => ['tavares', 'aluno1', 'aluno2'].includes(u.npc) && u.alive)) makeAlly(g, u); questAdvance(g, 'escola', 'decidir'); } , to: null },
           { t: 'Fiquem aqui e barriquem a biblioteca. A gente deixa comida.', op: { pablicio: 1, carol: -1 }, if: g => foodCount(g) >= 3,
-            do: g => { takeFood(g, 3); flag(g, 'escola_fortificada', true); const s = Q(g, 'escola'); s.step = 3; questDone(g, 'escola'); }, to: 'fica' },
+            do: g => { takeFood(g, 3); flag(g, 'escola_fortificada', true); questStart(g, 'escola'); questDone(g, 'escola'); }, to: 'fica' },
           { t: 'Ainda não sei. A gente já volta.', to: null },
         ] },
       fica: { who: 'npc', t: 'Tá certo. A gente segura as pontas. Voltem quando puderem — e tragam notícias.', next: null },

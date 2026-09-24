@@ -7,7 +7,7 @@ import { los } from './vision.js';
 import { findPath } from './path.js';
 import { hitChance, rollDamage, zombieWound, inRange, cheb, dist } from './combat.js';
 import { effStat } from './units.js';
-import { rng, clamp, wait } from '../util.js';
+import { rng, bus, clamp, wait } from '../util.js';
 import { S } from '../world/tiles.js';
 
 let pending = [];
@@ -19,12 +19,15 @@ export async function runAI(g) {
   const list = g.units.filter(u => u.alive && u.kind !== 'hero').map(u => ({ u, d: nearest(u) })).sort((a, b) => a.d - b.d);
   for (const { u, d } of list) {
     if (!u.alive || g.phase === 'over') continue;
+    g.aiCurrent = u; // ajuda a depurar turnos travados
     try {
       if (u.kind === 'zombie') await zombieTurn(g, u, d);
       else await npcTurn(g, u, d);
     } catch (e) { console.error('IA', e); }
   }
+  g.aiCurrent = 'pending';
   await Promise.all(pending);
+  g.aiCurrent = null;
   g.updateVision();
   g.updateMode();
 }
@@ -51,6 +54,8 @@ function perceive(g, z) {
   if (prot && los(g.map, z.x, z.z, prot.x, prot.z)) return prot;
   for (const t of g.units) {
     if (!t.alive || t.kind === 'zombie' || t.gone) continue;
+    // sobreviventes longe do grupo "se viram sozinhos" (não morrem fora da tela)
+    if (t.kind === 'npc' && t.faction !== 'ally' && !g.liveHeroes.some(h => Math.hypot(h.x - t.x, h.z - t.z) < 14)) continue;
     const d = Math.hypot(t.x - z.x, t.z - z.z);
     let sight = Z.visao;
     if (night) sight = Math.max(3, sight * 0.55);
@@ -266,6 +271,7 @@ async function bashDoor(g, z, door) {
   const near = g.liveHeroes.some(h => Math.hypot(h.x - door.x, h.z - door.z) < 12);
   if (g.visible.has(g.map.idx(z.x, z.z))) await g.S.units.play(z, 'attack');
   const dmg = rng.int(2, 5) * (Z.porta || 1);
+  if (near) bus.emit('sfx', 'bang', door.x, door.z);
   if (door.barricade > 0) {
     door.bhp = (door.bhp ?? 30) - dmg;
     if (door.bhp <= 0) { door.barricade = 0; door.bhp = undefined; g.S.world.refreshDoor(g.map.idx(door.x, door.z)); if (near) g.log('🪵 A barricada foi arrebentada!', 'perigo'); }
@@ -284,6 +290,7 @@ async function bashDoor(g, z, door) {
 }
 async function breakWindow(g, z, w) {
   w.broken = true;
+  bus.emit('sfx', 'glass', w.x, w.z);
   g.map.version++;
   const b = g.map.building[g.map.idx(w.x, w.z)];
   if (b >= 0) g.S.world.buildBuilding(g.map.buildings[b]);

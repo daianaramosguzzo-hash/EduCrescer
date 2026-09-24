@@ -51,12 +51,12 @@ export class Scene3D {
   }
 
   setMap(map) {
-    if (this.world) { this.scene.remove(this.world.root); }
+    if (this.world) { this.scene.remove(this.world.root); this.world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
     this.map = map;
     this.fow = new Fow(map.W, map.H);
     this.world = new WorldView(this.scene, map, this.fow);
     this.world.build();
-    if (this.units) for (const v of [...this.units.list.values()]) this.units.remove(v.unit);
+    if (this.units) this.units.dispose();
     this.units = new UnitView(this.scene, this.camera, this.overlay);
     this.buildHighlights();
   }
@@ -106,16 +106,16 @@ export class Scene3D {
   setTime(min, weather = {}) {
     const h = (min / 60) % 24;
     const P = [
-      [0, '#0e1430', 0.08, '#1a2448', '#0a0c18', 0.22, '#7a8ad8', 0.25, 1],
-      [4.8, '#0e1430', 0.08, '#1a2448', '#0a0c18', 0.22, '#7a8ad8', 0.25, 1],
+      [0, '#5a6aa8', 0.26, '#26335e', '#0e1020', 0.42, '#8a9ae0', 0.38, 1],
+      [4.8, '#5a6aa8', 0.26, '#26335e', '#0e1020', 0.42, '#8a9ae0', 0.38, 1],
       [5.8, '#f08a5a', 0.9, '#f0b890', '#4a3a3a', 0.55, '#ffb070', 0.9, 0.45],
       [7.0, '#fff0d8', 1.8, '#e0f0ff', '#6a7a4a', 1.0, '#fff0d8', 1.8, 0],
       [12, '#fffaf0', 2.2, '#e6f4ff', '#7a8a5a', 1.1, '#fffaf0', 2.2, 0],
       [16.5, '#ffe8c0', 1.9, '#e0ecff', '#7a7a5a', 1.0, '#ffe8c0', 1.9, 0],
       [17.8, '#ff9a4a', 1.2, '#f0a878', '#5a3a3a', 0.7, '#ff9a4a', 1.2, 0.3],
       [18.8, '#a04a6a', 0.35, '#5a3a6a', '#2a1a2a', 0.35, '#c06a8a', 0.4, 0.75],
-      [19.6, '#0e1430', 0.08, '#1a2448', '#0a0c18', 0.22, '#7a8ad8', 0.25, 1],
-      [24, '#0e1430', 0.08, '#1a2448', '#0a0c18', 0.22, '#7a8ad8', 0.25, 1],
+      [19.6, '#5a6aa8', 0.26, '#26335e', '#0e1020', 0.42, '#8a9ae0', 0.38, 1],
+      [24, '#5a6aa8', 0.26, '#26335e', '#0e1020', 0.42, '#8a9ae0', 0.38, 1],
     ];
     let a = P[0], b = P[1];
     for (let i = 0; i < P.length - 1; i++) if (h >= P[i][0] && h <= P[i + 1][0]) { a = P[i]; b = P[i + 1]; break; }
@@ -194,7 +194,12 @@ export class Scene3D {
     const max = 900;
     const geo = new THREE.PlaneGeometry(0.92, 0.92);
     geo.rotateX(-Math.PI / 2);
-    const mat = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.28, depthWrite: false });
+    const tc = document.createElement('canvas'); tc.width = tc.height = 64;
+    const tg = tc.getContext('2d');
+    tg.fillStyle = 'rgba(255,255,255,0.22)'; tg.fillRect(0, 0, 64, 64);
+    tg.strokeStyle = 'rgba(255,255,255,0.95)'; tg.lineWidth = 5; tg.strokeRect(5, 5, 54, 54);
+    const tex = new THREE.CanvasTexture(tc);
+    const mat = new THREE.MeshBasicMaterial({ color: '#ffffff', map: tex, transparent: true, opacity: 0.55, depthWrite: false });
     this.range = new THREE.InstancedMesh(geo, mat, max);
     this.range.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(max * 3), 3);
     this.range.count = 0; this.range.renderOrder = 2; this.range.frustumCulled = false;

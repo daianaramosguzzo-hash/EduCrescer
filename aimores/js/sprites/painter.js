@@ -1601,6 +1601,22 @@ export function paintPortrait(canvas, look, dir = 0) {
   ctx.clearRect(0, 0, W, H);
   const B = look.body;
   const sc = (H * 0.5) / (2 * B.headR * B.headH) / (look.scale || 1);
+  if (look.gait === 'crawler') {
+    // quem anda agachado: pinta inteiro e recorta em volta do ponto mais alto (a cabeça)
+    const tw = W * 3, th = H * 4;
+    const t = document.createElement('canvas'); t.width = tw; t.height = th;
+    const tg = t.getContext('2d', { willReadFrequently: true });
+    paintFrame(tg, look, 'idle', 0, dir, 'none', tw / 2, th * 0.9, sc);
+    const data = tg.getImageData(0, 0, tw, th).data;
+    let top = -1;
+    for (let y = 0; y < th && top < 0; y++) for (let x = 0; x < tw; x++) if (data[(y * tw + x) * 4 + 3] > 40) { top = y; break; }
+    const hh = 2 * B.headR * B.headH * sc;
+    let sx = 0, n = 0;
+    for (let y = Math.max(0, top); y < Math.min(th, top + hh); y++) for (let x = 0; x < tw; x++) if (data[(y * tw + x) * 4 + 3] > 40) { sx += x; n++; }
+    const cx = n ? sx / n : tw / 2;
+    ctx.drawImage(t, cx - W / 2, top - H * 0.16, W, H, 0, 0, W, H);
+    return;
+  }
   const headCenter = (B.thigh + B.shin + B.footH + B.torsoLen + B.neck + B.headR * B.headH * 0.9) * sc * (look.scale || 1);
   paintFrame(ctx, look, 'idle', 0, dir, 'none', W / 2, H * 0.46 + headCenter, sc);
 }

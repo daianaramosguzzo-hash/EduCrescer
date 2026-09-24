@@ -5,6 +5,7 @@ import { getStrip, frameDims, BAKE_SCALE, PX_PER_UNIT } from '../sprites/bank.js
 import { ANIMS } from '../sprites/painter.js';
 import { LOOKS } from '../sprites/looks.js';
 import { blobTexture, bloodTexture, glowTexture } from './textures.js';
+import { bus } from '../util.js';
 
 const VERT = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const FRAG = `uniform sampler2D map; uniform vec3 tint; uniform float flash; uniform vec3 flashColor; uniform float alpha;
@@ -81,6 +82,11 @@ export class UnitView {
   remove(unit) {
     const v = this.list.get(unit.uid);
     if (!v) return;
+    // ninguém fica esperando uma animação que não vai mais terminar
+    if (v.done) { const d = v.done; v.done = null; d(); }
+    for (const m of v.moves) m.res();
+    v.moves.length = 0;
+    if (v.idleWaiters) { const w = v.idleWaiters; v.idleWaiters = null; w.forEach(f => f()); }
     this.scene.remove(v.group);
     v.geo.dispose(); v.mat.dispose();
     if (v.bubble) v.bubble.remove();
@@ -88,6 +94,17 @@ export class UnitView {
     this.list.delete(unit.uid);
   }
   get(unit) { return this.list.get(unit.uid); }
+  // limpa tudo (novo jogo / carregar)
+  dispose() {
+    for (const v of [...this.list.values()]) this.remove(v.unit);
+    for (const e of this.effects) this.scene.remove(e.obj);
+    this.effects.length = 0;
+    for (const m of this.bloodDecals || []) { this.scene.remove(m); m.geometry.dispose(); }
+    this.bloodDecals = [];
+    for (const f of this.floaters) f.el?.remove?.();
+    this.floaters.length = 0;
+    this.overlay.innerHTML = '';
+  }
 
   // ------------------------------------------------------------ animação
   setAnim(v, anim, loop, done) {
@@ -98,6 +115,7 @@ export class UnitView {
   play(unit, anim, opts = {}) {
     const v = this.get(unit);
     if (!v) return Promise.resolve();
+    bus.emit('anim', unit, anim, v.hidden);
     return new Promise(res => this.setAnim(v, anim, false, () => { res(); }));
   }
   loop(unit, anim) { const v = this.get(unit); if (v && v.anim !== anim) this.setAnim(v, anim, true); }
@@ -120,7 +138,18 @@ export class UnitView {
     if (!v || !v.moves.length) return Promise.resolve();
     return new Promise(res => { (v.idleWaiters ||= []).push(res); });
   }
-  snap(unit) { const v = this.get(unit); if (v) { v.pos.set(unit.x + 0.5, 0, unit.z + 0.5); v.group.position.copy(v.pos); v.moves.length = 0; } }
+  snap(unit) {
+    const v = this.get(unit);
+    if (!v) return;
+    v.pos.set(unit.x + 0.5, 0, unit.z + 0.5); v.group.position.copy(v.pos);
+    // quem estava esperando esses passos não pode ficar pendurado
+    if (v.moves.length) {
+      const ms = v.moves.splice(0);
+      for (const m of ms) m.res();
+      this.setAnim(v, this.baseAnim(unit), true);
+    }
+    if (v.idleWaiters) { const w = v.idleWaiters; v.idleWaiters = null; w.forEach(f => f()); }
+  }
   flash(unit, color = '#ffffff', amount = 1) { const v = this.get(unit); if (v) { v.flash = amount; v.uni.flashColor.value.set(color); } }
   face(unit, tx, tz) { unit.face = Math.atan2(tx - unit.x, tz - unit.z); }
 
@@ -181,6 +210,7 @@ export class UnitView {
       }
       if (f !== v.frame) {
         v.frame = f;
+        if ((v.anim === 'walk' || v.anim === 'run') && (f === 0 || f * 2 === A.frames) && v.group.visible) bus.emit('step', u, v.anim);
         const n = v.strip.frames;
         const uv = v.geo.attributes.uv;
         const u0 = f / n, u1 = (f + 1) / n;

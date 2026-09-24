@@ -400,7 +400,7 @@ export function generateMap(seed = 1) {
   { const b = turma.bld; lotDeco(0, 8, 15, 15); }
   // baú do esconderijo e posição inicial
   add('bau', 9, 18, 0, { stash: true });
-  mark('inicio', 3, 17); mark('inicio', 6, 17); mark('inicio', 7, 17); mark('inicio', 2, 17);
+  mark('inicio', 6, 16); mark('inicio', 6, 17); mark('inicio', 7, 17); mark('inicio', 8, 17);
   mark('turma_portao', 5, 22);
   label('Casa da Turma', 7, 14, 'lugar');
 

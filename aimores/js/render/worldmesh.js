@@ -542,12 +542,66 @@ export class WorldView {
       }
       e.roof.group.visible = e.roofAlpha > 0.02 && vis > 0;
     }
+    this.updateHazards(dt);
     for (const s of this.glows) {
       const L = s.userData.L;
       let o = night * (L.flicker ? (Math.sin(this.time * 23 + L.x) > -0.7 ? 0.9 : 0.1) : 0.9);
       if (L.off) o = 0;
       s.material.opacity = o;
     }
+  }
+  // fogo (molotov, incêndios) e nuvens de gás tóxico
+  updateHazards(dt) {
+    const m = this.map;
+    this.hz ||= { fire: new Map(), gas: new Map() };
+    for (const [kind, src] of [['fire', m.fire], ['gas', m.gas]]) {
+      const cur = this.hz[kind];
+      for (const [i, obj] of cur) if (!src.has(i)) { this.root.remove(obj); obj.traverse(o => o.material?.dispose()); cur.delete(i); }
+      for (const [i] of src) if (!cur.has(i)) { const obj = kind === 'fire' ? this.makeFire(i) : this.makeGas(i); this.root.add(obj); cur.set(i, obj); }
+    }
+    const t = this.time;
+    for (const [i, grp] of this.hz.fire) {
+      grp.visible = !!m.explored[i];
+      grp.children.forEach((sp, k) => {
+        const ph = sp.userData.ph;
+        const f = 0.8 + Math.sin(t * 13 + ph) * 0.18 + Math.sin(t * 29 + ph * 2) * 0.1;
+        sp.scale.set(sp.userData.s * f, sp.userData.s * f * 1.5, 1);
+        sp.position.y = sp.userData.y + Math.sin(t * 7 + ph) * 0.06;
+        if (sp.userData.smoke) { sp.position.y = sp.userData.y + ((t * 0.6 + ph) % 1.6); sp.material.opacity = 0.35 * (1 - ((t * 0.6 + ph) % 1.6) / 1.6); }
+      });
+    }
+    for (const [i, grp] of this.hz.gas) {
+      grp.visible = !!m.explored[i];
+      grp.children.forEach(sp => { const ph = sp.userData.ph; const f = 1 + Math.sin(t * 1.5 + ph) * 0.12; sp.scale.set(sp.userData.s * f, sp.userData.s * f * 0.7, 1); sp.material.rotation = t * 0.2 + ph; });
+    }
+  }
+  makeFire(i) {
+    const x = i % this.map.W + 0.5, z = Math.floor(i / this.map.W) + 0.5;
+    const grp = new THREE.Group();
+    const cols = ['#ff5a1a', '#ff9a2a', '#ffd84a'];
+    for (let k = 0; k < 4; k++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: cols[k % 3], blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+      const s = 0.55 + Math.random() * 0.35 - k * 0.05;
+      sp.userData = { ph: Math.random() * 6.28, s, y: 0.25 + k * 0.12 };
+      sp.position.set(x + (Math.random() - 0.5) * 0.5, sp.userData.y, z + (Math.random() - 0.5) * 0.5);
+      grp.add(sp);
+    }
+    const smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: '#3a3238', transparent: true, depthWrite: false, opacity: 0.3 }));
+    smoke.userData = { ph: Math.random() * 1.6, s: 0.9, y: 0.9, smoke: true };
+    smoke.position.set(x, 0.9, z);
+    grp.add(smoke);
+    return grp;
+  }
+  makeGas(i) {
+    const x = i % this.map.W + 0.5, z = Math.floor(i / this.map.W) + 0.5;
+    const grp = new THREE.Group();
+    for (let k = 0; k < 2; k++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: '#9be24a', transparent: true, depthWrite: false, opacity: 0.4 }));
+      sp.userData = { ph: Math.random() * 6.28, s: 1.5 + Math.random() * 0.4 };
+      sp.position.set(x + (Math.random() - 0.5) * 0.3, 0.35 + k * 0.3, z + (Math.random() - 0.5) * 0.3);
+      grp.add(sp);
+    }
+    return grp;
   }
   // altura do que ocupa uma célula (para clicar no que se vê)
   heightAt(x, z) {

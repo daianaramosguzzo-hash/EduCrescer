@@ -3,7 +3,7 @@ import { S } from '../world/tiles.js';
 
 const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 
-// opts: { occupied(x,z) → bool, allowDoors: abre portas fechadas (custa +1), maxCost, goalAdjacent }
+// opts: { occupied(x,z) → bool, passFriend(x,z) → dá para atravessar (aliado), allowDoors: abre portas fechadas (custa +1), maxCost, goalAdjacent }
 export function passCost(map, x, z, opts) {
   if (!map.inb(x, z)) return -1;
   const i = map.idx(x, z);
@@ -34,6 +34,7 @@ class Heap {
 
 export function findPath(map, sx, sz, tx, tz, opts = {}) {
   const occ = opts.occupied || (() => false);
+  const pass = opts.passFriend || (() => false);
   const W = map.W;
   const goalAdj = !!opts.goalAdjacent;
   const maxNodes = opts.maxNodes || 6000;
@@ -50,7 +51,7 @@ export function findPath(map, sx, sz, tx, tz, opts = {}) {
   while (open.size) {
     const cur = open.pop();
     const ci = cur.z * W + cur.x;
-    if (isGoal(cur.x, cur.z) && ci !== start) {
+    if (isGoal(cur.x, cur.z) && ci !== start && !occ(cur.x, cur.z)) {
       const path = [];
       let k = ci;
       while (k !== start) { path.push([k % W, (k / W) | 0]); k = came.get(k); }
@@ -64,7 +65,7 @@ export function findPath(map, sx, sz, tx, tz, opts = {}) {
       const c = passCost(map, nx, nz, opts);
       if (c < 0) continue;
       if (dx && dz) { if (passCost(map, cur.x + dx, cur.z, opts) !== 1 || passCost(map, cur.x, cur.z + dz, opts) !== 1) continue; }
-      if (occ(nx, nz) && !(nx === tx && nz === tz && goalAdj === false && opts.targetOccupiedOk)) continue;
+      if (occ(nx, nz) && !(nx === tx && nz === tz && goalAdj === false && opts.targetOccupiedOk) && !pass(nx, nz)) continue;
       const ni = nz * W + nx;
       const ng = gc + c + (dx && dz ? 0.0001 : 0);
       if (!g.has(ni) || ng < g.get(ni)) {
@@ -86,8 +87,10 @@ export function pathCost(map, path, opts = {}) {
 // alcance: células atingíveis com até maxCost PA → Map(idx → custo)
 export function reachable(map, sx, sz, maxCost, opts = {}) {
   const occ = opts.occupied || (() => false);
+  const pass = opts.passFriend || (() => false);
   const W = map.W;
   const dist = new Map();
+  const through = [];
   const start = sz * W + sx;
   dist.set(start, 0);
   const open = new Heap();
@@ -101,12 +104,14 @@ export function reachable(map, sx, sz, maxCost, opts = {}) {
       const c = passCost(map, nx, nz, opts);
       if (c < 0) continue;
       if (dx && dz) { if (passCost(map, cur.x + dx, cur.z, opts) !== 1 || passCost(map, cur.x, cur.z + dz, opts) !== 1) continue; }
-      if (occ(nx, nz)) continue;
+      if (occ(nx, nz)) { if (!pass(nx, nz)) continue; through.push(nz * W + nx); }
       const nd = cur.f + c;
       if (nd > maxCost) continue;
       const ni = nz * W + nx;
       if (!dist.has(ni) || nd < dist.get(ni)) { dist.set(ni, nd); open.push({ x: nx, z: nz, f: nd }); }
     }
   }
+  // dá para passar por aliados, mas não parar em cima deles
+  for (const i of through) dist.delete(i);
   return dist;
 }

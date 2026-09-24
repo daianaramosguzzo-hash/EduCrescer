@@ -1,0 +1,373 @@
+{
+  "personagem": "Daiana",
+  "id": "daiana",
+  "quadro": {
+    "largura": 84,
+    "altura": 102,
+    "pe": {
+      "x": 42,
+      "y": 96
+    }
+  },
+  "colunas": 8,
+  "linhas": 152,
+  "direcoes": [
+    {
+      "id": "s",
+      "nome": "Baixo"
+    },
+    {
+      "id": "se",
+      "nome": "Baixo-direita"
+    },
+    {
+      "id": "e",
+      "nome": "Direita"
+    },
+    {
+      "id": "ne",
+      "nome": "Cima-direita"
+    },
+    {
+      "id": "n",
+      "nome": "Cima"
+    },
+    {
+      "id": "nw",
+      "nome": "Cima-esquerda"
+    },
+    {
+      "id": "w",
+      "nome": "Esquerda"
+    },
+    {
+      "id": "sw",
+      "nome": "Baixo-esquerda"
+    }
+  ],
+  "animacoes": {
+    "idle": {
+      "nome": "Parado",
+      "quadros": 4,
+      "fps": 4,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 0,
+        "se": 1,
+        "e": 2,
+        "ne": 3,
+        "n": 4,
+        "nw": 5,
+        "w": 6,
+        "sw": 7
+      }
+    },
+    "walk": {
+      "nome": "Andando",
+      "quadros": 8,
+      "fps": 11,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 8,
+        "se": 9,
+        "e": 10,
+        "ne": 11,
+        "n": 12,
+        "nw": 13,
+        "w": 14,
+        "sw": 15
+      }
+    },
+    "run": {
+      "nome": "Correndo",
+      "quadros": 6,
+      "fps": 13,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 16,
+        "se": 17,
+        "e": 18,
+        "ne": 19,
+        "n": 20,
+        "nw": 21,
+        "w": 22,
+        "sw": 23
+      }
+    },
+    "sneak": {
+      "nome": "Esgueirando",
+      "quadros": 8,
+      "fps": 8,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 24,
+        "se": 25,
+        "e": 26,
+        "ne": 27,
+        "n": 28,
+        "nw": 29,
+        "w": 30,
+        "sw": 31
+      }
+    },
+    "crouch": {
+      "nome": "Agachado",
+      "quadros": 2,
+      "fps": 2,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 32,
+        "se": 33,
+        "e": 34,
+        "ne": 35,
+        "n": 36,
+        "nw": 37,
+        "w": 38,
+        "sw": 39
+      }
+    },
+    "aim": {
+      "nome": "Mirando",
+      "quadros": 2,
+      "fps": 3,
+      "repete": true,
+      "arma": "pistol",
+      "linhas": {
+        "s": 40,
+        "se": 41,
+        "e": 42,
+        "ne": 43,
+        "n": 44,
+        "nw": 45,
+        "w": 46,
+        "sw": 47
+      }
+    },
+    "attack": {
+      "nome": "Atacando",
+      "quadros": 6,
+      "fps": 14,
+      "repete": false,
+      "arma": "bat",
+      "linhas": {
+        "s": 48,
+        "se": 49,
+        "e": 50,
+        "ne": 51,
+        "n": 52,
+        "nw": 53,
+        "w": 54,
+        "sw": 55
+      }
+    },
+    "shoot": {
+      "nome": "Usando arma",
+      "quadros": 4,
+      "fps": 14,
+      "repete": false,
+      "arma": "pistol",
+      "linhas": {
+        "s": 56,
+        "se": 57,
+        "e": 58,
+        "ne": 59,
+        "n": 60,
+        "nw": 61,
+        "w": 62,
+        "sw": 63
+      }
+    },
+    "hurt": {
+      "nome": "Recebendo dano",
+      "quadros": 3,
+      "fps": 10,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 64,
+        "se": 65,
+        "e": 66,
+        "ne": 67,
+        "n": 68,
+        "nw": 69,
+        "w": 70,
+        "sw": 71
+      }
+    },
+    "celebrate": {
+      "nome": "Comemorando",
+      "quadros": 6,
+      "fps": 8,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 72,
+        "se": 73,
+        "e": 74,
+        "ne": 75,
+        "n": 76,
+        "nw": 77,
+        "w": 78,
+        "sw": 79
+      }
+    },
+    "scared": {
+      "nome": "Assustado",
+      "quadros": 4,
+      "fps": 10,
+      "repete": true,
+      "arma": "none",
+      "linhas": {
+        "s": 80,
+        "se": 81,
+        "e": 82,
+        "ne": 83,
+        "n": 84,
+        "nw": 85,
+        "w": 86,
+        "sw": 87
+      }
+    },
+    "interact": {
+      "nome": "Interagindo",
+      "quadros": 4,
+      "fps": 8,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 88,
+        "se": 89,
+        "e": 90,
+        "ne": 91,
+        "n": 92,
+        "nw": 93,
+        "w": 94,
+        "sw": 95
+      }
+    },
+    "pickup": {
+      "nome": "Pegando item",
+      "quadros": 5,
+      "fps": 10,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 96,
+        "se": 97,
+        "e": 98,
+        "ne": 99,
+        "n": 100,
+        "nw": 101,
+        "w": 102,
+        "sw": 103
+      }
+    },
+    "eat": {
+      "nome": "Comendo",
+      "quadros": 5,
+      "fps": 6,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 104,
+        "se": 105,
+        "e": 106,
+        "ne": 107,
+        "n": 108,
+        "nw": 109,
+        "w": 110,
+        "sw": 111
+      }
+    },
+    "medicine": {
+      "nome": "Medicamento",
+      "quadros": 5,
+      "fps": 6,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 112,
+        "se": 113,
+        "e": 114,
+        "ne": 115,
+        "n": 116,
+        "nw": 117,
+        "w": 118,
+        "sw": 119
+      }
+    },
+    "die": {
+      "nome": "Morrendo",
+      "quadros": 6,
+      "fps": 9,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 120,
+        "se": 121,
+        "e": 122,
+        "ne": 123,
+        "n": 124,
+        "nw": 125,
+        "w": 126,
+        "sw": 127
+      }
+    },
+    "dead": {
+      "nome": "Caído",
+      "quadros": 1,
+      "fps": 1,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 128,
+        "se": 129,
+        "e": 130,
+        "ne": 131,
+        "n": 132,
+        "nw": 133,
+        "w": 134,
+        "sw": 135
+      }
+    },
+    "vehicleIn": {
+      "nome": "Entrando no veículo",
+      "quadros": 4,
+      "fps": 8,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 136,
+        "se": 137,
+        "e": 138,
+        "ne": 139,
+        "n": 140,
+        "nw": 141,
+        "w": 142,
+        "sw": 143
+      }
+    },
+    "vehicleOut": {
+      "nome": "Saindo do veículo",
+      "quadros": 4,
+      "fps": 8,
+      "repete": false,
+      "arma": "none",
+      "linhas": {
+        "s": 144,
+        "se": 145,
+        "e": 146,
+        "ne": 147,
+        "n": 148,
+        "nw": 149,
+        "w": 150,
+        "sw": 151
+      }
+    }
+  }
+}

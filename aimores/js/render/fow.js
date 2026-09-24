@@ -56,7 +56,10 @@ export class Fow {
       sh.fragmentShader = 'varying vec3 vFowPos;\nuniform sampler2D uFowTex;\nuniform vec2 uFowSize;\nuniform vec3 uFowDark;\nuniform float uFowOn;\n' +
         sh.fragmentShader.replace(/}\s*$/, `
         if (uFowOn > 0.5) {
-          vec4 fw = texture2D(uFowTex, vFowPos.xz / uFowSize);
+          vec2 fuv = vFowPos.xz / uFowSize;
+          vec4 fw = texture2D(uFowTex, fuv);
+          // fora do mapa: nunca visível (senão a borda da textura "escorre" para fora)
+          if (fuv.x < 0.0 || fuv.y < 0.0 || fuv.x > 1.0 || fuv.y > 1.0) fw = vec4(0.0, 0.35, 0.0, 0.0);
           vec3 c0 = gl_FragColor.rgb;
           float gray = dot(c0, vec3(0.299, 0.587, 0.114));
           vec3 mem = mix(vec3(gray), c0, 0.35) * 0.38 + vec3(0.012, 0.012, 0.03);

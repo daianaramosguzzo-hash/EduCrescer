@@ -27,7 +27,7 @@ export function getStrip(lookId, anim, dir, hold = 'none', onEvict) {
   const { fw, fh, foot, mul } = frameDims(look);
   const c = document.createElement('canvas');
   c.width = fw * A.frames; c.height = fh;
-  const g = c.getContext('2d');
+  const g = c.getContext('2d', { willReadFrequently: true }); // o clique lê pixels para acertar o boneco
   for (let f = 0; f < A.frames; f++) {
     paintFrame(g, look, anim, f, dir, hold, f * fw + fw / 2, foot, BAKE_SCALE);
   }

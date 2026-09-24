@@ -75,7 +75,14 @@ export function installActions(Game) {
         let cost = run ? (k % 3 === 2 ? 0 : 1) : 1;
         const win = map.windows.get(i);
         if (win) cost += 1;
-        if (u.ap < cost || this.unitAt(x, z)) break;
+        const other = this.unitAt(x, z);
+        if (u.ap < cost || (other && other !== u && !(u.kind === 'hero' && this.passFriend(x, z)))) break;
+        // atravessar um aliado só se der para sair da casa dele em seguida
+        if (other && other !== u) {
+          let j = moved + 1, need = cost + 1;
+          while (j < path.length && this.unitAt(path[j][0], path[j][1])) { j++; need++; }
+          if (j >= path.length || u.ap < need) break;
+        }
         this.spend(u, cost); k++; moved++;
         if (!opts.sneak) u.st.hidden = false;
         u.face = Math.atan2(x - u.x, z - u.z);
@@ -90,7 +97,8 @@ export function installActions(Game) {
         await this.checkTrap(u, x, z);
         if (u.dead || u.st.downed) break;
         const novos = this.seenEnemies().filter(e => !seenBefore.has(e.uid));
-        if (novos.length && !opts.ignoreEnemies) {
+        const sharing = this.units.some(o => o !== u && !o.dead && !o.gone && o.x === u.x && o.z === u.z);
+        if (novos.length && !opts.ignoreEnemies && !sharing) {
           const e = novos[0];
           this.say(u, rng.pick(['Opa! Zumbi!', 'Tem coisa ali!', 'Parados! Tem um ali.', 'Xiii...']).replace('Zumbi', e.kind === 'zombie' ? 'Zumbi' : 'alguém'));
           this.updateMode();
@@ -153,7 +161,7 @@ export function installActions(Game) {
       let w = u.weaponStats();
       const it = u.weapon();
       if (w.tipo === 'arremesso') return this.throwAt(u, t.x, t.z);
-      if (w.tipo === 'distancia' && w.pente > 0 && (u.eq.mao.loaded || 0) <= 0) {
+      if (w.tipo === 'distancia' && w.pente > 0 && w.classe !== 'sling' && (u.eq.mao.loaded || 0) <= 0) {
         if (countItem(u, w.municao) > 0) { this.toast('Sem munição carregada. Recarregue (R).', 'erro'); }
         else this.toast('Sem munição!', 'erro');
         return;
@@ -165,9 +173,13 @@ export function installActions(Game) {
         const path = this.pathTo(u, t.x, t.z, { goalAdjacent: true });
         if (!path) { this.toast('Não dá para chegar perto.', 'erro'); return; }
         const cost = this.moveCost(u, path, this.input.run);
-        if (u.ap < cost + (w.pa || 2)) { this.toast(`PA insuficientes (andar ${cost} + atacar ${w.pa}).`, 'erro'); return; }
+        if (u.ap < cost + (w.pa || 2)) {
+          // sem PA para chegar e bater: anda o que der e ataca no próximo turno
+          if (!this.can(u, 1)) return;
+          this.toast(`Longe demais para atacar neste turno (andar ${cost} + atacar ${w.pa} PA). Chegando mais perto...`);
+        }
         await this.act(() => this.moveAlong(u, path, this.input.run, { ignoreEnemies: true }));
-        if (!ADJ(u, t.x, t.z)) return;
+        if (!ADJ(u, t.x, t.z) || u.ap < (w.pa || 2)) return;
       }
       const cost = w.pa || 2;
       if (!this.can(u, cost)) return;
@@ -272,6 +284,7 @@ export function installActions(Game) {
       d.open = true;
       this.map.version++;
       this.S.world.refreshDoor(this.map.idx(d.x, d.z));
+      bus.emit('sfx', d.gate ? 'gate' : 'door_open', d.x, d.z);
       u.face = Math.atan2(d.x - u.x, d.z - u.z);
       this.noise(d.x, d.z, d.gate ? 3 : 2, u);
       await this.view().play(u, 'interact');
@@ -286,6 +299,7 @@ export function installActions(Game) {
         this.spend(u, 1);
         if (d.open) {
           d.open = false; this.map.version++; this.S.world.refreshDoor(this.map.idx(d.x, d.z));
+          bus.emit('sfx', d.gate ? 'gate' : 'door_close', d.x, d.z);
           await this.view().play(u, 'interact');
         } else await this.openDoorRaw(u, d);
       });
@@ -305,6 +319,7 @@ export function installActions(Game) {
           const str = effStat(u, 'forca');
           const ch = how === 'pe' ? 0.45 + str * 0.05 : how === 'machado' ? 0.6 + str * 0.04 : 0.1 + str * 0.06;
           this.noise(d.x, d.z, how === 'pe' ? 5 : 9, u);
+          bus.emit('sfx', 'bang', d.x, d.z);
           if (rng.next() < ch) { d.locked = false; d.open = true; d.broken = how !== 'pe'; this.map.version++; this.S.world.refreshDoor(this.map.idx(d.x, d.z)); this.log(`💥 ${u.name} arrombou a porta!`, 'bom'); }
           else { this.log(`${u.name} tentou arrombar, mas a porta resistiu. (barulho!)`, 'alerta'); view.floatText(d.x, d.z, 'Resistiu!', 'miss'); }
         }
@@ -322,6 +337,7 @@ export function installActions(Game) {
         removeItem(u, 'tabuas', 2); removeItem(u, 'pregos', 1);
         target.barricade = 2; target.bhp = 40;
         this.noise(target.x, target.z, 6, u);
+        bus.emit('sfx', 'hammer', target.x, target.z);
         await this.view().play(u, 'attack');
         if (isWindow) { const b = this.map.building[this.map.idx(target.x, target.z)]; if (b >= 0) this.S.world.buildBuilding(this.map.buildings[b]); }
         else this.S.world.refreshDoor(this.map.idx(target.x, target.z));
@@ -343,6 +359,7 @@ export function installActions(Game) {
         u.face = Math.atan2(w.x - u.x, w.z - u.z);
         await this.view().play(u, 'attack');
         w.broken = true; this.map.version++;
+        bus.emit('sfx', 'glass', w.x, w.z);
         const b = this.map.building[this.map.idx(w.x, w.z)];
         if (b >= 0) this.S.world.buildBuilding(this.map.buildings[b]);
         this.noise(w.x, w.z, 9, u);
@@ -589,6 +606,7 @@ export function installActions(Game) {
         if (e === u.eq.mao) { if (stackable(e.id) || (e.n || 1) <= 1) u.eq.mao = null; else e.n--; }
         else removeItem(u, e.id, 1);
         this.noise(tx, tz, w.ruido || 6, u);
+        bus.emit('sfx', it.id === 'molotov' ? 'fire' : it.id === 'rojao' ? 'boom' : 'thud', tx, tz);
         if (it.id === 'molotov') {
           view.burst(tx, tz, '#ff7a1a', 4);
           for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (this.map.inb(tx + dx, tz + dz) && !this.map.struct[this.map.idx(tx + dx, tz + dz)]) this.map.fire.set(this.map.idx(tx + dx, tz + dz), 3);
@@ -621,6 +639,7 @@ export function installActions(Game) {
         this.view().play(u, 'shoot');
         await this.view().projectile(u.x, u.z, x, z, '#9a9a9a', 1.5, 0.4);
         this.noise(x, z, 6, u);
+        bus.emit('sfx', 'thud', x, z);
         this.view().floatText(x, z, '*toc*', 'miss');
         this.log(`🪨 ${u.name} jogou uma pedrinha. Os zumbis por perto vão olhar para lá.`, '');
       });

@@ -82,10 +82,10 @@ export function check(g, ctx, spec) {
 }
 
 // ------------------------------------------------------------ diálogos
-export async function runDialog(g, id, hero, npc, startNode = null) {
+export async function runDialog(g, id, speakerHero, npc, startNode = null) {
   const D = DIALOGS[id];
   if (!D) { g.toast(`${npc ? npc.name : ''} não tem nada a dizer.`); return; }
-  const ctx = { hero, npc, g };
+  const ctx = { hero: speakerHero, npc, g };
   const prev = g.phase;
   g.phase = 'dialog';
   bus.emit('hud');
@@ -113,7 +113,7 @@ export async function runDialog(g, id, hero, npc, startNode = null) {
       if (!choices.length) { node = typeof N.next === 'function' ? N.next(g, ctx) : N.next; continue; }
       const c = choices[idx];
       if (!c) break;
-      if (c.op) applyOpinion(g, hero, c.op);
+      if (c.op) applyOpinion(g, speakerHero, c.op);
       if (c.do) await c.do(g, ctx);
       if (c.check) node = check(g, ctx, c.check) ? c.check.ok : c.check.fail;
       else node = typeof c.to === 'function' ? c.to(g, ctx) : c.to;
@@ -144,9 +144,16 @@ export function questStart(g, id) {
 }
 export function questStep(g, id) { const s = g.state.quests[id]; if (!s || s.done || s.failed) return null; return QUESTS[id].passos[s.step]?.id || null; }
 export function questAdvance(g, id, fromStep = null) {
+  const q = QUESTS[id];
+  // o mundo não espera: resolver algo antes de receber a missão também conta
+  if (!g.state.quests[id] && fromStep) {
+    const k = q.passos.findIndex(p => p.id === fromStep);
+    if (k < 0) return false;
+    questStart(g, id);
+    g.state.quests[id].step = k;
+  }
   const s = g.state.quests[id];
   if (!s || s.done || s.failed) return false;
-  const q = QUESTS[id];
   if (fromStep && q.passos[s.step]?.id !== fromStep) return false;
   const passo = q.passos[s.step];
   if (passo && passo.xp) for (const h of g.liveHeroes) g.gainXp(h, passo.xp, true);
@@ -348,7 +355,7 @@ export function onBossDead(g, u) {
   questAdvance(g, 'agronova', 'matriz');
 }
 export async function onSearch(g, u, p) {
-  if (p.alarme) { p.alarme = false; g.state.alarme = { x: p.x, z: p.z, t: 4 }; g.noise(p.x, p.z, 22, u); g.log('🚨 UÍÓÓÓ-UÍÓÓÓ! O carro tinha alarme! Todo zumbi da região ouviu.', 'perigo'); banter(g, 'alarme', { force: true }); }
+  if (p.alarme) { p.alarme = false; g.state.alarme = { x: p.x, z: p.z, t: 4 }; bus.emit('sfx', 'alarm', p.x, p.z); g.noise(p.x, p.z, 22, u); g.log('🚨 UÍÓÓÓ-UÍÓÓÓ! O carro tinha alarme! Todo zumbi da região ouviu.', 'perigo'); banter(g, 'alarme', { force: true }); }
   for (const q of Object.keys(g.state.quests)) { const qq = QUESTS[q]; if (qq.vasculhou) await qq.vasculhou(g, u, p); }
 }
 export function onItem(g, u, id) {
@@ -435,6 +442,7 @@ async function tocarSino(g, u, p) {
     g.spend(u, 2);
     await g.S.units.play(u, 'interact');
     g.noise(p.x, p.z, 30, u);
+    bus.emit('sfx', 'bell', p.x, p.z);
     g.S.shake = 0.4;
     g.log('🔔 DOOOOM... DOOOOM... O sino da Matriz ecoa pela cidade. Os zumbis estão vindo para a praça!', 'alerta');
     banter(g, 'sino', { force: true });

@@ -75,7 +75,7 @@ export class Hud {
       h('span', { class: 'clock' }, g.clock()),
       h('span', { title: hs.nome }, `${night ? '🌙' : g.state.weather.chuva ? '🌧️' : hs.icon} ${hs.t}°C`),
       h('span', { class: 'mode ' + g.state.mode }, g.state.mode === 'combat' ? '⚔️ Combate' : '🌿 Exploração'),
-      prazo !== null ? h('span', { class: 'prazo', title: 'Tempo até o bombardeio' }, `⏰ ${fmtPrazo(Math.max(0, prazo))}`) : null,
+      prazo !== null ? h('span', { class: 'prazo', title: 'Tempo até o bombardeio' }, `⏰ ${fmtPrazo(Math.max(0, prazo))}`) : '',
       h('span', { style: { color: '#b3a5c4', fontSize: '12px' } }, `Turno ${g.state.turn}`),
     );
     const banner = $('#phase-banner');
@@ -236,8 +236,13 @@ export class Hud {
     const floorCols = FLOORS.map(f => hex(f.mini));
     for (let i = 0; i < m.W * m.H; i++) {
       let rgb;
-      if (!m.explored[i]) rgb = [10, 8, 14];
-      else {
+      if (!m.explored[i]) {
+        // a turma conhece as ruas da cidade; o que tem dentro dos lugares, só vendo
+        const s = m.struct[i];
+        if (m.building[i] >= 0 || s === S.WALL || s === S.WINDOW || s === S.DOOR) rgb = [46, 36, 56];
+        else if (s === S.MURO || s === S.GRADE || s === S.FENCE || s === S.GATE) rgb = [40, 34, 40];
+        else { const f = floorCols[m.floor[i]]; rgb = [f[0] * 0.28 + 8, f[1] * 0.28 + 6, f[2] * 0.28 + 12]; }
+      } else {
         const s = m.struct[i];
         if (s === S.WALL || s === S.WINDOW) rgb = [30, 24, 36];
         else if (s === S.DOOR || s === S.GATE) rgb = [200, 140, 70];

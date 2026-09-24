@@ -484,6 +484,7 @@ export class Game {
     Story.onProvoke(this, npc);
   }
   gasCloud(x, z) {
+    bus.emit('sfx', 'splat', x, z);
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (this.map.inb(x + dx, z + dz)) this.map.gas.set(this.map.idx(x + dx, z + dz), 3);
     this.S.units.burst(x, z, '#a8ff40', 3.5);
     this.log('🤢 O Zumbi Inchado explodiu numa nuvem de gás tóxico!', 'alerta');
@@ -516,17 +517,19 @@ export class Game {
 
   // ------------------------------------------------------------ caminhos
   pathTo(u, x, z, opts = {}) {
-    return findPath(this.map, u.x, u.z, x, z, { occupied: this.occupied, allowDoors: u.kind === 'hero', ...opts });
+    return findPath(this.map, u.x, u.z, x, z, { occupied: this.occupied, allowDoors: u.kind === 'hero', passFriend: u.kind === 'hero' ? this.passFriend : null, ...opts });
   }
   reach(u, budget) {
-    return reachable(this.map, u.x, u.z, budget, { occupied: this.occupied, allowDoors: true });
+    return reachable(this.map, u.x, u.z, budget, { occupied: this.occupied, allowDoors: true, passFriend: this.passFriend });
   }
+  // heróis atravessam a casa de outro herói ou aliado (mas não param em cima)
+  passFriend = (x, z) => { const o = this.unitAt(x, z); return !!o && (o.kind === 'hero' || o.faction === 'ally') && !o.st.downed; };
 
   // ------------------------------------------------------------ salvar e carregar
   serialize() {
     const m = this.map;
-    const doors = [...m.doors].map(([i, d]) => [i, d.open ? 1 : 0, d.locked ? 1 : 0, d.hp, d.barricade, d.key || null]);
-    const wins = [...m.windows].map(([i, w]) => [i, w.broken ? 1 : 0, w.barricade]);
+    const doors = [...m.doors].map(([i, d]) => [i, d.open ? 1 : 0, d.locked ? 1 : 0, d.hp, d.barricade, d.key || null, d.knock || null, d.broken ? 1 : 0, d.bhp ?? null]);
+    const wins = [...m.windows].map(([i, w]) => [i, w.broken ? 1 : 0, w.barricade, w.bhp ?? null]);
     const props = m.props.map(p => [p.searched ? 1 : 0, p.loot || [], p.removed ? 1 : 0, p.extra || null, p.locked ? 1 : 0]);
     const explored = btoa(String.fromCharCode(...compressBits(m.explored)));
     const units = this.units.map(u => {
@@ -544,8 +547,8 @@ export class Game {
     this.state = data.state;
     this.map = generateMap(this.state.seed);
     const m = this.map;
-    for (const [i, open, locked, hp, bar, key] of data.map.doors) { const d = m.doors.get(i); if (d) { d.open = !!open; d.locked = !!locked; d.hp = hp; d.barricade = bar; d.key = key; } }
-    for (const [i, broken, bar] of data.map.wins) { const w = m.windows.get(i); if (w) { w.broken = !!broken; w.barricade = bar; } }
+    for (const [i, open, locked, hp, bar, key, knock, broken, bhp] of data.map.doors) { const d = m.doors.get(i); if (d) { d.open = !!open; d.locked = !!locked; d.hp = hp; d.barricade = bar; d.key = key; if (knock) d.knock = knock; if (broken) d.broken = true; if (bhp !== null && bhp !== undefined) d.bhp = bhp; } }
+    for (const [i, broken, bar, bhp] of data.map.wins) { const w = m.windows.get(i); if (w) { w.broken = !!broken; w.barricade = bar; if (bhp !== null && bhp !== undefined) w.bhp = bhp; } }
     for (const ep of data.map.extraProps || []) { const p = m.addProp(ep.type, ep.x, ep.z, ep.w, ep.d, ep.rot); p.added = true; }
     data.map.props.forEach(([searched, loot, removed, extra, locked], i) => { const p = m.props[i]; if (!p) return; p.searched = !!searched; p.loot = loot; p.locked = !!locked; if (extra) p.extra = extra; if (removed) m.removeProp(p); });
     const bits = Uint8Array.from(atob(data.map.explored), c => c.charCodeAt(0));

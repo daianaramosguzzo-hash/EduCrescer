@@ -14,7 +14,7 @@ export const QUESTS = {
     nome: 'Acordando no Apocalipse', tipo: 'principal', xp: 60,
     resumo: 'Uma manhã quente em Aimorés. A TV só mostra chiado e tem alguém gemendo no jardim.',
     passos: [
-      { id: 'explorar', desc: 'Pegue suprimentos: vasculhe a geladeira e o armário da cozinha da Casa da Turma.', xp: 15 },
+      { id: 'explorar', desc: 'Pegue suprimentos: vasculhe a geladeira e a pia da cozinha da Casa da Turma.', xp: 15 },
       { id: 'vizinho', desc: 'Tem alguém no jardim da frente... parece o Seu Lindomar, o vizinho. Vá ver — e se defenda.', xp: 30 },
       { id: 'radio', desc: 'Pegue o rádio de pilha no baú do esconderijo (na sala) e use-o no inventário.', xp: 15 },
     ],
