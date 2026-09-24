@@ -629,8 +629,14 @@ function setupTitle() {
     cont.textContent = `Continuar (${saved.name} · ${saved.badges.length} insígnias)`;
     cont.onclick = () => startGame(saved);
   }
+  let armed = false;
   $('#btn-new').onclick = () => {
-    if (saved && !confirm('Começar um novo jogo vai apagar o progresso salvo. Continuar?')) return;
+    // com jogo salvo, pede um segundo toque para confirmar (sem janelas do navegador)
+    if (saved && !armed) {
+      armed = true;
+      $('#btn-new').textContent = 'Apagar save e começar? Toque de novo';
+      return;
+    }
     startGame(null);
   };
   $('#name-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btn-new').click(); });
