@@ -1,0 +1,59 @@
+name: Instalador Windows — Aimorés dos Mortos
+
+# Gera o instalador .exe do Aimorés dos Mortos numa máquina Windows e publica na Release
+# "aimores-v<versão>" (a versão fica em aimores/desktop/electron-builder.json).
+# Roda sozinho quando algo do jogo muda, pela aba Actions ou com uma tag aimores-v*.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['**']
+    tags: ['aimores-v*']
+    paths:
+      - 'aimores/**'
+      - 'lib/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/aimores-windows.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aimores-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx electron-builder --config aimores/desktop/electron-builder.json --win nsis --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aimores-dos-Mortos-Windows
+          path: dist-aimores/*.exe
+      - name: Versão do jogo
+        id: ver
+        shell: bash
+        run: echo "v=$(node -p "require('./aimores/desktop/electron-builder.json').extraMetadata.version")" >> "$GITHUB_OUTPUT"
+      - name: Publicar na Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/aimores-v') && github.ref_name || format('aimores-v{0}', steps.ver.outputs.v) }}
+          target_commitish: ${{ github.sha }}
+          name: Aimorés dos Mortos ${{ steps.ver.outputs.v }}
+          make_latest: false
+          body: |
+            Instalador do **Aimorés dos Mortos** para Windows 10 e 11 (64 bits).
+
+            1. Baixe `Aimores-dos-Mortos-Setup-${{ steps.ver.outputs.v }}.exe` abaixo.
+            2. Dê dois cliques, escolha a pasta e conclua a instalação.
+            3. Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais informações → Executar assim mesmo** (o instalador não é assinado digitalmente).
+
+            O jogo ganha atalho na área de trabalho e no menu Iniciar. F11 (ou Alt+Enter) alterna a tela cheia. Os salvamentos ficam em `%APPDATA%\AimoresDosMortos`.
+          files: dist-aimores/*.exe

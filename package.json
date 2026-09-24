@@ -9,7 +9,9 @@
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win nsis --x64 --publish never"
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "start:aimores": "electron aimores/desktop/main.js",
+    "dist:win:aimores": "electron-builder --config aimores/desktop/electron-builder.json --win nsis --x64 --publish never"
   },
   "build": {
     "appId": "br.educrescer.crescemon",

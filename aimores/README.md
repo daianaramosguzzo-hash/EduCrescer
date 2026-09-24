@@ -17,6 +17,26 @@ Não há etapa de build. No GitHub Pages, o jogo fica em `…/aimores/`.
 
 Atalhos de URL, úteis para testar: `?novo=normal` começa um jogo direto (`facil`, `normal` ou `dificil`) e `&semente=123` fixa o sorteio do mapa e do saque.
 
+## Versão para Windows (instalável)
+
+O jogo também vem como um programa de desktop, feito com Electron, que funciona offline.
+
+- **Baixar:** na página [Releases](https://github.com/daianaramosguzzo-hash/EduCrescer/releases), abra **Aimorés dos Mortos** e baixe `Aimores-dos-Mortos-Setup-<versão>.exe`.
+- **Instalar:** dê dois cliques no arquivo e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e o jogo pode ser desinstalado pelo Painel de Controle.
+- **Aviso do Windows:** o instalador não é assinado digitalmente, então o Windows pode mostrar *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
+- **Tela cheia:** aperte **F11** ou **Alt+Enter**. A janela abre maximizada, e o botão **Sair** fica na tela de título e no menu.
+- **Salvamentos:** ficam em `%APPDATA%\AimoresDosMortos` e são separados dos do navegador.
+
+O instalador é gerado sozinho pelo GitHub Actions (fluxo *Instalador Windows — Aimorés dos Mortos*) sempre que algo do jogo muda, e publicado na Release `aimores-v<versão>`. A versão fica em `aimores/desktop/electron-builder.json` (`extraMetadata.version`): suba o número para criar uma Release nova. Para gerar o instalador numa máquina Windows:
+
+```bash
+npm install
+npm run start:aimores      # abre o jogo numa janela de desktop
+npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-1.0.0.exe
+```
+
+No Linux e no Mac, o último passo precisa do Wine.
+
 ## Controles
 
 | Ação | Mouse / teclado | Toque |
@@ -134,6 +154,7 @@ aimores/
   js/data/            heróis, itens, zumbis, NPCs, missões, diálogos, eventos, conversas do grupo
   js/ui/              HUD, janelas, galeria, entrada (mouse/teclado/toque)
   assets/             retratos, arte e sprite sheets
+  desktop/            app de Windows (Electron): janela, ícone e configuração do instalador
   tools/              páginas de teste e exportador de sprites
 ```
 

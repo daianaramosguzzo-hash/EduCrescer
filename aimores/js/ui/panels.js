@@ -384,7 +384,8 @@ export class Panels {
       h('button', { class: 'btn', onclick: () => this.save() }, 'Salvar / carregar'),
       h('button', { class: 'btn', onclick: () => this.help() }, 'Como jogar'),
       h('button', { class: 'btn', onclick: () => this.options() }, 'Opções'),
-      h('button', { class: 'btn danger', onclick: () => this.confirm('Voltar para a tela de título? O progresso não salvo será perdido.', () => ui.toTitle()) }, 'Sair para o título'));
+      h('button', { class: 'btn danger', onclick: () => this.confirm('Voltar para a tela de título? O progresso não salvo será perdido.', () => ui.toTitle()) }, 'Sair para o título'),
+      /Electron/i.test(navigator.userAgent) ? h('button', { class: 'btn danger', onclick: () => this.confirm('Fechar o jogo? O progresso não salvo será perdido.', () => window.close()) }, 'Fechar o jogo') : null);
     this.show(win('Menu', body, { small: true, close: () => this.close() }), 'menu');
   }
   options() {

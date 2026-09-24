@@ -1,0 +1,44 @@
+{
+  "appId": "br.educrescer.aimores",
+  "productName": "Aimorés dos Mortos",
+  "copyright": "EduCrescer",
+  "extraMetadata": {
+    "name": "aimores-dos-mortos",
+    "productName": "Aimorés dos Mortos",
+    "description": "Sobrevivência zumbi em 2,5D em Aimorés, Minas Gerais",
+    "version": "1.0.0",
+    "main": "aimores/desktop/main.js"
+  },
+  "directories": {
+    "output": "dist-aimores",
+    "buildResources": "aimores/desktop"
+  },
+  "files": [
+    "lib/three.module.min.js",
+    "aimores/index.html",
+    "aimores/css/**",
+    "aimores/js/**",
+    "aimores/assets/**",
+    "aimores/desktop/main.js",
+    "aimores/desktop/icon.png"
+  ],
+  "win": {
+    "target": [{ "target": "nsis", "arch": ["x64"] }],
+    "icon": "aimores/desktop/icon.ico",
+    "executableName": "AimoresDosMortos"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Aimorés dos Mortos",
+    "artifactName": "Aimores-dos-Mortos-Setup-${version}.${ext}",
+    "installerIcon": "aimores/desktop/icon.ico",
+    "uninstallerIcon": "aimores/desktop/icon.ico",
+    "uninstallDisplayName": "Aimorés dos Mortos",
+    "runAfterFinish": true,
+    "language": "1046"
+  }
+}

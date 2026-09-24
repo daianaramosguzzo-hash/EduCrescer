@@ -125,6 +125,12 @@ $('#btn-new').addEventListener('click', () => {
 $('#btn-continue').addEventListener('click', () => { const s = Save.latest(); if (s !== null) bus.emit('load-game', s); });
 $('#btn-load').addEventListener('click', () => ui.panels.save('load'));
 $('#btn-help').addEventListener('click', () => ui.panels.help());
+// no app de Windows (Electron) aparece o botão de fechar o jogo
+export const IS_DESKTOP = /Electron/i.test(navigator.userAgent);
+if (IS_DESKTOP) {
+  document.body.classList.add('desktop');
+  $('.title-buttons').append(h('button', { id: 'btn-quit', onclick: () => window.close() }, 'Sair'));
+}
 $('#btn-sprites').addEventListener('click', () => { $('#title').classList.add('hidden'); openGallery(() => $('#title').classList.remove('hidden')); });
 
 // ------------------------------------------------------------ laço principal
