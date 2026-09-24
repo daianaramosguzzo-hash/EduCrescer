@@ -315,6 +315,10 @@ export class UI {
     let pathDots = [];
     let curColor = '#ffffff';
     if (!known) { this.hideTip(); this.S.showCursor(cell.x, cell.z, '#555', 0); return; }
+    // passar o mouse sobre um prédio conhecido mostra o lado de dentro
+    const hb = g.map.buildingAt(cell.x, cell.z);
+    const hid = hb ? hb.id : null;
+    if (hid !== this.hoverB) { this.hoverB = hid; clearTimeout(this.hoverT); this.hoverT = setTimeout(() => { g.hoverBuilding = this.hoverB; g.updateCutaway(); }, hid === null ? 350 : 220); }
     const vu = unit && (unit.kind === 'hero' || g.unitVisible(unit)) ? unit : null;
     if (vu && vu !== u) {
       if (g.hostile(vu)) {
