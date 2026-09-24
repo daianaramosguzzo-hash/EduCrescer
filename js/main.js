@@ -199,6 +199,7 @@ const G = {
   async fade(fn) { await UI.fade(true); await fn(); await UI.fade(false); },
   warp: (m, x, z, dir, noFade) => warpTo(m, x, z, dir, noFade),
   battleBg() { const m = MAPS[currentMapId]; return m.bg || (m.interior ? 'indoor' : 'grass'); },
+  battleSky() { return MAPS[currentMapId].sky || null; },
   async shop(list) {
     await UI.shopScreen(list, () => state.money, (id, n) => { state.money -= ITEMS[id].price * n; G.giveItem(id, n); });
   },

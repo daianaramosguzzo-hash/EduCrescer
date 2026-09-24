@@ -55,6 +55,9 @@ O jogo salva sozinho a cada troca de mapa. Também dá para salvar pelo menu.
 - 29 criaturas com evolução por nível, aprendizado de golpes e Exp. Compartilhada
 - Captura com orbes animados, equipe de até 6, PC de armazenamento e Crescedex com prévia 3D
 - Centro Crescemon, loja, itens (Poção, Super Poção, Reviver, Elixir, orbes) e dinheiro
+- Visual 3D estilo desenho: céu com sol e nuvens, montanhas no horizonte, terreno pintado com trilhas de bordas suaves, água animada com margens, árvores variadas (pinheiros, copas redondas, coqueiros, outono) e mato alto balançando ao vento e se abrindo quando o herói passa
+- Um clima por lugar: dia nas vilas, floresta escura com vaga-lumes e folhas caindo, praia ensolarada e pôr do sol na Rota Vitória
+- Casas com telhado de telhas, chaminé, janelas com floreiras, toldos e postes; interiores com piso de madeira ou azulejo, papel de parede e janelas com cortinas
 - Músicas e efeitos chiptune sintetizados com Web Audio
 - Controles de toque e layout adaptado para celular
 
@@ -69,6 +72,7 @@ js/battle.js       cena e lógica de batalha
 js/maps.js         mapas, personagens e roteiro da história
 js/data.js         tipos, golpes, espécies e itens
 js/models.js       modelos 3D procedurais (herói, NPCs, criaturas)
+js/env.js          céu, terreno, árvores, água, texturas e partículas
 js/creature.js     status, experiência e golpes
 js/ui.js           diálogos, menus e telas
 js/audio.js        efeitos e músicas

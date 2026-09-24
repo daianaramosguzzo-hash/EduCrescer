@@ -119,7 +119,7 @@ export const MAPS = {
 
   // ------------------------------------------------------------ VILA AURORA
   aurora: {
-    name: 'Vila Aurora', music: 'town', bg: 'grass',
+    sky: 'day', name: 'Vila Aurora', music: 'town', bg: 'grass',
     rows: [
       'TTTTTTTTTT,,TTTTTTTTTT',
       'TTTTTTTTTT,,TTTTTTTTTT',
@@ -224,7 +224,7 @@ export const MAPS = {
 
   // ------------------------------------------------------------ ROTA 1
   rota1: {
-    name: 'Rota 1', music: 'route', bg: 'grass',
+    sky: 'day', name: 'Rota 1', music: 'route', bg: 'grass',
     rows: [
       'TTTTTTTTT,,TTTTTTTTT',
       'TTTTTTTTT,,TTTTTTTTT',
@@ -284,7 +284,7 @@ export const MAPS = {
 
   // ------------------------------------------------------------ PEDRA-VERDE
   pedraverde: {
-    name: 'Pedra-Verde', music: 'city', bg: 'grass',
+    sky: 'day', name: 'Pedra-Verde', music: 'city', bg: 'grass',
     rows: [
       'TTTTTTTTTTTT,TTTTTTTTTTTTT',
       'TTTTTTTTTTTT,TTTTTTTTTTTTT',
@@ -381,7 +381,7 @@ export const MAPS = {
 
   // ------------------------------------------------------------ FLORESTA
   floresta: {
-    name: 'Floresta Sussurro', music: 'forest', bg: 'forest', dark: true,
+    sky: 'forest', name: 'Floresta Sussurro', music: 'forest', bg: 'forest', dark: true,
     rows: [
       'TTTTTTTTTTT,TTTTTTTTTTTT',
       'TTTTTTTTTTT,TTTTTTTTTTTT',
@@ -455,7 +455,7 @@ export const MAPS = {
 
   // ------------------------------------------------------------ CIDADE MARÉ
   mare: {
-    name: 'Cidade Maré', music: 'city', bg: 'beach',
+    sky: 'beach', name: 'Cidade Maré', music: 'city', bg: 'beach',
     rows: [
       'TTTTTTTTTTTT,TTTTTTT==WWWW',
       'TTTTTTTTTTTT,TTTTTTT==WWWW',
@@ -541,7 +541,7 @@ export const MAPS = {
 
   // ------------------------------------------------------------ ROTA VITÓRIA
   rotavitoria: {
-    name: 'Rota Vitória', music: 'route', bg: 'grass',
+    sky: 'sunset', name: 'Rota Vitória', music: 'route', bg: 'grass',
     rows: [
       'TTTTTTTTTTTTTTTTTTTT',
       'TT................TT',

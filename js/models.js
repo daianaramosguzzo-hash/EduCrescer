@@ -10,6 +10,8 @@ const gradient = (() => {
   return t;
 })();
 
+export const GRADIENT = gradient;
+
 const matCache = new Map();
 export function toon(color, opts = {}) {
   const key = color + JSON.stringify(opts);
@@ -618,7 +620,7 @@ export function makeCreature(spec) {
       for (let i = 0; i < 3; i++) inner.add(mesh(geo.cyl, dark, [s * 0.3, 0.05, -0.12 + i * 0.14], [0.018, 0.16, 0.018], [0, 0, s * 1.1]));
     }
   } else if (plan === 'rock') {
-    const rm = toon(spec.c1, { flatShading: true });
+    const rm = toon(spec.c1);
     inner.add(mesh(geo.dodeca, rm, [0, 0.42, 0], [0.4, 0.38, 0.36]));
     for (const s of [-1, 1]) {
       const arm = new THREE.Group();

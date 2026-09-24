@@ -2,7 +2,8 @@
 import * as THREE from '../lib/three.module.min.js';
 import { SPECIES, MOVES, ITEMS, TYPES, typeMult } from './data.js';
 import { createCreature, recalc, nameOf, xpForLevel, movesAtLevel } from './creature.js';
-import { makeCreature, makeHuman, makeOrb, toon, LOOKS, HERO_LOOK } from './models.js';
+import { makeCreature, makeHuman, makeOrb, toon, LOOKS, HERO_LOOK, GRADIENT } from './models.js';
+import { SKIES, shared, makeSky, makeMountains, plantTrees, plantTufts, tuftGeometry, waterMaterial, TEX, texMat, boxW, hash as ehash } from './env.js';
 import { say, ask, list, hideDialog, hpColor, partyScreen, bagScreen, typeBadge } from './ui.js';
 import { sfx, playMusic } from './audio.js';
 
@@ -59,55 +60,116 @@ export class BattleScene {
     this.shake = 0;
   }
 
-  setup(bgName) {
+  setup(bgName, skyName) {
     const bg = BGS[bgName] || BGS.grass;
+    const outdoor = bgName === 'grass' || bgName === 'forest' || bgName === 'beach';
     this.scene.remove(this.env);
     this.env = new THREE.Group();
     this.scene.add(this.env);
-    this.scene.background = new THREE.Color(bg.sky);
-    this.scene.fog = new THREE.Fog(bg.sky, 12, 30);
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(40, 32), toon(bg.ground));
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    this.env.add(ground);
-    for (const [p, r] of [[ALLY_POS, 1.25], [FOE_POS, 1.15]]) {
-      const plat = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.05, 0.12, 32), toon(bg.plat));
-      plat.position.set(p.x, 0.06, p.z);
-      plat.receiveShadow = true;
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.04, 6, 40), toon('#ffffff'));
-      ring.rotation.x = Math.PI / 2;
-      ring.position.set(p.x, 0.12, p.z);
-      this.env.add(plat, ring);
-    }
-    // cenário distante
-    const farMat = toon(bg.far);
-    if (bgName === 'grass' || bgName === 'forest') {
-      for (let i = 0; i < 14; i++) {
-        const a = -2.4 + i * 0.35;
-        const r = 12 + (i % 3) * 2;
-        const tree = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3 + (i % 2), 8), farMat);
-        tree.position.set(Math.sin(a) * r, 1.5, -Math.cos(a) * r * 0.6 - 4);
-        this.env.add(tree);
+    const hemi = this.scene.children.find(o => o.isHemisphereLight);
+    const sun = this.scene.children.find(o => o.isDirectionalLight);
+    if (outdoor) {
+      const pr = SKIES[skyName] || SKIES[bgName === 'forest' ? 'forest' : bgName === 'beach' ? 'beach' : 'day'];
+      this.scene.background = new THREE.Color(pr.fog);
+      this.scene.fog = new THREE.Fog(pr.fog, 16, 70);
+      hemi.color.set(pr.hemiSky); hemi.groundColor.set(pr.hemiGround); hemi.intensity = pr.hemiI * 1.1;
+      sun.color.set(pr.sunLight); sun.intensity = pr.sunI;
+      const sd = new THREE.Vector3(...pr.sunDir).normalize();
+      if (sd.y < 0.4) sd.y = 0.4;
+      sd.normalize();
+      sun.position.set(sd.x * 12, sd.y * 12, Math.abs(sd.z) * 12 + 2);
+      this.env.add(makeSky(pr));
+      // chão com textura repetida
+      const beach = bgName === 'beach';
+      const t = (beach ? TEX.sandTile(pr) : TEX.grassTile(pr)).clone();
+      t.repeat.set(26, 26);
+      t.needsUpdate = true;
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 48), new THREE.MeshToonMaterial({ map: t, gradientMap: GRADIENT }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      this.env.add(ground);
+      if (beach) {
+        const sea = new THREE.Mesh(new THREE.PlaneGeometry(200, 80), waterMaterial(pr.water, 1));
+        sea.rotation.x = -Math.PI / 2;
+        sea.position.set(0, 0.03, -48);
+        this.env.add(sea);
       }
-      for (let i = 0; i < 4; i++) {
-        const hill = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 10), toon(bgName === 'forest' ? '#2e5a36' : '#5aa04a'));
-        hill.position.set(-14 + i * 9, -3, -18);
-        this.env.add(hill);
+      // árvores ao fundo e nas laterais
+      const trees = [];
+      for (let i = 0; i < 46; i++) {
+        const a = -2.5 + (i / 45) * 5 + (ehash(i, 3) - 0.5) * 0.1;
+        const r = 10 + ehash(i, 7) * 9 + (Math.abs(a) > 1.4 ? -2 : 0);
+        const x = Math.sin(a) * r, z = -Math.cos(a) * r * 0.75 - 3;
+        if (beach && z < -8) continue;
+        const kinds = Object.entries(pr.kinds);
+        let rr = ehash(i * 5, 11), kind = kinds[0][0];
+        for (const [k, w] of kinds) { rr -= w; if (rr <= 0) { kind = k; break; } }
+        trees.push({ x, y: 0, z, s: 1.1 + ehash(i, 1) * 0.6, r: ehash(i, 2) * 6, kind });
       }
-    } else if (bgName === 'beach' || bgName === 'pool') {
-      const sea = new THREE.Mesh(new THREE.PlaneGeometry(80, 20), toon(bg.far));
-      sea.rotation.x = -Math.PI / 2;
-      sea.position.set(0, 0.02, -14);
-      this.env.add(sea);
+      this.env.add(plantTrees(trees, pr, { shadows: false }));
+      const tufts = [];
+      for (let i = 0; i < 160; i++) {
+        const x = (ehash(i, 21) - 0.5) * 22, z = (ehash(i, 37) - 0.5) * 16 - 1;
+        if (Math.hypot(x - ALLY_POS.x, z - ALLY_POS.z) < 1.5 || Math.hypot(x - FOE_POS.x, z - FOE_POS.z) < 1.4) continue;
+        if (z > 0.8) continue;
+        tufts.push({ x, z, s: 0.8 + ehash(i, 5) * 0.8, r: ehash(i, 9) * 6 });
+      }
+      if (!beach) this.env.add(plantTufts(tufts, tuftGeometry(0.34, 7, pr.grassDark, pr.grassLight), { amp: 0.12 }));
+      this.env.add(makeMountains(0, -6, 26, pr, 7));
     } else {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(40, 8, 1), farMat);
-      wall.position.set(0, 4, -9);
+      this.scene.background = new THREE.Color(bg.sky);
+      this.scene.fog = new THREE.Fog(bg.sky, 14, 40);
+      hemi.color.set('#fff6ea'); hemi.groundColor.set('#6a5a4a'); hemi.intensity = 1.2;
+      sun.color.set('#fff0dc'); sun.intensity = 1.4;
+      sun.position.set(3, 8, 5);
+      const floorTex = bgName === 'pool' ? TEX.poolTile() : bgName === 'liga' ? TEX.checker('#f4ead4', '#d8c8a0') : TEX.stone();
+      const floor = new THREE.Mesh(boxW(40, 0.2, 30, bgName === 'liga' ? 0.5 : 1), texMat(floorTex, bgName === 'gym' ? '#b8ae9e' : '#ffffff'));
+      floor.position.set(0, -0.1, -5);
+      floor.receiveShadow = true;
+      this.env.add(floor);
+      const wall = new THREE.Mesh(boxW(40, 9, 1), texMat(TEX.stone(), bgName === 'liga' ? '#b84a4a' : bgName === 'pool' ? '#9ac8e8' : '#9a9084'));
+      wall.position.set(0, 4.5, -11);
       this.env.add(wall);
-      for (let i = -3; i <= 3; i++) {
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 8, 10), toon(bgName === 'liga' ? '#f0e0b0' : '#7a7064'));
-        col.position.set(i * 4, 4, -8);
+      for (let i = -4; i <= 4; i++) {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 9, 14), texMat(TEX.plaster(), bgName === 'liga' ? '#f4e2b0' : '#c8c0b0'));
+        col.position.set(i * 4.2, 4.5, -10.2);
         this.env.add(col);
+        if (i % 2 === 0 && i !== 0) {
+          const ban = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 3.2), toon(bgName === 'liga' ? '#e0b038' : bgName === 'pool' ? '#3a8ad0' : '#8a3a3a', { side: THREE.DoubleSide }));
+          ban.position.set(i * 4.2 + 2.1, 5.5, -10.45);
+          const em = new THREE.Mesh(new THREE.CircleGeometry(0.4, 16), toon('#ffffff'));
+          em.position.set(i * 4.2 + 2.1, 5.9, -10.4);
+          this.env.add(ban, em);
+        }
       }
+      if (bgName === 'pool') {
+        const pool = new THREE.Mesh(new THREE.PlaneGeometry(26, 6), waterMaterial('#3aa6f0', 0.95));
+        pool.rotation.x = -Math.PI / 2;
+        pool.position.set(0, 0.02, -7);
+        this.env.add(pool);
+      }
+      if (bgName === 'liga') {
+        const carpet = new THREE.Mesh(new THREE.BoxGeometry(3, 0.03, 30), toon('#b82a2a'));
+        carpet.position.set(0.1, 0.015, -3);
+        this.env.add(carpet);
+      }
+      for (const sx of [-1, 1]) {
+        const lamp = new THREE.PointLight('#ffe0b0', 20, 20, 1.5);
+        lamp.position.set(sx * 6, 5, -4);
+        this.env.add(lamp);
+      }
+    }
+    for (const [pp, r] of [[ALLY_POS, 1.25], [FOE_POS, 1.15]]) {
+      const plat = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.06, 0.14, 40), outdoor ? toon(bg.plat) : texMat(TEX.stone(), '#d8d0c4'));
+      plat.position.set(pp.x, 0.07, pp.z);
+      plat.receiveShadow = true;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.05, 8, 48), toon('#ffffff'));
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(pp.x, 0.14, pp.z);
+      const inner = new THREE.Mesh(new THREE.TorusGeometry(r * 0.55, 0.025, 6, 40), toon('#ffffff'));
+      inner.rotation.x = Math.PI / 2;
+      inner.position.set(pp.x, 0.145, pp.z);
+      this.env.add(plat, ring, inner);
     }
     this.clear();
   }
@@ -133,6 +195,7 @@ export class BattleScene {
   }
 
   update(dt) {
+    shared.time.value += dt;
     for (const k of ['ally', 'foe', 'trainerModel', 'heroModel']) if (this[k] && this[k].update) this[k].update(dt, false);
     if (this.shake > 0) {
       this.shake = Math.max(0, this.shake - dt);
@@ -409,7 +472,7 @@ export class Battle {
     this.escapes = 0;
     this.pendingEvos = G.pendingEvos || new Set();
 
-    bs.setup(G.battleBg());
+    bs.setup(G.battleBg(), G.battleSky ? G.battleSky() : null);
     bs.lastTrainerLook = this.trainer ? this.trainer.look : null;
     playMusic(this.trainer ? (this.trainer.leader || this.trainer.rival ? 'gym' : 'trainer') : 'battle');
     $('#battle-ui').classList.remove('hidden');
