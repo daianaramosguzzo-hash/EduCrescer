@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;background:#222;color:#eee;font:11px sans-serif}</style></head>
+<body><canvas id="c"></canvas><pre id="log"></pre>
+<script type="module">
+import { generateMap } from '../js/world/mapgen.js';
+import { FLOORS, S } from '../js/world/tiles.js';
+const warns = []; const ow = console.warn; console.warn = (...a) => { warns.push(a.join(' ')); ow(...a); };
+const t0 = performance.now();
+const map = generateMap(7);
+const T = 10;
+const c = document.getElementById('c'); c.width = map.W * T; c.height = map.H * T;
+const g = c.getContext('2d');
+for (let z = 0; z < map.H; z++) for (let x = 0; x < map.W; x++) {
+  const i = map.idx(x, z);
+  g.fillStyle = FLOORS[map.floor[i]].mini; g.fillRect(x*T, z*T, T, T);
+  const s = map.struct[i];
+  if (s === S.WALL) { g.fillStyle = '#222'; g.fillRect(x*T, z*T, T, T); }
+  if (s === S.WINDOW) { g.fillStyle = '#7ad0ff'; g.fillRect(x*T, z*T, T, T); }
+  if (s === S.DOOR) { const d = map.doors.get(i); g.fillStyle = d.locked ? '#f33' : '#c8843a'; g.fillRect(x*T+1, z*T+1, T-2, T-2); }
+  if (s === S.GATE) { g.fillStyle = '#e0e040'; g.fillRect(x*T+2, z*T+2, T-4, T-4); }
+  if (s === S.MURO) { g.fillStyle = '#8a6a5a'; g.fillRect(x*T, z*T, T, T); }
+  if (s === S.GRADE || s === S.FENCE) { g.fillStyle = '#aaa'; g.fillRect(x*T+3, z*T+3, T-6, T-6); }
+}
+for (const p of map.props) {
+  g.fillStyle = p.loot && p.loot.length ? 'rgba(255,200,0,0.8)' : 'rgba(255,255,255,0.55)';
+  g.fillRect(p.x*T+1, p.z*T+1, p.w*T-2, p.d*T-2);
+  g.fillStyle = '#000'; g.font = '7px sans-serif'; g.fillText(p.type.slice(0,3), p.x*T+1, p.z*T+7);
+}
+for (const [name, pts] of Object.entries(map.marks)) for (const [x, z] of pts) { g.fillStyle = '#f0f'; g.beginPath(); g.arc(x*T+5, z*T+5, 3, 0, 7); g.fill(); }
+g.font = 'bold 11px sans-serif';
+for (const l of map.labels) { g.fillStyle = '#000'; g.fillText(l.text, l.x*T - 30+1, l.z*T+1); g.fillStyle = '#fff'; g.fillText(l.text, l.x*T - 30, l.z*T); }
+document.getElementById('log').textContent = `props ${map.props.length}, prédios ${map.buildings.length}, portas ${map.doors.size}, tempo ${(performance.now()-t0).toFixed(0)}ms\n` + warns.join('\n');
+</script></body></html>

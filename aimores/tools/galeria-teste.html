@@ -1,0 +1,31 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;background:#6a8a5a;font:12px sans-serif}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+import { paintFrame, ANIMS } from '../js/sprites/painter.js';
+import { LOOKS } from '../js/sprites/looks.js';
+const q = new URLSearchParams(location.search);
+const ids = (q.get('ids') || 'arthur,carol,daiana,pablicio').split(',');
+const anims = (q.get('anims') || 'idle').split(',');
+const hold = q.get('hold') || 'none';
+const sc = +(q.get('sc') || 1.6);
+const dirs = (q.get('dirs') || '0,1,2,3,4,5,6,7').split(',').map(Number);
+const frameMode = q.get('frames'); // 'all' => mostra todos os quadros da animação para dir 0/2
+const FW = 112*sc, FH = 136*sc;
+const rows = [];
+for (const id of ids) for (const a of anims) {
+  if (frameMode) { for (const d of dirs) rows.push({id, a, d, frames: true}); }
+  else rows.push({id, a});
+}
+const cols = frameMode ? Math.max(...anims.map(a=>ANIMS[a].frames)) : dirs.length;
+const c = document.getElementById('c'); c.width = cols*FW; c.height = rows.length*FH;
+const g = c.getContext('2d');
+rows.forEach((r, i) => {
+  for (let j = 0; j < cols; j++) {
+    g.fillStyle = (i+j)%2 ? '#7a9a6a' : '#6f8f60'; g.fillRect(j*FW, i*FH, FW, FH);
+    g.fillStyle = 'rgba(0,0,0,0.2)'; g.beginPath(); g.ellipse(j*FW+FW/2, i*FH+128*sc, 18*sc, 6*sc, 0, 0, 7); g.fill();
+    if (r.frames) { if (j < ANIMS[r.a].frames) paintFrame(g, LOOKS[r.id], r.a, j, r.d, hold, j*FW+FW/2, i*FH+128*sc, sc); }
+    else paintFrame(g, LOOKS[r.id], r.a, Number(q.get('f')||0), dirs[j], hold, j*FW+FW/2, i*FH+128*sc, sc);
+  }
+});
+document.title = 'ok';
+</script></body></html>

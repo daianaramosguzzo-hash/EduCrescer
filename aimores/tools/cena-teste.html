@@ -1,0 +1,41 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#c{width:100%;height:100%;display:block}#ov{position:absolute;inset:0;pointer-events:none}
+.floater{position:absolute;left:0;top:0;color:#fff;font:bold 16px sans-serif;text-shadow:0 2px 0 #000}.bubble{position:absolute;left:0;top:0;background:#fff;border:2px solid #000;border-radius:10px;padding:4px 8px;font:13px sans-serif}.hpbar{position:absolute;left:0;top:0;width:40px;height:5px;background:#300;border:1px solid #000}.hpbar i{display:block;height:100%;background:#e33}</style></head>
+<body><canvas id="c"></canvas><div id="ov"></div>
+<script type="module">
+import { Scene3D } from '../js/render/scene.js';
+import { generateMap } from '../js/world/mapgen.js';
+const q = new URLSearchParams(location.search);
+const S = new Scene3D(document.getElementById('c'), document.getElementById('ov'));
+const map = generateMap(7);
+S.setMap(map);
+S.fow.revealAll(); for (const e of S.world.buildings) if (e) e.seen = 2; if (q.get('cut')) { const b = S.world.buildings[+q.get('cut')]; b.cutTarget = 1; b.roofTarget = 0; }
+const fx = +(q.get('x')||8), fz = +(q.get('z')||18);
+S.focus(fx, fz, true);
+S.zoom = S.zoomGoal = +(q.get('zoom')||1.2);
+S.yaw = S.yawGoal = Math.PI/4 + (+(q.get('rot')||0))*Math.PI/2;
+const hour = +(q.get('h')||10);
+S.setTime(hour*60);
+const units = [
+  {uid:1,id:'arthur',look:'arthur',kind:'hero',x:fx-1,z:fz,face:0},
+  {uid:2,id:'carol',look:'carol',kind:'hero',x:fx,z:fz,face:0.8},
+  {uid:3,id:'daiana',look:'daiana',kind:'hero',x:fx+1,z:fz+1,face:-0.8, selected:true},
+  {uid:4,id:'pablicio',look:'pablicio',kind:'hero',x:fx-2,z:fz+1,face:2},
+  {uid:5,look:'z_comum_a',kind:'zombie',faction:'zombie',x:fx+3,z:fz-2,face:3, hp:10,maxHp:20},
+  {uid:6,look:'z_resistente',kind:'zombie',faction:'zombie',x:fx+4,z:fz+2,face:-2, hp:30,maxHp:40},
+];
+for (const u of units) S.units.add(u);
+S.units.setHp(units[4], true);
+S.units.say(units[3], 'Eu tô de boa. Eu tô de boa. EU NÃO TÔ DE BOA!');
+const lights = map.lights.map(l => ({...l}));
+let last = performance.now(), frames = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  S.setLights(lights, hour>18||hour<6 ? [{x:units[2].x, z:units[2].z, dirX:0.7, dirZ:-0.7}] : [], S.target.x, S.target.z);
+  S.units.update(dt, (x,z)=>S.lightAt(x,z), ()=>true);
+  S.render(dt);
+  frames++;
+  if (frames === 30) document.title = 'pronto';
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script></body></html>

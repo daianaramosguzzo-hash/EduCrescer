@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#120d18">
+  <title>Aimorés dos Mortos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="world-ui"></div>
+  <div id="vignette"></div>
+  <div id="rain" class="hidden"></div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="party"></div>
+    <div id="topbar"></div>
+    <div id="mini-wrap">
+      <canvas id="minimap" width="200" height="168"></canvas>
+      <div id="mini-btns">
+        <button data-ui="map" title="Mapa (M)">🗺️</button>
+        <button data-ui="journal" title="Diário (J)">📓</button>
+        <button data-ui="save" title="Salvar / carregar">💾</button>
+        <button data-ui="menu" title="Menu (Esc)">☰</button>
+      </div>
+    </div>
+    <div id="tracker"></div>
+    <div id="log"><div id="log-lines"></div><button id="log-toggle" title="Histórico">▴</button></div>
+    <div id="actionbar"></div>
+    <div id="cam-btns">
+      <button data-cam="rotl" title="Girar câmera (Q)">⟲</button>
+      <button data-cam="zin" title="Aproximar">＋</button>
+      <button data-cam="zout" title="Afastar">－</button>
+      <button data-cam="rotr" title="Girar câmera (E)">⟳</button>
+      <button data-cam="cut" title="Paredes baixas (V)">🧱</button>
+    </div>
+    <div id="phase-banner" class="hidden"></div>
+  </div>
+
+  <div id="tooltip" class="hidden"></div>
+  <div id="ctxmenu" class="hidden"></div>
+  <div id="modal" class="hidden"></div>
+  <div id="dialog" class="hidden"></div>
+  <div id="toasts"></div>
+  <div id="fade"></div>
+
+  <!-- tela de título -->
+  <div id="title">
+    <div class="title-bg"></div>
+    <div class="title-inner">
+      <h1 class="logo"><span class="l1">AIMORÉS</span><span class="l2">dos Mortos</span></h1>
+      <p class="tagline">Um apocalipse zumbi em Minas Gerais. Quente, estratégico e cheio de pamonha.</p>
+      <div id="title-cast"></div>
+      <div class="title-buttons">
+        <button id="btn-new" class="big">Novo Jogo</button>
+        <button id="btn-continue" class="big hidden">Continuar</button>
+        <button id="btn-load">Carregar</button>
+        <button id="btn-help">Como jogar</button>
+        <button id="btn-sprites">Galeria de sprites</button>
+      </div>
+      <p class="credits">Jogo de fã sem fins comerciais · Aimorés é uma cidade real de MG; tudo o que acontece aqui é ficção.</p>
+    </div>
+  </div>
+  <div id="loading" class="hidden"><div class="spinner"></div><p>Construindo Aimorés...</p></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
