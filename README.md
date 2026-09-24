@@ -17,14 +17,15 @@ Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch
 
 ### Controles
 
-A câmera fica atrás do herói, em terceira pessoa. **Arraste o mouse** (ou o dedo na tela) para girar a câmera para os lados e para cima/baixo, e use a **rodinha** (ou pinça com dois dedos) para aproximar. As setas andam na direção da câmera: **cima** vai para onde ela está olhando. No menu dá para trocar para a câmera **de cima**, com setas fixas no mapa.
+A câmera fica atrás do herói, em terceira pessoa. **Clique na tela** para prender o mouse: a partir daí, é só **mexer o mouse** para olhar em volta, sem segurar botão. **Botão esquerdo = Z** (interagir/confirmar), **botão direito = X** (voltar/correr) e a **rodinha** aproxima (nos menus, ela sobe e desce as opções). **Esc** solta o mouse. As setas andam para onde você está olhando. No celular, arraste o dedo na tela para girar e use a pinça para aproximar. No menu dá para trocar para a câmera **de cima**.
 
 | Ação | Teclado | Celular |
 |---|---|---|
 | Andar | Setas / WASD | Direcional |
-| Interagir / confirmar | Z, Espaço, Enter | A |
-| Correr / voltar | X, Shift (segurar para correr) | B |
-| Menu | Esc, M | ☰ |
+| Interagir / confirmar | Z, Espaço, Enter, botão esquerdo | A |
+| Correr / voltar | X, Shift, botão direito | B |
+| Menu | M, Tab (Esc solta o mouse) | ☰ |
+| Olhar em volta | Mexer o mouse (depois de clicar na tela) | Arrastar o dedo |
 
 **Crescemon selvagens** aparecem andando pelo mato alto, com nome e nível acima deles. Chegue perto e aperte **A** (ou esbarre neles) para batalhar e tentar capturar. Às vezes eles ficam curiosos e vêm até você.
 

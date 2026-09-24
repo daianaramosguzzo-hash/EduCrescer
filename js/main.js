@@ -7,7 +7,7 @@ import { World, DIRS } from './world.js';
 import { MAPS, rivalFinalParty } from './maps.js';
 import { BattleScene, Battle, buildTrainerParty } from './battle.js';
 import * as UI from './ui.js';
-import { initInput, heldDir, isHeld, setWorldHandler, hasModal, pushHandler, popHandler } from './input.js';
+import { initInput, heldDir, isHeld, setWorldHandler, hasModal, pushHandler, popHandler, emit } from './input.js';
 import { initAudio, sfx, playMusic, setSound, soundOn, stopMusic } from './audio.js';
 
 const $ = s => document.querySelector(s);
@@ -44,19 +44,53 @@ function applyCamFov() {
 }
 window.addEventListener('resize', resize);
 
-// arrastar no mapa gira a câmera; a roda do mouse (ou pinça) aproxima
+// Mouse: clique na tela para "prender" o cursor; depois disso, mexer o mouse
+// gira a câmera, botão esquerdo = Z (A) e botão direito = X (B). Esc solta.
+// Toque: arrastar um dedo gira a câmera e a pinça aproxima.
+const isLocked = () => document.pointerLockElement === canvas;
+let lockUnavailable = false;
+function lockMouse() {
+  if (lockUnavailable || isLocked() || !canvas.requestPointerLock) return;
+  try {
+    const r = canvas.requestPointerLock();
+    if (r && r.catch) r.catch(() => { lockUnavailable = true; });
+  } catch (_) { lockUnavailable = true; }
+}
+function unlockMouse() { if (isLocked()) document.exitPointerLock(); }
+document.addEventListener('pointerlockchange', () => {
+  if (!isLocked() && mode === 'world' && world.camMode !== 'cima' && !busy && !hasModal()) {
+    UI.toast('Clique na tela para controlar a câmera com o mouse');
+  }
+});
+document.addEventListener('pointerlockerror', () => { lockUnavailable = true; });
+document.addEventListener('mousemove', e => {
+  if (isLocked()) world.rotateCam(e.movementX * 0.6, e.movementY * 0.6);
+});
 {
   const pts = new Map();
-  let pinch = 0;
+  let pinch = 0, moved = 0;
   canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') {
+      if (isLocked()) {
+        e.preventDefault();
+        if (e.button === 0) emit('a');
+        else if (e.button === 2) emit('b');
+        return;
+      }
+      if (mode === 'world' && world.camMode !== 'cima' && e.button === 0 && !lockUnavailable) {
+        lockMouse();
+        return;
+      }
+    }
     if (mode !== 'world') return;
+    moved = 0;
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
     canvas.classList.add('dragging');
   });
   canvas.addEventListener('pointermove', e => {
     const last = pts.get(e.pointerId);
-    if (!last) return;
+    if (!last || isLocked()) return;
     if (pts.size === 2) {
       last.x = e.clientX; last.y = e.clientY;
       const [a, b] = [...pts.values()];
@@ -65,17 +99,26 @@ window.addEventListener('resize', resize);
       pinch = d;
       return;
     }
-    world.rotateCam(e.clientX - last.x, e.clientY - last.y);
+    const dx = e.clientX - last.x, dy = e.clientY - last.y;
+    moved += Math.abs(dx) + Math.abs(dy);
+    world.rotateCam(dx, dy);
     last.x = e.clientX; last.y = e.clientY;
   });
   const end = e => {
+    const had = pts.has(e.pointerId);
     pts.delete(e.pointerId);
     if (pts.size < 2) pinch = 0;
     if (!pts.size) canvas.classList.remove('dragging');
+    // sem trava de mouse disponível: clique rápido sem arrastar também vale como Z
+    if (had && e.pointerType === 'mouse' && lockUnavailable && moved < 6 && e.type === 'pointerup') emit(e.button === 2 ? 'b' : 'a');
   };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
-  canvas.addEventListener('wheel', e => { if (mode === 'world') { e.preventDefault(); world.zoomCam(e.deltaY); } }, { passive: false });
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (hasModal()) emit(e.deltaY > 0 ? 'down' : 'up');
+    else if (mode === 'world') world.zoomCam(e.deltaY);
+  }, { passive: false });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 }
 resize();
@@ -182,6 +225,7 @@ async function runBattle(opts) {
   const wasBusy = busy;
   if (!state.party.some(c => c.hp > 0)) return 'lose';
   busy = true;
+  unlockMouse();
   sfx('encounter');
   stopMusic();
   const fl = $('#flash');
@@ -352,6 +396,7 @@ async function onStepEnd() {
 }
 
 function setCamMode(m) {
+  if (m === 'cima') unlockMouse();
   world.camMode = m;
   if (state) state.camMode = m;
   world.snapCamera = true;
@@ -361,6 +406,7 @@ function setCamMode(m) {
 
 // ------------------------------------------------ menus
 async function startMenu() {
+  unlockMouse();
   busy = true;
   let sel = 0;
   while (true) {
@@ -694,7 +740,7 @@ async function startGame(fromSave) {
   UI.showLocation('Vila Aurora');
   await runScript(async () => {
     await UI.say('Seu quarto em Vila Aurora. Hoje é o dia em que tudo começa!');
-    await UI.say('Controles: arraste o mouse (ou o dedo na tela) para girar a câmera e use a rodinha para aproximar. As setas andam na direção da câmera. Z/Espaço (A) interage, X (B) corre e ESC (☰) abre o menu.');
+    await UI.say('Controles: clique na tela e depois é só mexer o mouse para olhar em volta. Botão esquerdo = Z (interagir), botão direito = X (voltar/correr), rodinha = zoom. As setas andam para onde você olha. Esc solta o mouse; M abre o menu.');
     await UI.say('Crescemon selvagens aparecem no mato alto. Chegue perto de um e toque em A (ou esbarre nele) para batalhar e tentar capturar! A câmera pode ser trocada no menu.');
   });
 }

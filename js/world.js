@@ -635,8 +635,8 @@ export class World {
   rotateCam(dx, dy) {
     if (this.camMode === 'cima') return;
     if (this.camYaw === undefined) this.camYaw = ROT[this.player.dir];
-    this.camYaw -= dx * 0.006;
-    this.camPitch = Math.max(0.12, Math.min(1.35, this.camPitch + dy * 0.005));
+    this.camYaw -= dx * 0.005;
+    this.camPitch = Math.max(0.12, Math.min(1.35, this.camPitch + dy * 0.004));
   }
   zoomCam(delta) {
     if (this.camMode === 'cima') return;
