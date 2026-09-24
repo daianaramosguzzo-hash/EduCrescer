@@ -2,6 +2,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import { makeHuman, makeCreature, makeOrb, toon, textTexture, LOOKS, addOutline, shade as shadeHex } from './models.js';
 import { SPECIES } from './data.js';
+import { sfx } from './audio.js';
 import {
   SKIES, shared, setAnisotropy, makeSky, makeMountains, buildTerrain, waterMaterial, plantTrees, plantTufts,
   tuftGeometry, TEX, texMat, boxW, blobShadow, Ambient, hash as ehash,
@@ -176,6 +177,13 @@ export class World {
       this.sunDir.set(0.45, 0.85, 0.35).normalize();
       this.roomLight.position.set((this.W - 1) / 2, 2.8, (this.H - 1) / 2);
       this.roomLight.intensity = 9;
+      this.roomLight.color.set('#ffe2b8');
+      if (map.floor === 'cave') {
+        this.hemi.color.set('#8aa0d0'); this.hemi.groundColor.set('#2a2a3a'); this.hemi.intensity = 0.7;
+        this.sun.intensity = 0.5;
+        this.roomLight.color.set('#6ac8ff');
+        this.roomLight.intensity = 14;
+      }
       this.buildInterior(map);
       this.ambient.setup(null);
     }
@@ -208,6 +216,26 @@ export class World {
     } else if (def.creature) {
       model = makeCreature(SPECIES[def.creature].model);
       model.blobSize = 1.6;
+      if (SPECIES[def.creature].legendary) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.05, 8, 48), new THREE.MeshBasicMaterial({ color: '#ffe070', transparent: true, opacity: 0.8 }));
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.06;
+        const ring2 = ring.clone();
+        ring2.scale.setScalar(0.7);
+        const glow = new THREE.PointLight('#ffe8a0', 3, 5, 1.5);
+        glow.position.y = 1.2;
+        model.group.add(ring, ring2, glow);
+        const baseUpdate = model.update;
+        let tt = 0;
+        model.update = (dt, ...rest) => {
+          tt += dt;
+          baseUpdate(dt, ...rest);
+          ring.rotation.z += dt * 0.8;
+          ring.scale.setScalar(1 + Math.sin(tt * 2) * 0.08);
+          ring2.material.opacity = 0.4 + Math.sin(tt * 3) * 0.3;
+          glow.intensity = 2.5 + Math.sin(tt * 2) * 1;
+        };
+      }
     } else {
       model = makeHuman(LOOKS[def.look] || {});
     }
@@ -427,6 +455,37 @@ export class World {
     const g = new THREE.Group();
     const cx = b.x + (b.w - 1) / 2, cz = b.z + (b.d - 1) / 2;
     g.position.set(cx, 0, cz);
+    if (b.style === 'cave') {
+      const rock = toon('#8a8478');
+      const W = b.w, D = b.d;
+      const main = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), rock);
+      main.scale.set(W * 0.62, 1.9, D * 0.62);
+      main.position.set(0, 0.9, -0.1);
+      g.add(main);
+      for (const [x, z, s] of [[-W * 0.4, 0.3, 0.8], [W * 0.42, 0.2, 0.9], [W * 0.1, -D * 0.3, 1.1], [-W * 0.2, D * 0.35, 0.5]]) {
+        const r = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), toon('#9a948a'));
+        r.position.set(x, s * 0.6, z);
+        g.add(r);
+      }
+      const doorX = b.door - (b.w - 1) / 2;
+      const hole = new THREE.Mesh(new THREE.CircleGeometry(0.55, 20, 0, Math.PI), new THREE.MeshBasicMaterial({ color: '#05060c' }));
+      hole.scale.set(1, 1.6, 1);
+      hole.position.set(doorX, 0.02, D / 2 + 0.35);
+      hole.userData.noOutline = true;
+      const holeBox = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.0, 0.6), new THREE.MeshBasicMaterial({ color: '#05060c' }));
+      holeBox.position.set(doorX, 0.5, D / 2 + 0.05);
+      holeBox.userData.noOutline = true;
+      g.add(hole, holeBox);
+      for (let i = 0; i < 4; i++) {
+        const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), toon('#7af0ff', { emissive: '#3ab0ff', emissiveIntensity: 0.8 }));
+        cr.position.set(doorX + (i - 1.5) * 0.45, 1.25 + (i % 2) * 0.15, D / 2 + 0.25);
+        g.add(cr);
+      }
+      addOutline(g, 0.015);
+      g.traverse(o => { if (o.isMesh && !o.userData.noOutline) { o.castShadow = true; o.receiveShadow = true; } });
+      this.mapGroup.add(g);
+      return;
+    }
     const ST = {
       house: { wall: '#f6ead4', tex: 'siding', h: 1.55, roof: b.roof || '#d84a3a', roofH: 0.95, kind: 'gable', trim: '#ffffff' },
       lab: { wall: '#f2f4f8', tex: 'plaster', h: 1.8, roof: '#8a9aaa', kind: 'flat', trim: '#6a8ab0' },
@@ -588,6 +647,7 @@ export class World {
       stone: { tex: () => TEX.stone(), color: '#b8b0a2', s: 1, wall: null },
       pool: { tex: () => TEX.poolTile(), color: '#ffffff', s: 1, wall: ['#dcecf8', '#cce2f2', '#3a88c4'] },
       liga: { tex: () => TEX.checker('#f4ead4', '#d8c8a0'), color: '#ffffff', s: 0.5, wall: ['#c84444', '#b83a3a', '#5a1a1a'] },
+      cave: { tex: () => TEX.stone(), color: '#6a6c7a', s: 1, wall: null, wallColor: '#5a5c6a' },
     };
     const fl = FL[map.floor] || FL.wood;
     const floor = new THREE.Mesh(boxW(this.W, 0.2, this.H, fl.s), texMat(fl.tex(), fl.color));
@@ -601,7 +661,7 @@ export class World {
       else if (t === 'W') water.push([x, z]);
       else if (t === 'C') counters.push([x, z]);
     }
-    const wallMat = fl.wall ? texMat(TEX.wallpaper(...fl.wall), '#ffffff') : texMat(TEX.stone(), '#a89c8c');
+    const wallMat = fl.wall ? texMat(TEX.wallpaper(...fl.wall), '#ffffff') : texMat(TEX.stone(), fl.wallColor || '#a89c8c');
     const exit = map.exit;
     for (const [x, z] of walls) {
       const south = z === this.H - 1;
@@ -612,7 +672,7 @@ export class World {
       wm.receiveShadow = true;
       this.mapGroup.add(wm);
       // janelas e estandartes na parede do fundo
-      if (z === 0 && x > 0 && x < this.W - 1 && x % 3 === 1) {
+      if (z === 0 && x > 0 && x < this.W - 1 && x % 3 === 1 && map.floor !== 'cave') {
         const g = new THREE.Group();
         g.position.set(x, 1.4, 0.52);
         if (map.floor === 'stone' || map.floor === 'liga') {
@@ -804,6 +864,12 @@ export class World {
       }
       this.sun.position.set(p.x + this.sunDir.x * 30, this.sunDir.y * 30, p.z + this.sunDir.z * 30);
       this.sun.target.position.set(p.x, 0, p.z);
+      if (this.preset && this.preset.lightning) {
+        this.boltT = (this.boltT === undefined ? 5 : this.boltT) - dt;
+        if (this.boltT <= 0) { this.boltT = 5 + Math.random() * 8; this.flash = 1; setTimeout(() => sfx('thunder'), 300 + Math.random() * 600); }
+        this.flash = Math.max(0, (this.flash || 0) - dt * 3.5);
+        this.hemi.intensity = this.preset.hemiI + this.flash * 2.6;
+      }
       if (this.sky) {
         this.sky.position.copy(this.camera.position);
         if (this.sky.userData.clouds) this.sky.userData.clouds.rotation.y += dt * 0.004;

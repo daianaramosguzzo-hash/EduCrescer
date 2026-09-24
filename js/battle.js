@@ -35,6 +35,7 @@ const BGS = {
   pool: { sky: 0x2a4a6a, ground: '#bcd8ee', plat: '#e0ecf6', far: '#3aa0f0' },
   liga: { sky: 0x2a1a2a, ground: '#c89a4a', plat: '#e8c870', far: '#8a1a1a' },
   indoor: { sky: 0x303040, ground: '#c8b89a', plat: '#e0d4bc', far: '#8a7a6a' },
+  cave: { sky: 0x0a0c16, ground: '#4a4c5a', plat: '#6a6c7a', far: '#2a2c3a' },
 };
 
 export class BattleScene {
@@ -127,7 +128,7 @@ export class BattleScene {
       floor.position.set(0, -0.1, -5);
       floor.receiveShadow = true;
       this.env.add(floor);
-      const wall = new THREE.Mesh(boxW(40, 9, 1), texMat(TEX.stone(), bgName === 'liga' ? '#b84a4a' : bgName === 'pool' ? '#9ac8e8' : '#9a9084'));
+      const wall = new THREE.Mesh(boxW(40, 9, 1), texMat(TEX.stone(), bgName === 'liga' ? '#b84a4a' : bgName === 'pool' ? '#9ac8e8' : bgName === 'cave' ? '#4a4c5c' : '#9a9084'));
       wall.position.set(0, 4.5, -11);
       this.env.add(wall);
       for (let i = -4; i <= 4; i++) {
@@ -187,7 +188,9 @@ export class BattleScene {
     const p = side === 'ally' ? ALLY_POS : FOE_POS;
     m.group.position.set(p.x, 0.12, p.z);
     m.group.rotation.y = side === 'ally' ? ALLY_ROT : FOE_ROT;
-    m.group.userData.baseScale = side === 'ally' ? 0.85 : 1.2;
+    // criaturas muito grandes (lendários) são reduzidas para caber na tela
+    const h = new THREE.Box3().setFromObject(m.group).getSize(new THREE.Vector3()).y;
+    m.group.userData.baseScale = side === 'ally' ? Math.min(0.85, 1.9 / h) : Math.min(1.2, 2.2 / h);
     m.group.scale.setScalar(m.group.userData.baseScale);
     this.scene.add(m.group);
     this[side] = m;
@@ -707,7 +710,7 @@ export class Battle {
       const p = Math.min(1, a / 255);
       const success = Math.random() < p;
       const shakes = success ? 3 : Math.floor(Math.random() * (p > 0.3 ? 4 : 2));
-      await this.bs.throwBall(id === 'superorbe' ? '#3a6ad0' : '#e03a3a', Math.min(3, shakes), success);
+      await this.bs.throwBall(id === 'ultraorbe' ? '#f0c030' : id === 'superorbe' ? '#3a6ad0' : '#e03a3a', Math.min(3, shakes), success);
       if (success) {
         await this.msg(`Isso! ${nameOf(f)} foi capturado!`);
         G.caught(f.sp);

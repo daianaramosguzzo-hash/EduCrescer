@@ -46,13 +46,35 @@ O jogo salva sozinho a cada troca de mapa. Também dá para salvar pelo menu.
 | Misty (Água) | **Líder Marina**, em Cidade Maré |
 | Giovanni | **Chefe Breu**, na Rota Vitória |
 | Campeão Blue + Hall of Fame | **Campeão Gael** + Salão dos Campeões + créditos |
-| Lendários pós-jogo | A ave lendária **Solaris** aparece depois da Liga |
+| Lendários pós-jogo + Ilhas Sevii | A **Rainha Eclipse**, verdadeira líder da Equipe Sombra, tenta capturar os **4 lendários** |
+
+## Vilões — Equipe Sombra
+
+| Vilão | Onde | Papel |
+|---|---|---|
+| Recrutas Sombra | Pedra-Verde, Floresta, Rota Vitória e lugares pós-Liga | Soldados da equipe; somem depois de derrotados |
+| **Admin Nyx** | Cidade Maré e Gruta Abissal | Procura a serpente Abissal |
+| **Chefe Breu** | Rota Vitória | O "chefe" da primeira metade da história |
+| **Admin Grafite** | Santuário da Floresta | Brutamontes de pedra que quer Ipêrion |
+| **Dr. Vulto** | Pico Trovão | Cientista que quer a energia de Trovonça |
+| **Rainha Eclipse** | Rota Vitória, depois da Liga | A verdadeira líder: quer apagar o sol com os 4 lendários |
+
+## Os 4 lendários
+
+| Lendário | Tipo | Onde encontrar (depois de vencer a Liga) |
+|---|---|---|
+| **Solaris** | Fogo/Voador | Rota Vitória, protegido pela Rainha Eclipse |
+| **Abissal** | Água/Sombra | Gruta Abissal, na praia de Cidade Maré |
+| **Ipêrion** | Planta/Pedra | Santuário da Floresta, a leste da Floresta Sussurro |
+| **Trovonça** | Elétrico | Pico Trovão, a oeste da Rota Vitória |
+
+Cada lendário tem um golpe exclusivo. Se ele não for capturado, continua no lugar para você tentar de novo. Use as **Ultra Orbes**, vendidas nas lojas depois da Liga.
 
 ## Sistemas
 
 - Câmera em terceira pessoa (ou de cima), Crescemon selvagens visíveis no mato alto e treinadores que te veem e vêm batalhar
 - Batalhas por turnos em cena 3D com 9 tipos, vantagens, STAB, críticos, precisão, PP e golpes de status (inclusive "Crescer")
-- 29 criaturas com evolução por nível, aprendizado de golpes e Exp. Compartilhada
+- 65 criaturas (muitas inspiradas na fauna e no folclore do Brasil: cutia, tucano, lobo-guará, beija-flor, preguiça, peixe-boi, ariranha, tamanduá, poraquê, Saci...) com evolução por nível, aprendizado de golpes e Exp. Compartilhada
 - Captura com orbes animados, equipe de até 6, PC de armazenamento e Crescedex com prévia 3D
 - Centro Crescemon, loja, itens (Poção, Super Poção, Reviver, Elixir, orbes) e dinheiro
 - Visual 3D estilo desenho: céu com sol e nuvens, montanhas no horizonte, terreno pintado com trilhas de bordas suaves, água animada com margens, árvores variadas (pinheiros, copas redondas, coqueiros, outono) e mato alto balançando ao vento e se abrindo quando o herói passa

@@ -55,6 +55,17 @@ export const SKIES = {
     mountain: '#6a5a8a', snow: true, clouds: true, cloud: '#ffd8c8', cloudShade: '#b07890',
     kinds: { round: 0.6, pine: 0.4 }, motes: true,
   },
+  storm: {
+    top: '#1c2036', horizon: '#6a6c8c', bottom: '#4a4a62', fog: '#5c5e7c', fogNear: 14, fogFar: 46,
+    sunDir: [0.2, 0.9, 0.3], sunGlow: '#9098c0', sunLight: '#c8d0ff', sunI: 1.0,
+    hemiSky: '#b0b8e0', hemiGround: '#4a4a52', hemiI: 0.85,
+    grass: '#6a8a5a', grassDark: '#4a6a44', grassLight: '#88a070', tall: '#4a7a44',
+    path: '#a89a88', pathEdge: '#7a6e62', sand: '#b8ae98', bank: '#8a8070',
+    waterShallow: '#6a8aa0', waterDeep: '#2a3a5a', water: '#4a6a8a',
+    trunk: '#5a4030', pine: ['#2a4a3a', '#34584a', '#446a56'], leaf: ['#3a5a3a', '#4a6a44', '#5a7a4c'], palm: '#4a6a44',
+    mountain: '#4a4a6a', snow: true, clouds: true, cloud: '#8a8aa8', cloudShade: '#3a3a5a',
+    kinds: { pine: 1 }, lightning: true, motes: true,
+  },
 };
 
 export function hash(x, z) {

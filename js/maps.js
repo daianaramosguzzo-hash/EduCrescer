@@ -73,10 +73,41 @@ function loja(id, city, back) {
         if (G.flag('dex')) list.push('orbe');
         if (G.hasBadge('rocha')) list.push('superpocao', 'superorbe');
         if (G.hasBadge('mare') || G.flag('floresta_ok')) list.push('reviver', 'elixir');
+        if (G.flag('campeao')) list.push('ultraorbe');
         await G.shop(list);
         await G.say('Obrigado! Volte sempre!', 'Vendedor');
       } },
     ],
+  };
+}
+
+// Recruta da Equipe Sombra: some do mapa depois de derrotado
+function grunt(id, x, z, dir, sight, party, money, intro, lose, look = 'sombra', extraCond = null) {
+  return {
+    id, x, z, dir, look, sight,
+    cond: G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id),
+    trainer: { name: look === 'sombra2' ? 'Recruta Sombra' : 'Recruta Sombra', party, money, intro, lose },
+  };
+}
+
+// Encontro com um lendário: se não for capturado, ele continua lá para nova tentativa
+function legend(sp, lvl, intro, need) {
+  return async G => {
+    if (need && !G.flag(need.flag)) { await G.say(need.msg); return; }
+    await G.say(intro);
+    await G.cry(sp);
+    const r = await G.wildBattle(sp, lvl, { legendary: true });
+    if (r === 'caught') {
+      G.set('lend_' + sp);
+      await G.say(`Incrível! ${G.speciesName(sp)} decidiu seguir você!`, null, 'fanfare');
+      const all = ['solaris', 'abissal', 'iperion', 'trovonca'].every(k => G.flag('lend_' + k));
+      if (all && !G.flag('lendas4')) {
+        G.set('lendas4');
+        await G.say('Os 4 Crescemon lendários estão com você! Sol, mar, floresta e trovão, finalmente em paz.');
+      }
+    } else if (r !== 'lose') {
+      await G.say(`${G.speciesName(sp)} recuou para recuperar as forças... Volte para tentar de novo!`);
+    }
   };
 }
 
@@ -279,7 +310,7 @@ export const MAPS = {
         await G.say('Crescemon selvagens se escondem no MATO ALTO. Se o seu parceiro estiver fraco, volte para casa para descansar!');
       } },
     ],
-    encounters: { rate: 0.12, list: [['ratitu', 2, 4, 45], ['pardalito', 2, 5, 45], ['taturana', 3, 4, 10]] },
+    encounters: { rate: 0.12, list: [['ratitu', 2, 4, 35], ['pardalito', 2, 5, 35], ['taturana', 3, 4, 10], ['cutiara', 2, 4, 15], ['tucanito', 3, 5, 8]] },
   },
 
   // ------------------------------------------------------------ PEDRA-VERDE
@@ -341,6 +372,9 @@ export const MAPS = {
         await G.say('Quando um Crescemon desmaia, você precisa levá-lo ao CENTRO CRESCEMON. É o prédio de telhado vermelho!');
       } },
       { id: 'rival_pv', x: 12, z: 0, dir: 'down', look: 'rival', hidden: true },
+      grunt('pvgrunt', 15, 9, 'left', 3, [['ratitu', 7], ['morcegote', 8]], 160,
+        'Ei, você! Esta cidade está sendo vigiada pela EQUIPE SOMBRA. Esqueça que me viu... depois de perder!',
+        'Grr! O Chefe Breu não vai gostar nada disso...'),
     ],
     triggers: [
       { x: 12, z: 3, cond: G => G.hasBadge('rocha') && !G.flag('rival2'), run: rivalBattle2 },
@@ -398,7 +432,7 @@ export const MAPS = {
       'TT..TTTTTT...,TT..TT..TT',
       'TT..TGGGGT...,TT......TT',
       'TT..TGGGGT...,TTTTTTT.TT',
-      'TT....GG.....,....GGG.TT',
+      'TT....GG.....,....GGG.,,',
       'TT....GG.....,....GGG.TT',
       'TTTTTTTT..,,,,TTTTTTTTTT',
       'TT......,,,.....GGGG..TT',
@@ -422,6 +456,7 @@ export const MAPS = {
       { x: 12, z: 33, to: 'pedraverde', tx: 12, tz: 1, dir: 'down' },
       { x: 13, z: 33, to: 'pedraverde', tx: 12, tz: 1, dir: 'down' },
       { x: 11, z: 0, to: 'mare', tx: 11, tz: 20, dir: 'up' },
+      { x: 23, z: 15, to: 'santuario', tx: 1, tz: 18, dir: 'right' },
     ],
     items: [
       { id: 'fl1', x: 21, z: 11, item: 'orbe', n: 3 },
@@ -446,11 +481,17 @@ export const MAPS = {
           await G.say('A Equipe Sombra ainda vai voltar!', 'Recruta Sombra');
           G.set('floresta_ok');
         } } },
+      { id: 'florestal', x: 22, z: 15, dir: 'left', look: 'guarda', cond: G => !G.flag('campeao'), talk: async G => {
+        await G.say('Esta trilha leva ao SANTUÁRIO DA FLORESTA, onde vive um guardião lendário. Só o campeão da Liga pode passar.', 'Guarda-florestal');
+      } },
+      { id: 'florestal2', x: 21, z: 14, dir: 'down', look: 'guarda', cond: G => G.flag('campeao'), talk: async G => {
+        await G.say('Campeão! A Equipe Sombra entrou no Santuário. Proteja IPÊRION, por favor!', 'Guarda-florestal');
+      } },
       { id: 'flvelho', x: 19, z: 19, dir: 'left', look: 'velho', talk: async G => {
         await G.say('Shhh... ouça. As árvores sussurram. Dizem que só quem cuida bem dos seus Crescemon consegue atravessar a floresta.', 'Andarilho');
       } },
     ],
-    encounters: { rate: 0.13, list: [['taturana', 4, 6, 25], ['casulito', 5, 7, 15], ['joanito', 5, 8, 25], ['pardalito', 5, 7, 20], ['faiscatu', 6, 8, 8], ['morcegote', 5, 7, 7]] },
+    encounters: { rate: 0.13, list: [['taturana', 4, 6, 20], ['casulito', 5, 7, 12], ['joanito', 5, 8, 18], ['pardalito', 5, 7, 14], ['faiscatu', 6, 8, 7], ['morcegote', 5, 7, 6], ['fungito', 5, 7, 12], ['vagalumi', 6, 8, 8], ['jiboinha', 6, 8, 8], ['preguito', 6, 7, 6], ['micolumi', 5, 7, 6]] },
   },
 
   // ------------------------------------------------------------ CIDADE MARÉ
@@ -484,6 +525,7 @@ export const MAPS = {
       { x: 3, z: 3, w: 7, d: 5, style: 'gym', door: 3, to: 'ginasio2', label: 'GINÁSIO', roof: '#3a8ad0' },
       { x: 14, z: 3, w: 5, d: 5, style: 'center', door: 2, to: 'centro2', label: 'CENTRO' },
       { x: 3, z: 12, w: 4, d: 4, style: 'shop', door: 1, to: 'loja2', label: 'LOJA' },
+      { x: 15, z: 17, w: 4, d: 3, style: 'cave', door: 1, to: 'gruta' },
     ],
     signs: [{ x: 7, z: 10, text: 'CIDADE MARÉ — Onde o mar encontra a coragem. Líder do Ginásio: MARINA.' }],
     warps: [
@@ -497,6 +539,17 @@ export const MAPS = {
       { id: 'mguarda2', x: 13, z: 2, dir: 'left', look: 'guarda', cond: G => G.hasBadge('mare'), talk: async G => {
         await G.say('Duas insígnias! Pode seguir para a Liga. Ouvi dizer que o chefe da Equipe Sombra foi visto na Rota Vitória...', 'Guarda');
       } },
+      { id: 'nyx', x: 13, z: 10, dir: 'left', look: 'nyx', sight: 3, cond: G => !G.flag('tr_nyx'), trainer: {
+        name: 'Admin Nyx', party: [['aguaviva', 15], ['jiboinha', 16], ['morcegote', 17]], money: 900,
+        intro: 'Hmm? Uma criança atrapalhando meus planos? Sou NYX, Admin da EQUIPE SOMBRA. Estamos procurando a entrada da GRUTA ABISSAL... e você não vai nos impedir.',
+        lose: 'Que irritante... Você tem talento, admito.',
+        onWin: async G => {
+          await G.say('A gruta está selada por enquanto. Mas quando a Rainha acordar... nenhum lendário vai escapar.', 'Admin Nyx');
+          await G.say('Rainha? O Chefe Breu não é o líder? Hmph. Você não sabe de nada.', 'Admin Nyx');
+        } } },
+      { id: 'pescador', x: 16, z: 20, dir: 'up', look: 'nadador', cond: G => !G.flag('campeao'), talk: async G => {
+        await G.say('Esta é a GRUTA ABISSAL. Dizem que uma serpente lendária dorme lá dentro. É perigoso demais... só deixo o campeão da Liga entrar.', 'Pescador');
+      } },
       { id: 'nadador1', x: 21, z: 13, dir: 'left', look: 'nadador', sight: 4, trainer: {
         name: 'Nadador Rui', party: [['lambarito', 13], ['estrelito', 14]], money: 280,
         intro: 'A praia é o meu território! Bora uma batalha?', lose: 'Fui levado pela correnteza...',
@@ -505,7 +558,7 @@ export const MAPS = {
         await G.say('Crescemon de ÁGUA são fracos contra PLANTA e ELÉTRICO. Faiscatu, o tatu elétrico da floresta, seria ótimo contra a Marina!');
       } },
     ],
-    encounters: { rate: 0.12, list: [['sirito', 11, 14, 35], ['estrelito', 11, 14, 35], ['pardalito', 11, 13, 20], ['lambarito', 11, 13, 10]] },
+    encounters: { rate: 0.12, list: [['sirito', 11, 14, 22], ['estrelito', 11, 14, 22], ['pardalito', 11, 13, 10], ['lambarito', 11, 13, 8], ['sapito', 11, 14, 14], ['aguaviva', 11, 13, 10], ['ariranhito', 12, 14, 10], ['papagaia', 12, 14, 8], ['manatino', 12, 13, 5]] },
   },
   centro2: centro('centro2', 'Cidade Maré', { to: 'mare', tx: 16, tz: 8 }),
   loja2: loja('loja2', 'Cidade Maré', { to: 'mare', tx: 4, tz: 16 }),
@@ -564,7 +617,7 @@ export const MAPS = {
       'TT........,.......TT',
       'TT..TTTT..,..TTTT.TT',
       'TT..TTTT..,..TTTT.TT',
-      'TT........,.......TT',
+      ',,........,.......TT',
       'TTGGGG....,,,,,...TT',
       'TTGGGG........,...TT',
       'TTGGGG..GGGG..,...TT',
@@ -577,7 +630,7 @@ export const MAPS = {
       'TTTTTTTT,TTTTTTTTTTT',
     ],
     buildings: [{ x: 5, z: 1, w: 9, d: 5, style: 'liga', door: 4, to: 'liga', label: 'LIGA' }],
-    warps: [{ x: 8, z: 31, to: 'mare', tx: 12, tz: 1, dir: 'down' }],
+    warps: [{ x: 8, z: 31, to: 'mare', tx: 12, tz: 1, dir: 'down' }, { x: 0, z: 21, to: 'pico', tx: 14, tz: 20, dir: 'left' }],
     items: [{ id: 'rv1', x: 16, z: 18, item: 'elixir', n: 1 }, { id: 'rv2', x: 3, z: 9, item: 'superorbe', n: 3 }],
     npcs: [
       { id: 'as1', x: 7, z: 18, dir: 'right', look: 'as', sight: 3, trainer: {
@@ -596,16 +649,152 @@ export const MAPS = {
           await G.say('Talvez... eu tenha esquecido o que é crescer ao lado deles. A Equipe Sombra está acabada.', 'Chefe Breu');
           await G.say('Siga em frente, {N}. A Liga espera por você.', 'Chefe Breu');
         } } },
-      { id: 'solaris', x: 15, z: 3, dir: 'down', creature: 'solaris', cond: G => G.flag('campeao') && !G.flag('solaris'), talk: async G => {
-        await G.say('Uma luz dourada brilha intensamente... É SOLARIS, a ave lendária!');
-        await G.cry('solaris');
-        const r = await G.wildBattle('solaris', 35, { legendary: true });
-        G.set('solaris');
-        if (r === 'caught') await G.say('Incrível! Você fez amizade com a lenda!');
-        else await G.say('SOLARIS voou em direção ao sol nascente...');
+      grunt('rvgrunt1', 8, 12, 'down', 2, [['jiboinha', 17], ['sacirola', 18]], 420,
+        'A Equipe Sombra controla esta rota! Volte para casa, pirralho!', 'Como assim eu perdi?!', 'sombra2'),
+      grunt('rvgrunt2', 10, 16, 'down', 3, [['guarazito', 17], ['fungito', 18], ['morcegote', 18]], 440,
+        'Ninguém chega até o Chefe Breu sem passar por mim!', 'Ai... o Chefe vai me colocar pra limpar a base inteira...'),
+      { id: 'alpinista', x: 1, z: 21, dir: 'right', look: 'campista', cond: G => !G.flag('campeao'), talk: async G => {
+        await G.say('Esta trilha sobe até o PICO TROVÃO. As tempestades lá em cima são terríveis. Só o campeão da Liga pode subir.', 'Alpinista');
       } },
+      { id: 'alpinista2', x: 2, z: 20, dir: 'down', look: 'campista', cond: G => G.flag('campeao'), talk: async G => {
+        await G.say('Vi gente de preto subindo o Pico Trovão, com máquinas estranhas... Cuidado lá em cima, campeão!', 'Alpinista');
+      } },
+      { id: 'eclipse', x: 15, z: 3, dir: 'down', look: 'eclipse', sight: 3, cond: G => G.flag('campeao') && !G.flag('tr_eclipse'), trainer: {
+        name: 'Rainha Eclipse', party: [['assombrado', 38], ['medusombra', 38], ['jiboiao', 39], ['guaralobo', 39], ['magmarocha', 40], ['morcegao', 41]], money: 8000,
+        intro: 'Então você é o novo campeão. Eu sou ECLIPSE, a verdadeira RAINHA da Equipe Sombra. Breu era só um fantoche. Com os 4 lendários, vou apagar o sol e trazer uma noite que nunca termina! Saia do meu caminho!',
+        lose: 'Impossível... A luz... venceu a sombra?',
+        onWin: async G => {
+          await G.say('Seus Crescemon lutam com o coração... Os meus só lutavam por medo.', 'Rainha Eclipse');
+          await G.say('Talvez uma noite eterna não fizesse ninguém crescer. A Equipe Sombra está acabada. De verdade, desta vez.', 'Rainha Eclipse');
+          G.set('sombra_fim');
+        } } },
+      { id: 'solaris', x: 15, z: 1, dir: 'down', creature: 'solaris', cond: G => G.flag('campeao') && !G.flag('lend_solaris'),
+        talk: legend('solaris', 42, 'Uma luz dourada brilha intensamente... É SOLARIS, a ave lendária do sol nascente!',
+          { flag: 'tr_eclipse', msg: 'Uma barreira de sombras envolve Solaris... A Rainha Eclipse está por perto!' }) },
     ],
-    encounters: { rate: 0.12, list: [['sombrino', 16, 19, 20], ['ratanaz', 17, 19, 20], ['gavialto', 17, 19, 20], ['faiscatu', 16, 19, 15], ['pedrolho', 16, 18, 15], ['morcegote', 16, 18, 10]] },
+    encounters: { rate: 0.12, list: [['sombrino', 16, 19, 12], ['ratanaz', 17, 19, 12], ['gavialto', 17, 19, 12], ['faiscatu', 16, 19, 10], ['pedrolho', 16, 18, 10], ['morcegote', 16, 18, 6], ['guarazito', 16, 19, 12], ['cristalito', 16, 18, 8], ['carvaozinho', 16, 18, 8], ['colibrinho', 17, 19, 8], ['tamandito', 17, 19, 8], ['sacirola', 17, 19, 6], ['poraquinho', 16, 18, 6]] },
+  },
+
+  // ------------------------------------------------------------ PÓS-LIGA: SANTUÁRIO DA FLORESTA
+  santuario: {
+    sky: 'forest', name: 'Santuário da Floresta', music: 'forest', bg: 'forest', dark: true,
+    rows: [
+      'TTTTTTTTTTTTTTTTTT',
+      'TTTTTT......TTTTTT',
+      'TTTT..........TTTT',
+      'TTT....ffff....TTT',
+      'TTT...f....f...TTT',
+      'TTT....ffff....TTT',
+      'TTTT....,,....TTTT',
+      'TTTTTTTT,,TTTTTTTT',
+      'TTGGGG..,,..GGGGTT',
+      'TTGGGG..,,..GGGGTT',
+      'TTGGG...,,...GGGTT',
+      'TT......,,......TT',
+      'TT..TT..,,..TT..TT',
+      'TT..TT..,,..TT..TT',
+      'TTGGGG..,,..GGGGTT',
+      'TTGGGG..,,..GGGGTT',
+      'TT......,,......TT',
+      'TT..............TT',
+      ',,,,,,,,,,......TT',
+      'TT..............TT',
+      'TT....GGGGGG....TT',
+      'TTTTTTTTTTTTTTTTTT',
+    ],
+    warps: [{ x: 0, z: 18, to: 'floresta', tx: 22, tz: 15, dir: 'left' }],
+    items: [{ id: 'sa1', x: 15, z: 11, item: 'ultraorbe', n: 2 }],
+    npcs: [
+      { id: 'anciã', x: 13, z: 17, dir: 'left', look: 'velho', talk: async G => {
+        await G.say('IPÊRION floresce uma vez por ano, como os ipês amarelos. Onde ele pisa, a floresta renasce.', 'Guardiã do Santuário');
+        await G.say('Aqueles brutamontes da Equipe Sombra querem prendê-lo numa máquina. Não deixe!', 'Guardiã do Santuário');
+      } },
+      grunt('sgrunt2', 4, 17, 'right', 4, [['jiboiao', 30], ['fungalhao', 31]], 900,
+        'O Santuário agora pertence à Equipe Sombra!', 'Eu só queria colher cogumelos...', 'sombra2'),
+      grunt('sgrunt1', 9, 7, 'down', 4, [['guaralobo', 31], ['medusombra', 31], ['morcegao', 32]], 950,
+        'Nenhum passo a mais! O Admin Grafite está trabalhando.', 'Como?! Nossas defesas...'),
+      { id: 'grafite', x: 8, z: 7, dir: 'down', look: 'grafite', sight: 4, cond: G => !G.flag('tr_grafite'), trainer: {
+        name: 'Admin Grafite', party: [['rochedao', 32], ['magmarocha', 33], ['cristalord', 34]], money: 3000,
+        intro: 'HAH! Eu sou GRAFITE, o Admin mais forte da Equipe Sombra! A Rainha quer Ipêrion, e eu vou entregar. Vou te esmagar como pedra!',
+        lose: 'Minhas rochas... quebraram?!',
+        onWin: async G => { await G.say('Tá bom, tá bom! Estou indo embora! A Rainha vai ficar furiosa...', 'Admin Grafite'); } } },
+      { id: 'iperion', x: 8, z: 4, dir: 'down', creature: 'iperion', cond: G => !G.flag('lend_iperion'),
+        talk: legend('iperion', 40, 'Pétalas douradas caem do céu... IPÊRION, o guardião lendário da floresta, olha para você!') },
+    ],
+    encounters: { rate: 0.12, list: [['fungito', 30, 33, 16], ['vagalumi', 30, 33, 14], ['jiboiao', 31, 34, 10], ['preguito', 30, 33, 12], ['colibrilho', 31, 34, 10], ['borbolux', 30, 33, 14], ['saparrao', 31, 33, 10], ['micolumi', 30, 33, 8]] },
+  },
+
+  // ------------------------------------------------------------ PÓS-LIGA: GRUTA ABISSAL
+  gruta: {
+    name: 'Gruta Abissal', interior: true, floor: 'cave', music: 'forest', bg: 'cave',
+    rows: room(15, 14, 7).map((r, z) => ({
+      1: '#____WWWWW____#', 2: '#___WWWWWWW___#', 3: '#___WWWWWWW___#', 4: '#____WWWWW____#',
+    }[z] || r)),
+    exit: { x: 7, z: 13, to: 'mare', tx: 16, tz: 20 },
+    furniture: [
+      ...[1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13].map(x => ({ type: 'boulder', x, z: 7 })),
+      { type: 'boulder', x: 1, z: 1 }, { type: 'boulder', x: 13, z: 1 }, { type: 'boulder', x: 1, z: 12 }, { type: 'boulder', x: 13, z: 12 },
+    ],
+    npcs: [
+      grunt('ggrunt1', 3, 10, 'right', 3, [['medusombra', 30], ['poraquao', 31]], 900,
+        'A Admin Nyx está acordando a serpente! Não atrapalhe!', 'Glub... perdi...', 'sombra2'),
+      grunt('ggrunt2', 11, 10, 'left', 3, [['assombrado', 31], ['ariranhao', 31]], 900,
+        'Você chegou tarde, campeão!', 'Eu devia ter ficado na praia...'),
+      { id: 'nyx2', x: 7, z: 7, dir: 'down', look: 'nyx', sight: 4, cond: G => !G.flag('tr_nyx2'), trainer: {
+        name: 'Admin Nyx', party: [['medusombra', 33], ['assombrado', 34], ['poraquao', 35]], money: 3200,
+        intro: 'Você de novo... Desta vez a gruta está aberta, e ABISSAL será da Rainha. As profundezas vão engolir você!',
+        lose: 'Outra vez... Por que você sempre vence?',
+        onWin: async G => { await G.say('A Rainha Eclipse espera na Rota Vitória, perto de Solaris. Vá, se tiver coragem.', 'Admin Nyx'); } } },
+      { id: 'abissal', x: 7, z: 5, dir: 'down', creature: 'abissal', cond: G => !G.flag('lend_abissal'),
+        talk: legend('abissal', 40, 'A água do lago se agita... ABISSAL, a serpente lendária das profundezas, se ergue diante de você!') },
+    ],
+  },
+
+  // ------------------------------------------------------------ PÓS-LIGA: PICO TROVÃO
+  pico: {
+    sky: 'storm', name: 'Pico Trovão', music: 'route', bg: 'grass',
+    rows: [
+      'TTTTTTTTTTTTTTTT',
+      'TTTTRR....RRTTTT',
+      'TTTR........RTTT',
+      'TTTR...,,...RTTT',
+      'TTTTR..,,..RTTTT',
+      'TTTTTR.,,.RTTTTT',
+      'TTTTTTR,,RTTTTTT',
+      'TTTTTTR,,RTTTTTT',
+      'TTTTRR.,,..RRTTT',
+      'TTTR...,,....RTT',
+      'TTR..GG,,GGG..TT',
+      'TTR..GG,,GGG..TT',
+      'TT...GG,,GGG..TT',
+      'TT.....,,.....TT',
+      'TTRR...,,...RRTT',
+      'TTR....,,,,,..TT',
+      'TT..GGG....,..TT',
+      'TT..GGG....,..TT',
+      'TT..GGG....,..TT',
+      'TTR........,..TT',
+      'TT.........,,,,,',
+      'TTRR..........TT',
+      'TTTTRRR....RRRTT',
+      'TTTTTTTTTTTTTTTT',
+    ],
+    warps: [{ x: 15, z: 20, to: 'rotavitoria', tx: 1, tz: 21, dir: 'right' }],
+    items: [{ id: 'pi1', x: 3, z: 21, item: 'elixir', n: 2 }],
+    npcs: [
+      grunt('pgrunt2', 3, 13, 'right', 3, [['cristalito', 30], ['poraquinho', 31], ['trovatu', 31]], 900,
+        'A máquina do Dr. Vulto vai sugar toda a energia dos raios!', 'Levei um choque de derrota...'),
+      grunt('pgrunt1', 8, 7, 'down', 4, [['colibrilho', 31], ['magmarocha', 32]], 950,
+        'O cume está interditado pela Equipe Sombra!', 'Brr... que frio aqui em cima...', 'sombra2'),
+      { id: 'vulto', x: 7, z: 7, dir: 'down', look: 'vulto', sight: 4, cond: G => !G.flag('tr_vulto'), trainer: {
+        name: 'Dr. Vulto', party: [['cristalord', 34], ['trovatu', 34], ['colibrilho', 35], ['poraquao', 36]], money: 3400,
+        intro: 'Fascinante! Um campeão no meu laboratório a céu aberto. Sou o DR. VULTO, cientista da Equipe Sombra. Com a energia de TROVONÇA, minha máquina vai escurecer o céu. Vamos testar você primeiro!',
+        lose: 'Os cálculos... estavam errados?',
+        onWin: async G => { await G.say('Minha máquina queimou... Ciência sem coração não leva a lugar nenhum, afinal.', 'Dr. Vulto'); } } },
+      { id: 'trovonca', x: 8, z: 2, dir: 'down', creature: 'trovonca', cond: G => !G.flag('lend_trovonca'),
+        talk: legend('trovonca', 40, 'Um raio cai bem na sua frente! Das faíscas surge TROVONÇA, a onça lendária das tempestades!') },
+    ],
+    encounters: { rate: 0.12, list: [['cristalito', 30, 33, 18], ['poraquinho', 30, 33, 14], ['trovatu', 31, 34, 14], ['carvaozinho', 30, 33, 14], ['gavialto', 31, 34, 12], ['rochedao', 32, 34, 10], ['guaralobo', 32, 35, 10], ['colibrilho', 31, 34, 8]] },
   },
 
   liga: {
@@ -736,6 +925,12 @@ async function profTalk(G) {
     await G.say('Meu sonho é completar a Crescedex. Conto com você! E se quiser se tornar um grande treinador, vença os Ginásios e desafie a LIGA!', 'Prof. Ipê');
     return;
   }
+  if (G.flag('campeao')) {
+    const n = ['solaris', 'abissal', 'iperion', 'trovonca'].filter(k => G.flag('lend_' + k)).length;
+    await G.say(`Lendários protegidos por você: ${n} de 4.`, 'Prof. Ipê');
+    if (n < 4) await G.say('Ipêrion no Santuário da Floresta, Abissal na Gruta Abissal, Trovonça no Pico Trovão e Solaris na Rota Vitória. A Equipe Sombra não pode pegá-los!', 'Prof. Ipê');
+    else await G.say('Todos os 4! Você é uma lenda, {N}!', 'Prof. Ipê');
+  }
   if (G.flag('dex')) {
     const n = G.caughtCount();
     await G.say(`Vamos ver sua Crescedex... Você já capturou ${n} Crescemon e viu ${G.seenCount()}!`, 'Prof. Ipê');
@@ -781,6 +976,14 @@ async function championEnding(G) {
   G.set('campeao');
   G.healParty();
   await G.credits();
+  await G.say('{N}, notícias urgentes! A Equipe Sombra voltou, agora comandada pela misteriosa RAINHA ECLIPSE!', 'Prof. Ipê');
+  await G.say('Ela quer capturar os 4 Crescemon LENDÁRIOS para cobrir o mundo com uma noite sem fim!', 'Prof. Ipê');
+  await G.say('IPÊRION, no Santuário da Floresta, a leste da Floresta Sussurro. ABISSAL, na Gruta Abissal, na praia de Cidade Maré.', 'Prof. Ipê');
+  await G.say('TROVONÇA, no Pico Trovão, a oeste da Rota Vitória. E SOLARIS, aqui mesmo na Rota Vitória!', 'Prof. Ipê');
+  await G.say('Os guardas liberaram os caminhos para você. Leve estas ULTRA ORBES. Conto com você!', 'Prof. Ipê');
+  G.giveItem('ultraorbe', 5);
+  await G.say('{N} recebeu 5 ULTRA ORBES!', null, 'fanfare');
+  G.set('posjogo');
   p.hide();
 }
 

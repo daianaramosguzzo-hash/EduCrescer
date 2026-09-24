@@ -78,6 +78,7 @@ export function sfx(name) {
     case 'run': noise(t, 0.2, 0.1); break;
     case 'buy': tone(1500, t, 0.08, 'square', 0.05); tone(2000, t + 0.08, 0.12, 'square', 0.05); break;
     case 'evolve': for (let i = 0; i < 12; i++) tone(hz(60 + i * 2), t + i * 0.08, 0.1, 'triangle', 0.08); break;
+    case 'thunder': noise(t, 1.4, 0.3); tone(60, t, 1.2, 'sawtooth', 0.08, master, 0.5); break;
     case 'cry': tone(500 + Math.random() * 400, t, 0.25, 'sawtooth', 0.06, master, 0.6); tone(700, t + 0.12, 0.2, 'square', 0.04, master, 1.4); break;
   }
 }

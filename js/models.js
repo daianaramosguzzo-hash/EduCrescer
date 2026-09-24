@@ -318,6 +318,11 @@ export const LOOKS = {
   velho: { hair: '#bbbbbb', hairStyle: 'bald', shirt: '#7a8a5a', pants: '#6a5a4a', skin: '#e0a880' },
   guarda: { hair: '#1a1a1a', shirt: '#3a4a8a', pants: '#2a2a4a', hat: '#2a3a7a' },
   as: { hair: '#c02a2a', hairStyle: 'spiky', shirt: '#f0f0f0', pants: '#2a2a2a', jacket: '#c02a2a', lining: '#fff' },
+  sombra2: { hair: '#1a1a1a', hairStyle: 'long', dress: '#2a2a2e', hat: '#1a1a1a', shoes: '#111' },
+  nyx: { hair: '#8a3aff', hairStyle: 'long', dress: '#1a1028', shoes: '#3a1a5a', skin: '#f0d0c0' },
+  grafite: { hair: '#1a1a1a', hairStyle: 'bald', shirt: '#4a4a4a', pants: '#2a2a2a', jacket: '#2a2a2a', lining: '#8a2a2a', skin: '#c8906a', scale: 1.15, shoes: '#111' },
+  vulto: { hair: '#f0f0f0', hairStyle: 'spiky', shirt: '#2a2a3a', coat: true, pants: '#1a1a2a', shoes: '#111', skin: '#e0c0a8' },
+  eclipse: { hair: '#f0e8ff', hairStyle: 'long', dress: '#3a0a5a', hat: '#1a0a2a', shoes: '#1a0a2a', skin: '#f4dcd0' },
 };
 
 // ---------- CRESCEMON ----------
@@ -370,7 +375,7 @@ export function makeCreature(spec) {
   const plan = spec.plan;
   if (plan === 'quad') {
     const low = spec.low;
-    const by = low ? 0.3 : 0.42;
+    const by = low ? 0.3 : spec.tall ? 0.62 : 0.42;
     inner.add(mesh(geo.sphere, c1, [0, by, 0], low ? [0.34, 0.24, 0.48] : [0.32, 0.3, 0.44]));
     inner.add(mesh(geo.sphere, c2, [0, by - 0.06, 0.08], low ? [0.27, 0.18, 0.38] : [0.25, 0.23, 0.34]));
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
@@ -438,6 +443,37 @@ export function makeCreature(spec) {
     if (ex.has('spikes')) for (let i = 0; i < 4; i++) inner.add(mesh(geo.cone, toon('#fff0a0'), [0, by + 0.35, 0.15 - i * 0.14], [0.06, 0.16, 0.06], [-0.3, 0, 0]));
     if (ex.has('backFin')) inner.add(mesh(geo.cone, c3, [0, by + 0.26, -0.05], [0.03, 0.3, 0.25]));
 
+    if (ex.has('antlers')) for (const sx of [-1, 1]) {
+      const ant = toon(spec.c3);
+      head.add(mesh(geo.cyl, ant, [sx * 0.15, 0.36, -0.02], [0.03, 0.36, 0.03], [0, 0, -sx * 0.45]));
+      head.add(mesh(geo.cyl, ant, [sx * 0.3, 0.52, -0.02], [0.022, 0.26, 0.022], [0, 0, -sx * 1.05]));
+      head.add(mesh(geo.cyl, ant, [sx * 0.22, 0.62, 0.02], [0.02, 0.22, 0.02], [0.25, 0, -sx * 0.2]));
+      const fl = toon(spec.c4 || '#ffd23a', { emissive: spec.c4 || '#ffd23a', emissiveIntensity: 0.2 });
+      for (const [fx, fy, fz, r] of [[0.42, 0.6, -0.02, 0.07], [0.25, 0.75, 0.04, 0.08], [0.33, 0.68, 0.06, 0.05], [0.14, 0.56, 0, 0.05], [0.47, 0.5, 0.02, 0.05]]) {
+        head.add(mesh(geo.sphereLow, fl, [sx * fx, fy, fz], r));
+      }
+    }
+    if (ex.has('spots')) for (let i = 0; i < 10; i++) {
+      const a = i * 2.39, z = -0.34 + (i / 9) * 0.62;
+      const k = Math.sqrt(Math.max(0.05, 1 - (z / 0.44) ** 2));
+      const x = Math.cos(a) * 0.3 * k, y = by + Math.abs(Math.sin(a)) * 0.28 * k + 0.02;
+      inner.add(mesh(geo.sphere, toon(spec.c3), [x, y, z], [0.055, 0.045, 0.055]));
+    }
+    if (ex.has('longSnout')) {
+      head.add(mesh(geo.cyl, c1, [0, -0.08, 0.34], [0.055, 0.34, 0.055], [Math.PI / 2 - 0.25, 0, 0]));
+      head.add(mesh(geo.sphere, toon('#222'), [0, -0.12, 0.5], 0.03));
+    }
+    if (ex.has('mane')) for (let i = 0; i < 5; i++) inner.add(mesh(geo.cone, toon(spec.c3), [0, by + 0.28 - i * 0.02, 0.25 - i * 0.1], [0.06, 0.2, 0.05], [-0.4, 0, 0]));
+    if (ex.has('stripe')) inner.add(mesh(geo.sphere, toon(spec.c3), [0, by + 0.05, 0.05], [0.33, 0.1, 0.35], [0.5, 0, 0]));
+    if (ex.has('mask')) for (const sx of [-1, 1]) head.add(mesh(geo.sphere, toon('#4a3a2a'), [sx * 0.11, 0.03, 0.17], [0.09, 0.06, 0.04]));
+    if (ex.has('sparksBody')) {
+      const y = new THREE.MeshBasicMaterial({ color: 0xfff080 });
+      for (let i = 0; i < 6; i++) {
+        const a = i * 1.05;
+        inner.add(mesh(geo.box, y, [Math.cos(a) * 0.42, by + 0.2 + Math.sin(i) * 0.12, Math.sin(a) * 0.5], [0.03, 0.16, 0.03], [0, a, 0.8]));
+      }
+    }
+
     // cauda
     const tail = new THREE.Group();
     tail.position.set(0, by + 0.05, -0.42);
@@ -449,6 +485,9 @@ export function makeCreature(spec) {
       flame(tail, [0, 0.3, -0.14], 1.1);
     } else if (ex.has('finTail')) {
       tail.add(mesh(geo.sphere, c1, [0, 0.02, -0.18], [0.05, 0.16, 0.26]));
+    } else if (ex.has('bushTail')) {
+      tail.add(mesh(geo.sphere, c1, [0, 0.12, -0.2], [0.12, 0.13, 0.26], [-0.5, 0, 0]));
+      tail.add(mesh(geo.sphere, c2, [0, 0.22, -0.4], [0.08, 0.08, 0.1]));
     } else if (ex.has('thinTail')) {
       tail.add(mesh(geo.cyl, toon('#f4b0c0'), [0, 0.1, -0.2], [0.02, 0.5, 0.02], [-1.0, 0, 0]));
     } else if (ex.has('sparkTail')) {
@@ -472,7 +511,12 @@ export function makeCreature(spec) {
     head.add(mesh(geo.sphere, c1, [0, 0, 0], 0.2));
     eyes(head, 0, 0.03, 0.15, 0.06, 0.085);
     if (!bat) {
-      head.add(mesh(geo.cone, c3, [0, -0.04, 0.25], [0.05, 0.14, 0.05], [Math.PI / 2, 0, 0]));
+      if (ex.has('bigBeak')) {
+        head.add(mesh(geo.cone, c3, [0, -0.04, 0.34], [0.1, 0.34, 0.1], [Math.PI / 2 + 0.12, 0, 0]));
+        head.add(mesh(geo.cone, toon(spec.c4 || '#ffd23a'), [0, 0.0, 0.2], [0.09, 0.08, 0.09], [Math.PI / 2, 0, 0]));
+      } else if (ex.has('longBeak')) {
+        head.add(mesh(geo.cone, c3, [0, -0.03, 0.36], [0.022, 0.36, 0.022], [Math.PI / 2, 0, 0]));
+      } else head.add(mesh(geo.cone, c3, [0, -0.04, 0.25], [0.05, 0.14, 0.05], [Math.PI / 2, 0, 0]));
       if (ex.has('crest')) for (let i = 0; i < 3; i++) head.add(mesh(geo.cone, c3, [0, 0.2, -0.04 - i * 0.07], [0.04, 0.18, 0.04], [-0.4 - i * 0.3, 0, 0]));
     } else {
       for (const s of [-1, 1]) {
@@ -499,7 +543,8 @@ export function makeCreature(spec) {
       anim.wings.push({ g: w, side: s });
     }
     if (!bat) {
-      for (let i = -1; i <= 1; i++) inner.add(mesh(geo.cone, c3, [i * 0.07, by - 0.05, -0.3], [0.05, 0.25, 0.03], [-1.9, i * 0.3, 0]));
+      const tl = ex.has('longTail') ? 0.6 : 0.25;
+      for (let i = -1; i <= 1; i++) inner.add(mesh(geo.cone, i === 0 && spec.c4 ? toon(spec.c4) : c3, [i * 0.07, by - 0.05 - tl * 0.2, -0.3 - tl * 0.35], [0.05, tl, 0.03], [-1.9, i * 0.3, 0]));
       if (ex.has('flameTail')) flame(inner, [0, by, -0.4], 1.6);
       for (const s of [-1, 1]) inner.add(mesh(geo.cyl, toon('#e0a030'), [s * 0.08, 0.12, 0.02], [0.02, 0.24, 0.02]));
     }
@@ -562,6 +607,24 @@ export function makeCreature(spec) {
       inner.add(p);
     }
     inner.add(mesh(geo.sphere, toon('#2a0a2a'), [0, 0.7, 0.29], [0.1, 0.06, 0.03]));
+    if (ex.has('tentacles')) {
+      const tm = toon(spec.c2, { transparent: true, opacity: 0.85 });
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        inner.add(mesh(geo.cyl, tm, [Math.cos(a) * 0.2, 0.38, Math.sin(a) * 0.2], [0.025, 0.45, 0.025], [Math.sin(a) * 0.2, 0, Math.cos(a) * 0.2]));
+      }
+    }
+    if (ex.has('cap')) {
+      inner.add(mesh(geo.cone, toon('#e02a2a'), [0, 1.18, -0.05], [0.2, 0.42, 0.2], [-0.35, 0, 0.1]));
+      inner.add(mesh(geo.sphere, toon('#e02a2a'), [0, 1.05, 0], [0.26, 0.08, 0.26]));
+    }
+    if (ex.has('whirl')) for (let i = 0; i < 3; i++) {
+      const w = mesh(geo.torus, toon('#c8d8e8', { transparent: true, opacity: 0.6 }), [0, 0.18 + i * 0.12, -0.05], [0.28 - i * 0.07, 0.28 - i * 0.07, 0.12], [Math.PI / 2, 0, 0]);
+      w.userData.noOutline = true;
+      inner.add(w);
+      anim.whirls = anim.whirls || [];
+      anim.whirls.push(w);
+    }
     if (ex.has('crown')) for (let i = 0; i < 5; i++) {
       const a = (i / 5) * Math.PI * 2;
       inner.add(mesh(geo.cone, toon('#f0c030'), [Math.cos(a) * 0.15, 1.15, Math.sin(a) * 0.15], [0.05, 0.16, 0.05]));
@@ -607,6 +670,11 @@ export function makeCreature(spec) {
       inner.add(w);
       anim.wings.push({ g: w, side: s, butterfly: true });
     }
+    if (ex.has('glow')) {
+      const gl = mesh(geo.sphere, new THREE.MeshBasicMaterial({ color: spec.c2 || '#fff4a0' }), [0, by - 0.25, -0.04], [0.09, 0.12, 0.09]);
+      inner.add(gl);
+      anim.glow = gl;
+    }
   } else if (plan === 'beetle') {
     inner.add(mesh(geo.hemi, c1, [0, 0.1, -0.02], [0.32, 0.3, 0.36]));
     const dark = toon(spec.c2);
@@ -636,6 +704,78 @@ export function makeCreature(spec) {
     inner.add(p);
     inner.add(mesh(geo.box, toon(spec.c2), [0, 0.66, 0.3], [0.26, 0.05, 0.05], [0.2, 0, 0]));
     if (ex.has('moss')) inner.add(mesh(geo.sphere, toon('#5c9a3a'), [0, 0.72, -0.05], [0.3, 0.1, 0.26]));
+    if (ex.has('flameTop')) flame(inner, [0, 0.74, -0.05], 1.4);
+    if (ex.has('lava')) for (let i = 0; i < 5; i++) {
+      const a = i * 1.3;
+      const l = mesh(geo.box, new THREE.MeshBasicMaterial({ color: 0xff6a1a }), [Math.cos(a) * 0.36, 0.3 + (i % 3) * 0.12, Math.sin(a) * 0.3], [0.04, 0.2, 0.03], [0, a, 0.5]);
+      l.userData.noOutline = true;
+      inner.add(l);
+    }
+  } else if (plan === 'serpent') {
+    const segs = [];
+    const n = 9;
+    for (let i = 0; i < n; i++) {
+      const r = 0.16 - i * 0.011;
+      const seg = mesh(geo.sphere, c1, [Math.sin(i * 0.9) * 0.16, r, 0.28 - i * 0.12], [r, r, r * 1.25]);
+      seg.userData.i = i;
+      inner.add(seg);
+      segs.push(seg);
+      if (ex.has('bands') && i % 2 === 1) {
+        const b = mesh(geo.sphere, toon(spec.c3), [0, 0, 0], [1.03, 0.5, 0.45]);
+        b.position.y = 0.1;
+        seg.add(b);
+      }
+      if (ex.has('glowSpots') && i % 2 === 0) {
+        const gs = mesh(geo.sphere, new THREE.MeshBasicMaterial({ color: spec.c4 || '#8af0ff' }), [0, 0.9, 0], 0.22);
+        gs.userData.noOutline = true;
+        seg.add(gs);
+      }
+      if (ex.has('fins') && i % 2 === 0 && i < 8) seg.add(mesh(geo.cone, c3, [0, 1.1, 0], [0.18, 0.9, 0.5]));
+      if (ex.has('sparks') && i % 3 === 1) {
+        const sp = mesh(geo.box, new THREE.MeshBasicMaterial({ color: 0xfff060 }), [0.9, 0.6, 0], [0.15, 0.7, 0.15], [0, 0, 0.8]);
+        sp.userData.noOutline = true;
+        seg.add(sp);
+      }
+    }
+    inner.add(mesh(geo.sphere, c1, [0, 0.36, 0.36], [0.13, 0.14, 0.13]));
+    inner.add(mesh(geo.sphere, c1, [0, 0.55, 0.42], [0.12, 0.13, 0.12]));
+    const head = new THREE.Group();
+    head.position.set(0, 0.74, 0.5);
+    inner.add(head);
+    head.add(mesh(geo.sphere, c1, [0, 0, 0], [0.2, 0.16, 0.25]));
+    head.add(mesh(geo.sphere, c2, [0, -0.07, 0.07], [0.15, 0.07, 0.19]));
+    eyes(head, 0, 0.07, 0.14, 0.055, 0.1);
+    if (ex.has('horn')) head.add(mesh(geo.cone, toon(spec.c4 || '#f0e0c0'), [0, 0.2, -0.04], [0.05, 0.24, 0.05], [-0.5, 0, 0]));
+    if (ex.has('whiskers')) for (const sx of [-1, 1]) head.add(mesh(geo.cyl, c3, [sx * 0.16, -0.06, 0.16], [0.012, 0.36, 0.012], [0.3, 0, sx * 1.2]));
+    if (ex.has('fins')) for (const sx of [-1, 1]) head.add(mesh(geo.cone, c3, [sx * 0.2, 0.05, -0.05], [0.06, 0.2, 0.12], [0, 0, -sx * 1.2]));
+    anim.segs = segs;
+  } else if (plan === 'mushroom') {
+    inner.add(mesh(geo.cyl, c2, [0, 0.25, 0], [0.18, 0.5, 0.18]));
+    eyes(inner, 0, 0.32, 0.17, 0.06, 0.08);
+    for (const sx of [-1, 1]) inner.add(mesh(geo.sphere, c2, [sx * 0.21, 0.22, 0.04], [0.06, 0.08, 0.06]));
+    const capM = ex.has('glow') ? toon(spec.c1, { emissive: spec.c1, emissiveIntensity: 0.35 }) : c1;
+    inner.add(mesh(geo.hemi, capM, [0, 0.45, 0], [0.44, 0.36, 0.44]));
+    for (let i = 0; i < 7; i++) {
+      const a = i * 0.9, d = i === 0 ? 0 : 0.28;
+      const h = 0.36 * Math.sqrt(Math.max(0, 1 - (d / 0.44) ** 2));
+      inner.add(mesh(geo.sphere, toon(spec.c3), [Math.cos(a) * d, 0.45 + h, Math.sin(a) * d], [0.07, 0.03, 0.07], [Math.sin(a) * d * 1.5, 0, -Math.cos(a) * d * 1.5]));
+    }
+  } else if (plan === 'crystal') {
+    anim.float = true;
+    const cm = toon(spec.c1, { emissive: spec.c1, emissiveIntensity: 0.3 });
+    const core = mesh(new THREE.OctahedronGeometry(1, 0), cm, [0, 0.6, 0], [0.22, 0.42, 0.22]);
+    inner.add(core);
+    for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2 + 0.4;
+      inner.add(mesh(new THREE.OctahedronGeometry(1, 0), toon(spec.c2), [Math.cos(a) * 0.3, 0.45, Math.sin(a) * 0.3], [0.08, 0.2, 0.08], [Math.sin(a) * 0.4, 0, -Math.cos(a) * 0.4]));
+    }
+    eyes(inner, 0, 0.66, 0.18, 0.05, 0.07);
+    if (ex.has('sparks')) for (let i = 0; i < 4; i++) {
+      const sp = mesh(geo.box, new THREE.MeshBasicMaterial({ color: 0xfff080 }), [Math.cos(i * 1.6) * 0.45, 0.7 + (i % 2) * 0.2, Math.sin(i * 1.6) * 0.3], [0.03, 0.18, 0.03], [0, 0, 0.9]);
+      sp.userData.noOutline = true;
+      inner.add(sp);
+    }
+    anim.spin = core;
   }
 
   const s = spec.size * 1.6;
@@ -663,6 +803,9 @@ export function makeCreature(spec) {
       }
       if (anim.tail) anim.tail.rotation.y = Math.sin(t * 4) * 0.25;
       if (anim.spin) anim.spin.rotation.z = Math.sin(t * 1.5) * 0.4;
+      if (anim.segs) for (const sg of anim.segs) sg.position.x = Math.sin(t * 2.6 + sg.userData.i * 0.9) * 0.16;
+      if (anim.glow) anim.glow.scale.setScalar(0.09 * (1 + Math.max(0, Math.sin(t * 4)) * 0.6));
+      if (anim.whirls) anim.whirls.forEach((w, i) => { w.rotation.z = t * (4 + i); });
     },
   };
 }
