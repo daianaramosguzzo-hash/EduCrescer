@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1420">
+  <title>Crescemon Brasa 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="location"></div>
+  <div id="toast" class="hidden"></div>
+
+  <!-- batalha -->
+  <div id="battle-ui" class="hidden">
+    <div id="hud-foe" class="hud hidden"></div>
+    <div id="hud-balls" class="hidden"></div>
+    <div id="hud-ally" class="hud hidden"></div>
+  </div>
+  <div id="battle-menu" class="panel hidden"></div>
+
+  <!-- diálogo e menus -->
+  <div id="dialog" class="hidden">
+    <div id="dialog-name" class="hidden"></div>
+    <div id="dialog-text"></div>
+    <div id="dialog-arrow" class="hidden">▼</div>
+  </div>
+  <div id="choice" class="panel hidden"></div>
+  <div id="start-menu" class="panel hidden"></div>
+  <div id="screen" class="hidden"></div>
+  <div id="preview" class="hidden"><canvas width="256" height="256"></canvas><div class="pv-name"></div></div>
+
+  <!-- controles de toque -->
+  <div id="touch">
+    <div class="dpad">
+      <button data-act="up" class="d-up" aria-label="Cima">▲</button>
+      <button data-act="left" class="d-left" aria-label="Esquerda">◀</button>
+      <button data-act="right" class="d-right" aria-label="Direita">▶</button>
+      <button data-act="down" class="d-down" aria-label="Baixo">▼</button>
+    </div>
+    <div class="ab">
+      <button data-act="b" class="btn-b" aria-label="B">B</button>
+      <button data-act="a" class="btn-a" aria-label="A">A</button>
+    </div>
+    <button data-act="menu" class="btn-menu" aria-label="Menu">☰</button>
+  </div>
+
+  <div id="flash"></div>
+  <div id="fade"></div>
+  <div id="credits" class="hidden"></div>
+
+  <!-- título -->
+  <div id="title">
+    <div class="title-inner">
+      <div class="logo">
+        <span class="l1">CRESCEMON</span>
+        <span class="l2">Versão Brasa 3D</span>
+      </div>
+      <img class="hero" src="assets/heroi.webp" alt="Herói">
+      <label class="name">Nome do herói
+        <input id="name-input" maxlength="10" placeholder="Cris" autocomplete="off">
+      </label>
+      <div class="buttons">
+        <button id="btn-new">Novo Jogo</button>
+        <button id="btn-continue" class="hidden">Continuar</button>
+      </div>
+      <p class="help">Setas/WASD: andar · Z/Espaço: interagir · X: correr/voltar · Esc: menu</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
