@@ -98,6 +98,9 @@ export class World {
     this.camPos = new THREE.Vector3();
     this.time = 0;
     this.animated = [];
+    this.wilds = [];
+    this.camMode = 'terceira';
+    this.onWildContact = null;
   }
 
   setPlayerModel(model) {
@@ -125,7 +128,7 @@ export class World {
     if (outdoor) {
       const dark = map.dark;
       this.scene.background = new THREE.Color(dark ? 0x2a4a3a : 0x9fd8f5);
-      this.scene.fog = new THREE.Fog(dark ? 0x2a4a3a : 0x9fd8f5, 14, 30);
+      this.scene.fog = new THREE.Fog(dark ? 0x2a4a3a : 0x9fd8f5, 16, 34);
       this.hemi.intensity = dark ? 0.75 : 1.1;
       this.sun.intensity = dark ? 0.9 : 1.6;
       this.buildOutdoor(map);
@@ -149,6 +152,7 @@ export class World {
     }
     for (const def of map.npcs || []) this.addNpc(def, G);
     this.refreshNpcs(G);
+    this.initWilds();
     this.snapCamera = true;
   }
 
@@ -225,13 +229,15 @@ export class World {
     if (this.blockExtra.has(x + ',' + z)) return true;
     const n = this.npcAt(x, z);
     if (n && n !== self) return true;
+    const w = this.wildAt(x, z);
+    if (w && w !== self) return true;
     if (self && self !== this.player && this.player.x === x && this.player.z === z) return true;
     return false;
   }
 
   // ------------------------------------------------ geometria exterior
   buildOutdoor(map) {
-    const PAD = 6;
+    const PAD = 10;
     const ground = [], grass = [], trees = [], water = [], flowers = [], fences = [], rocks = [];
     const edgeTile = (x, z) => this.tile(Math.max(0, Math.min(this.W - 1, x)), Math.max(0, Math.min(this.H - 1, z)));
     for (let z = -PAD; z < this.H + PAD; z++) {
@@ -249,6 +255,10 @@ export class World {
       }
     }
     const dark = map.dark;
+    const base = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), toon(dark ? '#24503a' : '#4f9a48'));
+    base.rotation.x = -Math.PI / 2;
+    base.position.set(this.W / 2, -0.32, this.H / 2);
+    this.mapGroup.add(base);
     // chão
     const gGeo = new THREE.BoxGeometry(1, 0.3, 1);
     const gm = new THREE.InstancedMesh(gGeo, toon('#ffffff'), ground.length);
@@ -562,17 +572,161 @@ export class World {
       const s = Math.sin(this.time * 1.5) * 0.5 + 0.5;
       this.waterMat.color.setHSL(0.57, 0.7, 0.52 + s * 0.06);
     }
+    this.updateWilds(dt, busy);
     // câmera
     if (this.player) {
       const p = this.player.group.position;
-      const off = this.map && this.map.interior ? new THREE.Vector3(0, 7.8, 6.0) : new THREE.Vector3(0, 8.4, 7.0);
-      const target = p.clone().add(off);
-      if (this.snapCamera) { this.camPos.copy(target); this.snapCamera = false; }
-      this.camPos.lerp(target, Math.min(1, dt * 6));
-      this.camera.position.copy(this.camPos);
-      this.camera.lookAt(this.camPos.x, p.y + 0.4, this.camPos.z - off.z);
+      if (this.camMode === 'cima') {
+        const off = this.map && this.map.interior ? new THREE.Vector3(0, 7.8, 6.0) : new THREE.Vector3(0, 8.4, 7.0);
+        const target = p.clone().add(off);
+        if (this.snapCamera) { this.camPos.copy(target); this.snapCamera = false; }
+        this.camPos.lerp(target, Math.min(1, dt * 6));
+        this.camera.position.copy(this.camPos);
+        this.camera.lookAt(this.camPos.x, p.y + 0.4, this.camPos.z - off.z);
+      } else {
+        // terceira pessoa: a câmera fica atrás do herói e acompanha para onde ele olha
+        const targetYaw = ROT[this.player.dir];
+        if (this.camYaw === undefined || this.snapCamera) this.camYaw = targetYaw;
+        let d = targetYaw - this.camYaw;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        this.camYaw += d * Math.min(1, dt * 5);
+        const fx = Math.sin(this.camYaw), fz = Math.cos(this.camYaw);
+        const interior = this.map && this.map.interior;
+        // se houver árvore ou parede logo atrás, aproxima e eleva a câmera
+        let wall = false;
+        for (let i = 1; i <= 3; i++) {
+          const tx = Math.round(p.x - fx * i), tz = Math.round(p.z - fz * i);
+          const t = this.tile(tx, tz);
+          if (t === 'T' || t === '#' || this.buildingAt(tx, tz)) { wall = true; break; }
+        }
+        const dist = wall ? (interior ? 2.4 : 2.8) : (interior ? 3.4 : 4.6);
+        const h = wall ? 4.4 : (interior ? 3.6 : 3.4);
+        if (this.camDist === undefined || this.snapCamera) { this.camDist = dist; this.camH = h; }
+        const k = Math.min(1, dt * 4);
+        this.camDist += (dist - this.camDist) * k;
+        this.camH += (h - this.camH) * k;
+        // leve deslocamento lateral (visão por cima do ombro) para não esconder o que está à frente
+        const side = interior ? 0.4 : 0.8;
+        const target = new THREE.Vector3(p.x - fx * this.camDist + fz * side, p.y + this.camH, p.z - fz * this.camDist - fx * side);
+        if (this.snapCamera) { this.camPos.copy(target); this.snapCamera = false; }
+        this.camPos.lerp(target, Math.min(1, dt * 8));
+        this.camera.position.copy(this.camPos);
+        this.camera.lookAt(p.x + fx * 2.4 + fz * 0.3, p.y + 0.5, p.z + fz * 2.4 - fx * 0.3);
+      }
       this.sun.position.set(p.x + 6, 14, p.z + 5);
       this.sun.target.position.set(p.x, 0, p.z);
+    }
+  }
+
+  // ------------------------------------------------ Crescemon selvagens no mapa
+  initWilds() {
+    this.wilds = [];
+    this.grassTiles = [];
+    if (!this.map.encounters) return;
+    for (let z = 0; z < this.H; z++) for (let x = 0; x < this.W; x++) if (this.tile(x, z) === 'G') this.grassTiles.push([x, z]);
+    this.wildTimer = 0.3;
+    // já começa com alguns no mato
+    const start = Math.min(3, this.wildCap());
+    for (let i = 0; i < start; i++) this.spawnWild(true);
+  }
+
+  wildCap() { return Math.min(7, Math.max(2, Math.floor(this.grassTiles.length / 10))); }
+
+  wildAt(x, z) { return this.wilds.find(w => w.x === x && w.z === z) || null; }
+
+  spawnWild(instant) {
+    const enc = this.map.encounters;
+    if (!enc || !this.grassTiles.length) return;
+    const p = this.player;
+    for (let tries = 0; tries < 25; tries++) {
+      const [x, z] = this.grassTiles[Math.floor(Math.random() * this.grassTiles.length)];
+      if (Math.abs(x - p.x) + Math.abs(z - p.z) < 3 || this.blocked(x, z)) continue;
+      const total = enc.list.reduce((a, e) => a + e[3], 0);
+      let r = Math.random() * total, pick = enc.list[0];
+      for (const e of enc.list) { r -= e[3]; if (r <= 0) { pick = e; break; } }
+      const lvl = pick[1] + Math.floor(Math.random() * (pick[2] - pick[1] + 1));
+      const sp = pick[0];
+      const model = makeCreature(SPECIES[sp].model);
+      const dirs = Object.keys(DIRS);
+      const a = new Actor(this, model, x, z, dirs[Math.floor(Math.random() * 4)]);
+      a.sp = sp; a.lvl = lvl;
+      a.life = 40 + Math.random() * 40;
+      a.moveT = 0.5 + Math.random() * 2;
+      a.spawnT = instant ? 1 : 0;
+      a.scaleBase = 0.95;
+      a.hopT = Math.random() * 2;
+      a.group.scale.setScalar(a.scaleBase * a.spawnT + 0.001);
+      const tex = textTexture([`${SPECIES[sp].name}  Nv.${lvl}`], { w: 320, h: 64, bg: '#1e1a24', fg: '#ffffff', size: 30 });
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.9, depthTest: false }));
+      label.renderOrder = 998;
+      label.scale.set(1.5, 0.3, 1);
+      label.position.y = model.height + 0.55;
+      label.visible = false;
+      a.label = label;
+      a.group.add(label);
+      this.mapGroup.add(a.group);
+      this.wilds.push(a);
+      return a;
+    }
+    return null;
+  }
+
+  removeWild(w) {
+    const i = this.wilds.indexOf(w);
+    if (i >= 0) this.wilds.splice(i, 1);
+    this.mapGroup.remove(w.group);
+  }
+
+  updateWilds(dt, busy) {
+    if (!this.wilds || !this.grassTiles || !this.grassTiles.length) return;
+    const p = this.player;
+    if (!busy) {
+      this.wildTimer -= dt;
+      if (this.wildTimer <= 0) {
+        this.wildTimer = 2 + Math.random() * 4;
+        if (this.wilds.length < this.wildCap()) this.spawnWild(false);
+      }
+    }
+    for (const w of [...this.wilds]) {
+      w.update(dt);
+      const s = w.scaleBase * (w.spawnT < 1 ? w.spawnT : 1);
+      if (w.spawnT < 1) { w.spawnT = Math.min(1, w.spawnT + dt * 2.5); }
+      w.group.scale.setScalar(Math.max(0.001, w.despawn ? w.scaleBase * Math.max(0, w.despawn) : s));
+      // pulinhos para aparecer acima do mato alto
+      w.hopT += dt;
+      const idleHop = (w.hopT % 1.8) < 0.35 ? Math.sin(((w.hopT % 1.8) / 0.35) * Math.PI) * 0.35 : 0;
+      w.group.position.y = w.moving ? Math.sin(w.t * Math.PI) * 0.3 : idleHop;
+      const dist = Math.abs(w.x - p.x) + Math.abs(w.z - p.z);
+      w.label.visible = dist <= 4;
+      if (w.despawn !== undefined) {
+        w.despawn -= dt * 2.5;
+        if (w.despawn <= 0) this.removeWild(w);
+        continue;
+      }
+      if (busy) continue;
+      if (w.cooldown > 0) w.cooldown -= dt;
+      w.life -= dt;
+      if (w.life <= 0 && dist > 3 && !w.moving) { w.despawn = 1; continue; }
+      if (w.moving) continue;
+      w.moveT -= dt;
+      if (w.moveT > 0) continue;
+      w.moveT = 1 + Math.random() * 2.2;
+      // se o herói estiver perto, o Crescemon fica curioso e se aproxima
+      let d;
+      if (dist <= 3 && Math.random() < 0.6) {
+        const dx = p.x - w.x, dz = p.z - w.z;
+        d = Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'right' : 'left') : (dz > 0 ? 'down' : 'up');
+      } else d = Object.keys(DIRS)[Math.floor(Math.random() * 4)];
+      const [dx, dz] = DIRS[d];
+      const nx = w.x + dx, nz = w.z + dz;
+      if (nx === p.x && nz === p.z) {
+        w.face(d);
+        if (!p.moving && !(w.cooldown > 0) && this.onWildContact) this.onWildContact(w);
+        continue;
+      }
+      if (this.tile(nx, nz) === 'G' && !this.blocked(nx, nz, w)) w.startMove(d, 0.6);
+      else w.face(d);
     }
   }
 

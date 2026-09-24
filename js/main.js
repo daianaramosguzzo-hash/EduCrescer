@@ -35,7 +35,11 @@ function resize() {
   // em tela em pé, a câmera fica atrás do nosso Crescemon (inimigo aparece acima)
   if (w < h) { bs.baseCam.set(-4.4, 4.2, 8.4); bs.lookTarget.set(0.3, -1.1, 0.2); }
   else { bs.baseCam.set(0.2, 1.9, 6.4); bs.lookTarget.set(0.3, 0.7, 0); }
-  world.camera.fov = w < h ? 55 : 45;
+  applyCamFov();
+}
+function applyCamFov() {
+  const portrait = window.innerWidth < window.innerHeight;
+  world.camera.fov = world.camMode === 'cima' ? (portrait ? 55 : 45) : (portrait ? 64 : 52);
   world.camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
@@ -54,7 +58,7 @@ function newState(name) {
   return {
     v: 1, name, party: [], box: [], bag: {}, money: 3000, flags: {}, badges: [],
     seen: {}, caught: {}, map: 'casa', x: 2, z: 5, dir: 'up', starter: null, rivalStarter: null,
-    lastCenter: { map: 'casa', x: 4, z: 5 }, playTime: 0, sound: true,
+    lastCenter: { map: 'casa', x: 4, z: 5 }, playTime: 0, sound: true, camMode: 'terceira',
   };
 }
 
@@ -76,6 +80,7 @@ let currentMapId = 'casa';
 const G = {
   get state() { return state; },
   get name() { return state.name; },
+  get world() { return world; },
   pendingEvos: new Set(),
   say: async (t, name, sound) => { if (sound) sfx(sound); await UI.say(t, name); },
   ask: (t, opts, name) => UI.ask(t, opts, name),
@@ -237,10 +242,35 @@ async function trainerFlow(npc, spotted) {
   }
 }
 
+async function fightWild(w) {
+  const p = world.player;
+  if (!state.party.some(c => c.hp > 0)) {
+    w.cooldown = 8;
+    await UI.say('Seus Crescemon estão sem energia! Cure-os antes de batalhar.');
+    return;
+  }
+  const dx = w.x - p.x, dz = w.z - p.z;
+  if (Math.abs(dx) + Math.abs(dz) === 1) {
+    p.face(dx > 0 ? 'right' : dx < 0 ? 'left' : dz > 0 ? 'down' : 'up');
+    w.face(dx > 0 ? 'left' : dx < 0 ? 'right' : dz > 0 ? 'up' : 'down');
+  }
+  sfx('cry');
+  await w.emote('!');
+  await G.wildBattle(w.sp, w.lvl);
+  world.removeWild(w);
+}
+
+world.onWildContact = w => {
+  if (mode !== 'world' || busy || hasModal() || world.player.moving) return;
+  runScript(() => fightWild(w));
+};
+
 async function interact() {
   const p = world.player;
   const [fx, fz, dx, dz] = frontOf(p);
   const map = world.map;
+  const wild = world.wildAt(fx, fz);
+  if (wild) return runScript(() => fightWild(wild));
   let npc = world.npcAt(fx, fz);
   if (!npc && world.tile(fx, fz) === 'C') npc = world.npcAt(fx + dx, fz + dz);
   if (npc) return runScript(() => talkTo(npc));
@@ -284,17 +314,14 @@ async function onStepEnd() {
   if (tr) return runScript(tr.run);
   const spot = world.trainerSpotting(G);
   if (spot) return runScript(() => trainerFlow(spot, true));
-  if (world.tile(p.x, p.z) === 'G' && map.encounters && state.party.some(c => c.hp > 0)) {
-    if (Math.random() < map.encounters.rate) {
-      const list = map.encounters.list;
-      const total = list.reduce((s, e) => s + e[3], 0);
-      let r = Math.random() * total;
-      let pick = list[0];
-      for (const e of list) { r -= e[3]; if (r <= 0) { pick = e; break; } }
-      const lvl = pick[1] + Math.floor(Math.random() * (pick[2] - pick[1] + 1));
-      return runScript(() => G.wildBattle(pick[0], lvl));
-    }
-  }
+}
+
+function setCamMode(m) {
+  world.camMode = m;
+  if (state) state.camMode = m;
+  world.snapCamera = true;
+  lockKey = null;
+  applyCamFov();
 }
 
 // ------------------------------------------------ menus
@@ -309,6 +336,9 @@ async function startMenu() {
     opts.push([state.name.toUpperCase(), () => UI.trainerCard(state)]);
     opts.push(['SALVAR', async () => { if (save(false)) await UI.say('{N} salvou o jogo.'); }]);
     opts.push([`SOM: ${soundOn() ? 'LIGADO' : 'DESLIGADO'}`, async () => { setSound(!soundOn()); state.sound = soundOn(); }]);
+    opts.push([`CÂMERA: ${world.camMode === 'cima' ? 'DE CIMA' : '3ª PESSOA'}`, async () => {
+      setCamMode(world.camMode === 'cima' ? 'terceira' : 'cima');
+    }]);
     opts.push(['FECHAR', null]);
     const r = await UI.list($('#start-menu'), opts.map(o => o[0]), { start: sel });
     if (r < 0 || !opts[r][1]) break;
@@ -454,19 +484,37 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+// Em terceira pessoa, as direções são relativas à câmera: cima = frente,
+// esquerda/direita = virar e andar, baixo = dar meia-volta.
+// A direção escolhida fica travada enquanto a tecla estiver pressionada.
+const CLOCK = ['up', 'right', 'down', 'left'];
+const REL_OFF = { up: 0, right: 1, down: 2, left: 3 };
+let lockKey = null, lockAbs = null;
+function absDir(rel) {
+  if (world.camMode === 'cima') return rel;
+  if (rel !== lockKey) {
+    lockKey = rel;
+    lockAbs = CLOCK[(CLOCK.indexOf(world.player.dir) + REL_OFF[rel]) % 4];
+  }
+  return lockAbs;
+}
+
 function updateMovement(dt) {
   const p = world.player;
   if (busy || hasModal() || p.moving) return;
-  const d = heldDir();
-  if (!d) { turnHold = 0; return; }
+  const rel = heldDir();
+  if (!rel) { turnHold = 0; lockKey = null; return; }
+  const d = absDir(rel);
   if (p.dir !== d && !p.justMoved) {
     p.face(d);
-    turnHold = 0.09;
+    turnHold = world.camMode === 'cima' ? 0.09 : 0.2;
     return;
   }
   if (turnHold > 0) { turnHold -= dt; return; }
   const [dx, dz] = DIRS[d];
   const nx = p.x + dx, nz = p.z + dz;
+  const wild = world.wildAt(nx, nz);
+  if (wild) { p.face(d); runScript(() => fightWild(wild)); return; }
   if (world.blocked(nx, nz, p)) {
     p.face(d);
     p.justMoved = false;
@@ -595,6 +643,7 @@ async function startGame(fromSave) {
     state = fromSave;
     for (const c of [...state.party, ...state.box]) reviveUid(c);
     setSound(state.sound !== false);
+    setCamMode(state.camMode || 'terceira');
     UI.setNames(state.name);
     await UI.fade(true);
     mode = 'world';
@@ -606,6 +655,7 @@ async function startGame(fromSave) {
   const name = ($('#name-input').value || '').trim().slice(0, 10) || 'Cris';
   state = newState(name);
   UI.setNames(name);
+  setCamMode('terceira');
   await UI.fade(true);
   bs.clear();
   await intro();
@@ -615,7 +665,8 @@ async function startGame(fromSave) {
   UI.showLocation('Vila Aurora');
   await runScript(async () => {
     await UI.say('Seu quarto em Vila Aurora. Hoje é o dia em que tudo começa!');
-    await UI.say('Controles: setas/WASD para andar, Z/Espaço para interagir, X para correr/voltar e ESC para o menu.');
+    await UI.say('Controles: CIMA anda para frente, ESQUERDA/DIREITA viram, BAIXO dá meia-volta. Z/Espaço (A) interage, X (B) corre e ESC (☰) abre o menu.');
+    await UI.say('Crescemon selvagens aparecem no mato alto. Chegue perto de um e toque em A (ou esbarre nele) para batalhar e tentar capturar! A câmera pode ser trocada no menu.');
   });
 }
 

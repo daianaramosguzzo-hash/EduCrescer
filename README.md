@@ -17,12 +17,16 @@ Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch
 
 ### Controles
 
+A câmera fica atrás do herói, em terceira pessoa. **Cima** anda para frente, **esquerda/direita** viram e andam, **baixo** dá meia-volta. No menu dá para trocar para a câmera **de cima**, com setas fixas no mapa.
+
 | Ação | Teclado | Celular |
 |---|---|---|
 | Andar | Setas / WASD | Direcional |
 | Interagir / confirmar | Z, Espaço, Enter | A |
 | Correr / voltar | X, Shift (segurar para correr) | B |
 | Menu | Esc, M | ☰ |
+
+**Crescemon selvagens** aparecem andando pelo mato alto, com nome e nível acima deles. Chegue perto e aperte **A** (ou esbarre neles) para batalhar e tentar capturar. Às vezes eles ficam curiosos e vêm até você.
 
 O jogo salva sozinho a cada troca de mapa. Também dá para salvar pelo menu.
 
@@ -45,7 +49,7 @@ O jogo salva sozinho a cada troca de mapa. Também dá para salvar pelo menu.
 
 ## Sistemas
 
-- Movimento em grade com câmera 3D, mato alto com encontros aleatórios e treinadores que te veem e vêm batalhar
+- Câmera em terceira pessoa (ou de cima), Crescemon selvagens visíveis no mato alto e treinadores que te veem e vêm batalhar
 - Batalhas por turnos em cena 3D com 9 tipos, vantagens, STAB, críticos, precisão, PP e golpes de status (inclusive "Crescer")
 - 29 criaturas com evolução por nível, aprendizado de golpes e Exp. Compartilhada
 - Captura com orbes animados, equipe de até 6, PC de armazenamento e Crescedex com prévia 3D
