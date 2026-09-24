@@ -1,7 +1,7 @@
 // Aimorés dos Mortos — versão desktop para Windows (Electron)
-const { app, BrowserWindow, protocol, net, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, protocol, Menu, shell, dialog } = require('electron');
 const path = require('path');
-const { pathToFileURL } = require('url');
+const fs = require('fs');
 
 // Os arquivos são servidos por app://game/ (módulos JavaScript funcionam e o progresso salvo
 // fica sempre no mesmo lugar). A raiz é a do repositório, porque o jogo usa lib/three.module.min.js.
@@ -14,6 +14,15 @@ const START = 'app://game/aimores/index.html';
 
 // pasta dos salvamentos sem acento no nome (%APPDATA%\AimoresDosMortos)
 app.setPath('userData', path.join(app.getPath('appData'), 'AimoresDosMortos'));
+// o nome do app entra no User-Agent; com "é" os cabeçalhos das requisições ficam inválidos
+// e o CSS/JS do jogo não carregam. Deixa só caracteres ASCII.
+app.userAgentFallback = app.userAgentFallback.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7e]/g, '');
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp',
+  '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ico': 'image/x-icon',
+};
 
 // uma janela só: abrir o atalho de novo traz o jogo para a frente
 const gotLock = app.requestSingleInstanceLock();
@@ -65,11 +74,18 @@ else {
 
 function start() {
   Menu.setApplicationMenu(null);
-  protocol.handle('app', req => {
-    const { pathname } = new URL(req.url);
-    const file = path.normalize(path.join(ROOT, decodeURIComponent(pathname)));
-    if (!file.startsWith(ROOT)) return new Response('Não encontrado', { status: 404 });
-    return net.fetch(pathToFileURL(file).toString());
+  // lê os arquivos direto (funciona dentro do app.asar) e define o tipo de cada um,
+  // sem depender do registro do Windows
+  protocol.handle('app', async req => {
+    try {
+      const { pathname } = new URL(req.url);
+      const file = path.normalize(path.join(ROOT, decodeURIComponent(pathname)));
+      if (!file.startsWith(ROOT)) return new Response('Não encontrado', { status: 404 });
+      const data = await fs.promises.readFile(file);
+      return new Response(data, { headers: { 'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' } });
+    } catch (e) {
+      return new Response('Não encontrado', { status: 404 });
+    }
   });
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

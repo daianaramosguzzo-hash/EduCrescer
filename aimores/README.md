@@ -32,7 +32,7 @@ O instalador é gerado sozinho pelo GitHub Actions (fluxo *Instalador Windows �
 ```bash
 npm install
 npm run start:aimores      # abre o jogo numa janela de desktop
-npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-1.0.0.exe
+npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-1.0.1.exe
 ```
 
 No Linux e no Mac, o último passo precisa do Wine.
