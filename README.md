@@ -19,7 +19,7 @@ Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch
 
 O projeto também vira um programa de desktop com **Electron**.
 
-- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.3.0.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
+- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.3.1.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
 - **Tela cheia:** aperte **F11**.
 - **Aviso do Windows:** como o instalador não é assinado digitalmente, o Windows pode mostrar *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
 
@@ -28,7 +28,7 @@ Para gerar o instalador você mesmo:
 ```bash
 npm install
 npm start            # abre o jogo numa janela de desktop
-npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.3.0.exe (no Linux precisa do Wine)
+npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.3.1.exe (no Linux precisa do Wine)
 ```
 
 O fluxo do GitHub Actions `Instalador Windows` também gera o `.exe` numa máquina Windows. Rode-o pela aba **Actions** ou crie uma tag `v*` para publicar o instalador numa Release.

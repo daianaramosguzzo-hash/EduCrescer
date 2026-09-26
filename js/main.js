@@ -782,6 +782,7 @@ async function startGame(fromSave) {
   await UI.fade(true);
   bs.clear();
   await intro();
+  busy = true; // sem brecha entre a abertura e as primeiras mensagens do quarto
   mode = 'world';
   await warpTo('casa', 2, 5, 'up', true);
   await UI.fade(false);
