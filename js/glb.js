@@ -1,5 +1,5 @@
 // Modelos 3D importados (glTF/GLB com esqueleto e animações).
-// O herói e a Pingolote usam arquivos próprios em assets/models/. Os modelos
+// A Pingolote usa um arquivo próprio em assets/models/. Os modelos
 // recebem o mesmo acabamento do resto do jogo (sombreamento toon, luz de borda
 // e contorno de desenho) e expõem a mesma interface dos modelos procedurais,
 // então o resto do código não precisa saber de onde o modelo veio.
@@ -12,7 +12,6 @@ import { GRADIENT, addRim } from './models.js';
 
 // altura no jogo (unidades do mapa) e espessura do contorno de cada modelo
 const DEFS = {
-  heroi: { file: 'assets/models/heroi.glb', height: 1.55, outline: 0.012 },
   // pupilas, nariz e espinhos pequenos ficam sem contorno para não borrar o rosto
   pingolote: { file: 'assets/models/pingolote.glb', height: 0.8, outline: 0.011, noOutline: /black|darkblue|spike/i },
 };
@@ -178,69 +177,6 @@ function animator(mixer, clips, speeds = {}) {
       oneShot = a;
     },
     busy: () => !!oneShot,
-  };
-}
-
-// O cabelo do arquivo cobre só o topo e a frente da cabeça; como a câmera fica
-// atrás do herói, uma calota de cabelo bagunçado cobre a nuca (presa ao osso
-// da cabeça, acompanha todas as animações).
-function addBackHair(head, mat, olMat) {
-  const g = new THREE.Group();
-  // coordenadas do modelo: centro da cabeça ~ (0, 1.97, 0); osso Head em y = 1.63
-  g.position.set(0, 1.97 - 1.63, 0.0);
-  const cap = new THREE.SphereGeometry(1, 22, 14, Math.PI + 0.3, Math.PI - 0.6, 0, Math.PI * 0.66);
-  const parts = [[cap, [0, 0, -0.02], [0.6, 0.6, 0.47]]];
-  const lump = new THREE.SphereGeometry(1, 12, 8);
-  let seed = 11;
-  const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-  for (let i = 0; i < 9; i++) {
-    const th = Math.PI * (1.2 + rnd() * 0.6), ph = 0.35 + rnd() * 1.2;
-    const d = new THREE.Vector3(-Math.cos(th) * Math.sin(ph) * 0.58, Math.cos(ph) * 0.58, Math.sin(th) * Math.sin(ph) * 0.46);
-    const r = 0.12 + rnd() * 0.07;
-    parts.push([lump, d.toArray(), [r, r * 0.85, r]]);
-  }
-  // cachos na borda de baixo, para a nuca não terminar numa linha reta
-  for (let i = 0; i < 6; i++) {
-    const th = Math.PI * (1.18 + i * 0.128), ph = Math.PI * (0.6 + rnd() * 0.05);
-    const d = new THREE.Vector3(-Math.cos(th) * Math.sin(ph) * 0.55, Math.cos(ph) * 0.55, Math.sin(th) * Math.sin(ph) * 0.44);
-    const r = 0.1 + rnd() * 0.04;
-    parts.push([lump, d.toArray(), [r, r * 1.1, r * 0.8]]);
-  }
-  for (const [geo, pos, sc] of parts) {
-    if (!geo.attributes.onormal) geo.setAttribute('onormal', geo.attributes.normal.clone());
-    const m = new THREE.Mesh(geo, mat);
-    m.position.set(...pos); m.scale.set(...sc);
-    m.castShadow = true;
-    const ol = new THREE.Mesh(geo, olMat);
-    ol.userData.noOutline = true;
-    m.add(ol);
-    g.add(m);
-  }
-  head.add(g);
-}
-
-// Herói: mesma interface de makeHuman (group, head, body, update, pose)
-export function makeGlbHuman() {
-  const it = instance('heroi');
-  const anim = animator(it.mixer, it.clips, { Andar: 1.55, Correr: 1.25, Atacar: 1.1 });
-  anim.loop('Idle', 0);
-  let head = null, body = null, hairMat = null;
-  it.scene.traverse(o => {
-    if (o.name === 'Head') head = o;
-    if (o.name === 'Spine') body = o;
-    if (o.isMesh && o.material.name === 'hair') hairMat = o.material;
-  });
-  if (head && hairMat) addBackHair(head, hairMat, it.olMat);
-  return {
-    group: it.group, head: head || it.inner, body: body || it.inner, height: it.height, glb: true,
-    update(dt, moving, speed = 1) {
-      if (!anim.busy()) anim.loop(moving ? (speed > 1.3 ? 'Correr' : 'Andar') : 'Idle');
-      it.mixer.update(dt);
-    },
-    pose(name) {
-      if (name === 'throw' || name === 'fist') { anim.once('Atacar'); it.mixer.update(name === 'fist' ? 0.25 : 0.05); }
-    },
-    play(name) { anim.once(name); },
   };
 }
 

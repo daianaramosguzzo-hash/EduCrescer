@@ -1,7 +1,8 @@
 // Modelos 3D procedurais (estilo cartoon) para humanos e Crescemon.
 import * as THREE from '../lib/three.module.min.js';
 import { MAT_TEX } from './textures.js';
-import { hasGlb, makeGlbHuman, makeGlbCreature } from './glb.js';
+import { hasGlb, makeGlbCreature } from './glb.js';
+import { makeHero } from './hero.js';
 
 // ---------- materiais toon ----------
 const gradient = (() => {
@@ -120,8 +121,8 @@ export function textTexture(lines, opts = {}) {
 
 // ---------- HUMANOS ----------
 export function makeHuman(o = {}) {
-  // personagens com modelo 3D importado (ex.: o herói) usam o arquivo GLB
-  if (o.glb && hasGlb(o.glb)) return makeGlbHuman(o.glb);
+  // o herói tem modelo próprio, feito a partir da ficha de personagem (hero.js)
+  if (o.hero) return makeHero(o);
   const opt = {
     skin: '#f6c9a0', hair: '#3b2415', hairStyle: 'short', shirt: '#6a8ac8', pants: '#3a3a5a',
     shorts: false, shoes: '#6a4a3a', socks: null, sockStripe: null, jacket: null, lining: null,
@@ -376,7 +377,7 @@ export const HERO_LOOK = {
   skin: '#f4c7a1', hair: '#3a2314', hairStyle: 'messy', shirt: '#9c9c9c', logo: 'CRESCER',
   jacket: '#9b6231', lining: '#dcc38e', pants: '#1c1c1c', shorts: true, socks: '#f8f8f8',
   sockStripe: '#3a5a9a', shoes: '#f4f4f4',
-  glb: 'heroi', // modelo 3D em assets/models/heroi.glb (o procedural acima fica de reserva)
+  hero: true, // modelo detalhado em js/hero.js (as cores acima servem ao modelo genérico)
 };
 
 export const LOOKS = {
