@@ -1,10 +1,12 @@
 // Modelos 3D procedurais (estilo cartoon) para humanos e Crescemon.
 import * as THREE from '../lib/three.module.min.js';
+import { MAT_TEX } from './textures.js';
+import { hasGlb, makeGlbHuman, makeGlbCreature } from './glb.js';
 
 // ---------- materiais toon ----------
 const gradient = (() => {
-  const data = new Uint8Array([90, 90, 90, 255, 175, 175, 175, 255, 255, 255, 255, 255]);
-  const t = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
+  const data = new Uint8Array([108, 108, 108, 255, 158, 158, 158, 255, 212, 212, 212, 255, 255, 255, 255, 255]);
+  const t = new THREE.DataTexture(data, 4, 1, THREE.RGBAFormat);
   t.minFilter = t.magFilter = THREE.NearestFilter;
   t.needsUpdate = true;
   return t;
@@ -21,6 +23,36 @@ export function toon(color, opts = {}) {
   return m;
 }
 function stripOpts(o) { const r = { ...o }; delete r.unique; return r; }
+
+// Luz de contorno (rim light) suave, típica de animação: destaca personagens
+// e criaturas do cenário sem mudar suas cores.
+export function addRim(m, strength = 0.32, color = '#fff4e0') {
+  const rc = new THREE.Color(color);
+  m.onBeforeCompile = sh => {
+    sh.uniforms.uRimColor = { value: rc };
+    sh.fragmentShader = 'uniform vec3 uRimColor;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
+      {
+        vec3 vdir = normalize(vViewPosition);
+        float rim = pow(1.0 - clamp(dot(normal, vdir), 0.0, 1.0), 3.0);
+        rim *= smoothstep(-0.2, 0.6, normal.y + 0.3);
+        outgoingLight += uRimColor * rim * ${strength.toFixed(3)} * (0.6 + 0.4 * diffuseColor.rgb);
+      }
+      #include <opaque_fragment>`);
+  };
+  m.customProgramCacheKey = () => 'rim' + strength;
+  return m;
+}
+
+// material com textura procedural (tecido, cabelo, pelo...) + rim light
+const charCache = new Map();
+export function charMat(color, texName = null, extra = {}) {
+  const key = color + '|' + texName + '|' + (extra.transparent ? extra.opacity : '');
+  if (charCache.has(key)) return charCache.get(key);
+  const m = new THREE.MeshToonMaterial({ color, gradientMap: gradient, map: texName ? MAT_TEX[texName]() : null, ...extra });
+  addRim(m, extra.transparent ? 0.2 : 0.3);
+  charCache.set(key, m);
+  return m;
+}
 
 const OUTLINE_MAT = new THREE.MeshBasicMaterial({ color: 0x1a1410, side: THREE.BackSide });
 
@@ -88,6 +120,8 @@ export function textTexture(lines, opts = {}) {
 
 // ---------- HUMANOS ----------
 export function makeHuman(o = {}) {
+  // personagens com modelo 3D importado (ex.: o herói) usam o arquivo GLB
+  if (o.glb && hasGlb(o.glb)) return makeGlbHuman(o.glb);
   const opt = {
     skin: '#f6c9a0', hair: '#3b2415', hairStyle: 'short', shirt: '#6a8ac8', pants: '#3a3a5a',
     shorts: false, shoes: '#6a4a3a', socks: null, sockStripe: null, jacket: null, lining: null,
@@ -96,30 +130,40 @@ export function makeHuman(o = {}) {
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const skin = toon(opt.skin);
-  const hairM = toon(opt.hair);
+  const skin = charMat(opt.skin, 'skin');
+  const hairM = charMat(opt.hair, 'hair');
+  const T = (c, t) => charMat(c, t);
 
   // pernas
   const legs = [];
   for (const side of [-1, 1]) {
     const leg = new THREE.Group();
     leg.position.set(side * 0.095, 0.45, 0);
-    const shoe = mesh(geo.sphere, toon(opt.shoes), [0, -0.4, 0.035], [0.085, 0.06, 0.13]);
-    const sole = mesh(geo.sphere, toon('#8a8a8a'), [0, -0.425, 0.035], [0.088, 0.03, 0.132]);
+    const shoe = mesh(geo.sphere, T(opt.shoes, 'leather'), [0, -0.4, 0.035], [0.085, 0.06, 0.13]);
+    const sole = mesh(geo.sphere, T('#8a8a8a', 'leather'), [0, -0.425, 0.035], [0.088, 0.03, 0.132]);
     leg.add(sole, shoe);
+    // cadarços e biqueira
+    const lace = T(shade(opt.shoes, -0.25), null);
+    for (let i = 0; i < 2; i++) { const l = mesh(geo.box, lace, [0, -0.35, 0.05 + i * 0.035], [0.07, 0.008, 0.012]); l.userData.noOutline = true; leg.add(l); }
+    const toe = mesh(geo.sphere, T(shade(opt.shoes, -0.06), 'leather'), [0, -0.41, 0.13], [0.06, 0.035, 0.035]);
+    toe.userData.noOutline = true;
+    leg.add(toe);
     if (opt.shorts) {
       if (opt.socks) {
-        leg.add(mesh(geo.cyl, toon(opt.socks), [0, -0.3, 0], [0.052, 0.14, 0.052]));
+        leg.add(mesh(geo.cyl, T(opt.socks, 'knit'), [0, -0.3, 0], [0.052, 0.14, 0.052]));
         if (opt.sockStripe) {
-          const st = toon(opt.sockStripe);
+          const st = T(opt.sockStripe, 'knit');
           leg.add(mesh(geo.cyl, st, [0, -0.25, 0], [0.054, 0.018, 0.054]));
           leg.add(mesh(geo.cyl, st, [0, -0.285, 0], [0.054, 0.018, 0.054]));
         }
       }
       leg.add(mesh(geo.cyl, skin, [0, -0.17, 0], [0.047, 0.16, 0.047]));
-      leg.add(mesh(geo.cyl, toon(opt.pants), [0, -0.04, 0], [0.085, 0.2, 0.085]));
+      leg.add(mesh(geo.cyl, T(opt.pants, 'twill'), [0, -0.04, 0], [0.085, 0.2, 0.085]));
+      const hem = mesh(geo.cyl, T(shade(opt.pants, -0.05), 'twill'), [0, -0.13, 0], [0.088, 0.02, 0.088]);
+      hem.userData.noOutline = true;
+      leg.add(hem);
     } else if (!opt.dress) {
-      leg.add(mesh(geo.cyl, toon(opt.pants), [0, -0.18, 0], [0.06, 0.4, 0.06]));
+      leg.add(mesh(geo.cyl, T(opt.pants, 'twill'), [0, -0.18, 0], [0.06, 0.4, 0.06]));
     } else {
       leg.add(mesh(geo.cyl, skin, [0, -0.2, 0], [0.045, 0.36, 0.045]));
     }
@@ -129,11 +173,14 @@ export function makeHuman(o = {}) {
 
   // quadril e tronco
   if (opt.dress) {
-    body.add(mesh(geo.cone, toon(opt.dress), [0, 0.5, 0], [0.26, 0.38, 0.2]));
+    body.add(mesh(geo.cone, T(opt.dress, 'cotton'), [0, 0.5, 0], [0.26, 0.38, 0.2]));
   } else {
-    body.add(mesh(geo.box, toon(opt.pants), [0, 0.48, 0], [0.34, 0.12, 0.22]));
+    body.add(mesh(geo.box, T(opt.pants, 'twill'), [0, 0.48, 0], [0.34, 0.12, 0.22]));
+    const belt = mesh(geo.box, T(shade(opt.pants, -0.12), 'leather'), [0, 0.535, 0], [0.345, 0.03, 0.225]);
+    belt.userData.noOutline = true;
+    body.add(belt);
   }
-  let torsoMat = toon(opt.dress || opt.shirt);
+  let torsoMat = T(opt.dress || opt.shirt, 'cotton');
   if (opt.logo) {
     const tex = textTexture([opt.logo], {
       bg: opt.shirt, fg: '#3a3a3a', size: 34, dy: -10, w: 256, h: 256,
@@ -144,15 +191,15 @@ export function makeHuman(o = {}) {
         g.fillRect(52, 156, 52, 6); g.fillRect(56, 166, 44, 5); g.fillRect(62, 175, 32, 4);
       },
     });
-    const logoMat = new THREE.MeshToonMaterial({ map: tex, gradientMap: gradient });
+    const logoMat = addRim(new THREE.MeshToonMaterial({ map: tex, gradientMap: gradient }), 0.3);
     torsoMat = [torsoMat, torsoMat, torsoMat, torsoMat, logoMat, torsoMat];
   }
   const torso = mesh(geo.box, torsoMat, [0, 0.71, 0], [0.36, 0.38, 0.22]);
   body.add(torso);
 
   if (opt.jacket || opt.coat) {
-    const jc = toon(opt.coat ? '#f4f4f0' : opt.jacket);
-    const ln = toon(opt.coat ? '#e0e0dc' : (opt.lining || opt.jacket));
+    const jc = opt.coat ? T('#f4f4f0', 'cotton') : T(opt.jacket, 'canvas');
+    const ln = opt.coat ? T('#e0e0dc', 'cotton') : T(opt.lining || opt.jacket, opt.lining ? 'fleece' : 'canvas');
     const len = opt.coat ? 0.62 : 0.43;
     const cy = 0.9 - len / 2;
     for (const side of [-1, 1]) {
@@ -160,6 +207,22 @@ export function makeHuman(o = {}) {
       body.add(mesh(geo.box, ln, [side * 0.078, cy, 0.128], [0.022, len, 0.012]));
     }
     body.add(mesh(geo.box, jc, [0, cy, -0.115], [0.38, len, 0.04]));
+    // bolsos, barra e puxadores de zíper
+    const pk = T(shade(opt.coat ? '#f4f4f0' : opt.jacket, -0.07), opt.coat ? 'cotton' : 'canvas');
+    const metal = T('#c8c8cc', 'metal');
+    for (const side of [-1, 1]) {
+      const pocket = mesh(geo.box, pk, [side * 0.14, cy - len * 0.25, 0.132], [0.085, 0.07, 0.01]);
+      pocket.userData.noOutline = true;
+      body.add(pocket);
+      const hemJ = mesh(geo.box, pk, [side * 0.135, cy - len / 2 + 0.015, 0.006], [0.125, 0.03, 0.255]);
+      hemJ.userData.noOutline = true;
+      body.add(hemJ);
+      if (!opt.coat) {
+        const zip = mesh(geo.box, metal, [side * 0.09, cy + len * 0.2, 0.134], [0.012, 0.03, 0.008]);
+        zip.userData.noOutline = true;
+        body.add(zip);
+      }
+    }
     // capuz / gola
     const hood = mesh(geo.torus, jc, [0, 0.93, -0.05], [0.14, 0.11, 0.2], [Math.PI / 2 + 0.25, 0, 0]);
     body.add(hood);
@@ -168,13 +231,13 @@ export function makeHuman(o = {}) {
 
   // braços
   const arms = [];
-  const sleeve = toon(opt.coat ? '#f4f4f0' : (opt.jacket || opt.dress || opt.shirt));
+  const sleeve = opt.coat ? T('#f4f4f0', 'cotton') : opt.jacket ? T(opt.jacket, 'canvas') : T(opt.dress || opt.shirt, 'cotton');
   for (const side of [-1, 1]) {
     const arm = new THREE.Group();
     arm.position.set(side * 0.235, 0.87, 0);
     arm.add(mesh(geo.sphere, sleeve, [0, -0.02, 0], 0.07));
     arm.add(mesh(geo.cyl, sleeve, [0, -0.17, 0], [0.058, 0.32, 0.058]));
-    if (opt.lining && opt.jacket) arm.add(mesh(geo.cyl, toon(opt.lining), [0, -0.33, 0], [0.06, 0.03, 0.06]));
+    if (opt.lining && opt.jacket) arm.add(mesh(geo.cyl, T(opt.lining, 'fleece'), [0, -0.33, 0], [0.06, 0.03, 0.06]));
     arm.add(mesh(geo.sphere, skin, [0, -0.38, 0], 0.052));
     arm.rotation.z = side * 0.08;
     body.add(arm);
@@ -189,14 +252,29 @@ export function makeHuman(o = {}) {
   head.add(mesh(geo.sphere, skin, [-0.25, -0.01, 0], [0.05, 0.065, 0.045]));
   head.add(mesh(geo.sphere, skin, [0.25, -0.01, 0], [0.05, 0.065, 0.045]));
   // olhos grandes de desenho
-  const white = toon('#ffffff');
+  const white = charMat('#ffffff');
   const black = toon('#111111');
+  const irisM = toon(opt.eyes || shade(opt.hair, 0.05));
+  const shineM = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+  const lidM = toon(shade(opt.skin, -0.3));
+  const browM = toon(shade(opt.hair, -0.05));
+  const blushM = new THREE.MeshBasicMaterial({ color: '#ff8a7a', transparent: true, opacity: 0.28, depthWrite: false });
+  const noOl = m => { m.userData.noOutline = true; m.castShadow = false; return m; };
   for (const side of [-1, 1]) {
     const eye = mesh(geo.sphere, white, [side * 0.092, 0.025, 0.2], [0.085, 0.09, 0.06]);
     head.add(eye);
-    const pupil = mesh(geo.sphere, black, [side * 0.088, 0.02, 0.258], [0.02, 0.022, 0.012]);
-    pupil.userData.noOutline = true;
-    head.add(pupil);
+    head.add(noOl(mesh(geo.sphere, irisM, [side * 0.088, 0.02, 0.254], [0.03, 0.033, 0.01])));
+    head.add(noOl(mesh(geo.sphere, black, [side * 0.088, 0.02, 0.259], [0.02, 0.022, 0.012])));
+    head.add(noOl(mesh(geo.sphere, shineM, [side * 0.088 + 0.008, 0.032, 0.266], [0.007, 0.008, 0.004])));
+    head.add(noOl(mesh(geo.sphere, shineM, [side * 0.088 - 0.006, 0.01, 0.266], [0.0035, 0.004, 0.003])));
+    // linha da pálpebra superior
+    head.add(noOl(mesh(new THREE.TorusGeometry(0.083, 0.006, 5, 14, Math.PI * 0.8), lidM, [side * 0.092, 0.027, 0.232], [1, 1.05, 1], [0, 0, Math.PI * 0.1])));
+    // sobrancelha
+    head.add(noOl(mesh(geo.cyl, browM, [side * 0.1, 0.132, 0.214], [0.011, 0.075, 0.011], [0.25, 0, Math.PI / 2 + side * 0.18])));
+    // bochecha rosada
+    const blush = noOl(mesh(geo.sphere, blushM, [side * 0.155, -0.055, 0.185], [0.045, 0.028, 0.02], [0, side * 0.55, 0]));
+    blush.renderOrder = 2;
+    head.add(blush);
   }
   const nose = mesh(geo.sphere, toon(shade(opt.skin, -0.08)), [0, -0.04, 0.245], [0.022, 0.028, 0.02]);
   nose.userData.noOutline = true;
@@ -207,13 +285,15 @@ export function makeHuman(o = {}) {
 
   buildHair(head, opt, hairM);
   if (opt.hat) {
-    head.add(mesh(geo.hemi, toon(opt.hat), [0, 0.06, 0], [0.275, 0.24, 0.275]));
-    head.add(mesh(geo.cyl, toon(opt.hat), [0, 0.07, 0.2], [0.17, 0.02, 0.14]));
+    head.add(mesh(geo.hemi, T(opt.hat, 'cotton'), [0, 0.06, 0], [0.275, 0.24, 0.275]));
+    head.add(mesh(geo.cyl, T(opt.hat, 'cotton'), [0, 0.07, 0.2], [0.17, 0.02, 0.14]));
   }
   body.add(head);
 
   root.scale.setScalar(opt.scale);
   addOutline(root, 0.012);
+  // só as peças com contorno projetam sombra: detalhes minúsculos e cascas de contorno não mudam a sombra
+  root.traverse(o => { if (o.isMesh) o.castShadow = !o.userData.noOutline; });
 
   let phase = 0;
   const api = {
@@ -296,6 +376,7 @@ export const HERO_LOOK = {
   skin: '#f4c7a1', hair: '#3a2314', hairStyle: 'messy', shirt: '#9c9c9c', logo: 'CRESCER',
   jacket: '#9b6231', lining: '#dcc38e', pants: '#1c1c1c', shorts: true, socks: '#f8f8f8',
   sockStripe: '#3a5a9a', shoes: '#f4f4f4',
+  glb: 'heroi', // modelo 3D em assets/models/heroi.glb (o procedural acima fica de reserva)
 };
 
 export const LOOKS = {
@@ -326,22 +407,37 @@ export const LOOKS = {
 };
 
 // ---------- CRESCEMON ----------
-export function makeCreature(spec) {
+const SKIN_BY_PLAN = { quad: 'fur', bird: 'feathers', bat: 'fur', fish: 'scales', serpent: 'scales', rock: 'rock', beetle: 'chitin', worm: 'chitin', cocoon: 'chitin', butterfly: 'chitin', crab: 'chitin', ghost: 'smooth', star: 'smooth', mushroom: 'smooth', crystal: null };
+
+// variant (0..1): cada indivíduo selvagem tem leve diferença de tom e tamanho
+export function makeCreature(spec, variant = null) {
+  if (spec.glb && hasGlb(spec.glb)) return makeGlbCreature(spec.glb, variant);
   const root = new THREE.Group();
   const inner = new THREE.Group();
   root.add(inner);
-  const c1 = toon(spec.c1), c2 = toon(spec.c2 || '#ffffff');
-  const c3 = toon(spec.c3 || shade(spec.c1, -0.2));
-  const c4 = toon(spec.c4 || '#ffe060');
+  let skinKind = SKIN_BY_PLAN[spec.plan] || 'smooth';
+  if (spec.plan === 'quad' && spec.low) skinKind = 'smooth';
+  const vq = variant === null ? 0 : Math.round((variant - 0.5) * 4) / 4; // -0.5..0.5 em 5 passos
+  const base1 = vq ? shade(spec.c1, vq * 0.07) : spec.c1;
+  const c1 = charMat(base1, skinKind), c2 = charMat(spec.c2 || '#ffffff', skinKind === 'fur' ? 'fur' : 'smooth');
+  const c3 = charMat(spec.c3 || shade(spec.c1, -0.2), skinKind === 'rock' ? 'rock' : skinKind === 'scales' ? 'scales' : 'smooth');
+  const c4 = charMat(spec.c4 || '#ffe060', 'smooth');
+  const irisCol = spec.eye || (spec.c3 ? shade(spec.c3, -0.15) : shade(spec.c1, -0.35));
   const ex = new Set(spec.extras || []);
   const anim = { flames: [], wings: [], float: false, spin: null, tail: null };
 
   const eyes = (parent, x, y, z, r = 0.075, spread = 0.12) => {
     for (const side of [-1, 1]) {
-      parent.add(mesh(geo.sphere, toon('#ffffff'), [x + side * spread, y, z], [r, r * 1.1, r * 0.7]));
-      const p = mesh(geo.sphere, toon('#111'), [x + side * spread * 0.95, y + r * 0.1, z + r * 0.6], [r * 0.45, r * 0.55, r * 0.3]);
+      parent.add(mesh(geo.sphere, charMat('#ffffff'), [x + side * spread, y, z], [r, r * 1.1, r * 0.7]));
+      const ir = mesh(geo.sphere, toon(irisCol), [x + side * spread * 0.95, y + r * 0.08, z + r * 0.55], [r * 0.62, r * 0.72, r * 0.3]);
+      ir.userData.noOutline = true;
+      parent.add(ir);
+      const p = mesh(geo.sphere, toon('#111'), [x + side * spread * 0.95, y + r * 0.1, z + r * 0.62], [r * 0.4, r * 0.5, r * 0.3]);
       p.userData.noOutline = true;
       parent.add(p);
+      const sh2 = mesh(geo.sphere, toon('#ffffff'), [x + side * spread * 0.95 - r * 0.2, y - r * 0.15, z + r * 0.85], r * 0.08);
+      sh2.userData.noOutline = true;
+      parent.add(sh2);
       const sh = mesh(geo.sphere, toon('#ffffff'), [x + side * spread * 0.95 + 0.012, y + r * 0.35, z + r * 0.8], r * 0.15);
       sh.userData.noOutline = true;
       parent.add(sh);
@@ -382,6 +478,11 @@ export function makeCreature(spec) {
       const lx = sx * (low ? 0.24 : 0.17), lz = sz * 0.24;
       inner.add(mesh(geo.cyl, c1, [lx, by / 2 - 0.02, lz], [0.07, by, 0.07], low ? [0, 0, sx * 0.6] : undefined));
       inner.add(mesh(geo.sphere, c2, [lx * (low ? 1.3 : 1), 0.04, lz + 0.03], [0.08, 0.05, 0.1]));
+      if (!spec.low) for (const cx of [-0.035, 0, 0.035]) {
+        const cl = mesh(geo.cone, toon('#f4ecd8'), [lx + cx, 0.025, lz + 0.12], [0.012, 0.04, 0.012], [Math.PI / 2, 0, 0]);
+        cl.userData.noOutline = true;
+        inner.add(cl);
+      }
     }
     const head = new THREE.Group();
     head.position.set(0, low ? by + 0.14 : by + 0.3, low ? 0.46 : 0.38);
@@ -596,7 +697,7 @@ export function makeCreature(spec) {
     }
   } else if (plan === 'ghost') {
     anim.float = true;
-    const gm = toon(spec.c1, { transparent: true, opacity: 0.9 });
+    const gm = charMat(base1, 'smooth', { transparent: true, opacity: 0.9 });
     inner.add(mesh(geo.sphere, gm, [0, 0.8, 0], [0.34, 0.32, 0.32]));
     inner.add(mesh(geo.cone, gm, [0, 0.45, -0.1], [0.3, 0.5, 0.26], [Math.PI + 0.35, 0, 0]));
     for (const s of [-1, 1]) inner.add(mesh(geo.sphere, gm, [s * 0.34, 0.7, 0.05], [0.1, 0.07, 0.07]));
@@ -778,10 +879,10 @@ export function makeCreature(spec) {
     anim.spin = core;
   }
 
-  const s = spec.size * 1.6;
+  const s = spec.size * 1.6 * (variant === null ? 1 : 0.94 + variant * 0.12);
   inner.scale.setScalar(s);
   addOutline(root, 0.02);
-  root.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  root.traverse(o => { if (o.isMesh) o.castShadow = !o.userData.noOutline; });
 
   let t = Math.random() * 10;
   const baseY = anim.float ? 0.12 : 0;

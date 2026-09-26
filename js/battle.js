@@ -3,7 +3,7 @@ import * as THREE from '../lib/three.module.min.js';
 import { SPECIES, MOVES, ITEMS, TYPES, typeMult } from './data.js';
 import { createCreature, recalc, nameOf, xpForLevel, movesAtLevel } from './creature.js';
 import { makeCreature, makeHuman, makeOrb, toon, LOOKS, HERO_LOOK, GRADIENT } from './models.js';
-import { SKIES, shared, makeSky, makeMountains, plantTrees, plantTufts, tuftGeometry, waterMaterial, TEX, texMat, boxW, hash as ehash } from './env.js';
+import { SKIES, shared, makeSky, makeMountains, plantTrees, plantTufts, tuftGeometry, waterMaterial, TEX, texMat, boxW, hash as ehash, flowerGeometry, rockGeometry, rockMaterial, hullGeometry, bushGeometry } from './env.js';
 import { say, ask, list, hideDialog, hpColor, partyScreen, bagScreen, typeBadge } from './ui.js';
 import { sfx, playMusic } from './audio.js';
 
@@ -52,7 +52,10 @@ export class BattleScene {
     sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
     Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 });
-    this.scene.add(hemi, sun);
+    this.fill = new THREE.DirectionalLight('#bcd8ff', 0.35);
+    this.fill.position.set(-4, 5, -3);
+    this.scene.add(hemi, sun, this.fill);
+    this.gradeName = 'day';
     this.env = new THREE.Group();
     this.scene.add(this.env);
     this.ally = null; this.foe = null;
@@ -71,6 +74,8 @@ export class BattleScene {
     const sun = this.scene.children.find(o => o.isDirectionalLight);
     if (outdoor) {
       const pr = SKIES[skyName] || SKIES[bgName === 'forest' ? 'forest' : bgName === 'beach' ? 'beach' : 'day'];
+      this.gradeName = skyName || (bgName === 'forest' ? 'forest' : bgName === 'beach' ? 'beach' : 'day');
+      this.fill.color.set(pr.hemiSky); this.fill.intensity = pr.sunI * 0.22;
       this.scene.background = new THREE.Color(pr.fog);
       this.scene.fog = new THREE.Fog(pr.fog, 16, 70);
       hemi.color.set(pr.hemiSky); hemi.groundColor.set(pr.hemiGround); hemi.intensity = pr.hemiI * 1.1;
@@ -115,11 +120,40 @@ export class BattleScene {
         if (z > 0.8) continue;
         tufts.push({ x, z, s: 0.8 + ehash(i, 5) * 0.8, r: ehash(i, 9) * 6 });
       }
-      if (!beach) this.env.add(plantTufts(tufts, tuftGeometry(0.34, 7, pr.grassDark, pr.grassLight), { amp: 0.12 }));
+      if (!beach) {
+        this.env.add(plantTufts(tufts, tuftGeometry(0.34, 7, pr.grassDark, pr.grassLight), { amp: 0.12, fade: 0 }));
+        // flores e capim baixo espalhados pela arena
+        const cols = ['#f05a7a', '#ffd23a', '#ffffff', '#b07af0'];
+        cols.forEach((c, ci) => {
+          const l = [];
+          for (let i = 0; i < 40; i++) {
+            const x = (ehash(i, 101 + ci) - 0.5) * 24, z = (ehash(i, 211 + ci) - 0.5) * 18 - 2;
+            if (Math.hypot(x - ALLY_POS.x, z - ALLY_POS.z) < 1.5 || Math.hypot(x - FOE_POS.x, z - FOE_POS.z) < 1.4 || z > 1.5) continue;
+            l.push({ x, z, s: 1 + ehash(i, 7) * 0.5, r: ehash(i, 9) * 6 });
+          }
+          this.env.add(plantTufts(l, flowerGeometry(c), { amp: 0.15, fade: 0, base: 0.1 }));
+        });
+        const bushes = [];
+        for (let i = 0; i < 16; i++) {
+          const a = -2.2 + (i / 15) * 4.4;
+          bushes.push({ x: Math.sin(a) * 8.5, z: -Math.cos(a) * 6 - 2.5, s: 1.1 + ehash(i, 3) * 0.6, r: ehash(i, 5) * 6 });
+        }
+        const bg = bushGeometry(pr, 1);
+        this.env.add(plantTufts(bushes, bg.main, { amp: 0.03, base: 0.2, double: false, outline: bg.outline, fade: 0 }));
+      }
+      const rocks = [];
+      for (let i = 0; i < 9; i++) {
+        const a = -2 + (i / 8) * 4;
+        rocks.push({ x: Math.sin(a) * 7 + (ehash(i, 1) - 0.5) * 2, y: 0, z: -Math.cos(a) * 5 - 1.5, s: 0.25 + ehash(i, 2) * 0.35, r: ehash(i, 4) * 6 });
+      }
+      const rg = rockGeometry(31);
+      this.env.add(plantTufts(rocks, rg, { material: rockMaterial(), outline: hullGeometry(rg) }));
       this.env.add(makeMountains(0, -6, 26, pr, 7));
     } else {
       this.scene.background = new THREE.Color(bg.sky);
       this.scene.fog = new THREE.Fog(bg.sky, 14, 40);
+      this.gradeName = bgName === 'cave' ? 'cave' : 'indoor';
+      this.fill.color.set('#ffe8d0'); this.fill.intensity = 0.3;
       hemi.color.set('#fff6ea'); hemi.groundColor.set('#6a5a4a'); hemi.intensity = 1.2;
       sun.color.set('#fff0dc'); sun.intensity = 1.4;
       sun.position.set(3, 8, 5);
@@ -184,7 +218,7 @@ export class BattleScene {
 
   placeCreature(side, c) {
     if (this[side]) this.scene.remove(this[side].group);
-    const m = makeCreature(SPECIES[c.sp].model);
+    const m = makeCreature(SPECIES[c.sp].model, c.variant ?? null);
     const p = side === 'ally' ? ALLY_POS : FOE_POS;
     m.group.position.set(p.x, 0.12, p.z);
     m.group.rotation.y = side === 'ally' ? ALLY_ROT : FOE_ROT;
@@ -305,6 +339,7 @@ export class BattleScene {
     const from = me.group.position.clone();
     const to = (side === 'ally' ? FOE_POS : ALLY_POS).clone();
     const mv = MOVES[move];
+    if (me.play) me.play('Atacar'); // modelos GLB têm animação própria de ataque
     const projTypes = ['fogo', 'agua', 'planta', 'eletrico', 'sombra', 'pedra'];
     if (mv.cat === 'status') {
       await animate(300, k => { me.group.position.y = 0.12 + Math.sin(k * Math.PI) * 0.3; });

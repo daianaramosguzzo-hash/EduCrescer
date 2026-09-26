@@ -6,6 +6,7 @@ import { sfx } from './audio.js';
 import {
   SKIES, shared, setAnisotropy, makeSky, makeMountains, buildTerrain, waterMaterial, plantTrees, plantTufts,
   tuftGeometry, TEX, texMat, boxW, blobShadow, Ambient, hash as ehash,
+  scatterDecor, rockGeometry, rockMaterial, hullGeometry,
 } from './env.js';
 
 export const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -109,6 +110,12 @@ export class World {
     this.sunDir = new THREE.Vector3(0.5, 0.8, 0.3).normalize();
     this.roomLight = new THREE.PointLight('#ffe2b8', 0, 18, 1.4);
     this.scene.add(this.roomLight);
+    // luz de preenchimento vinda do lado oposto ao sol: simula a luz que
+    // rebate no chão e no céu, clareando as sombras sem deixá-las chapadas
+    this.fill = new THREE.DirectionalLight('#bcd8ff', 0.35);
+    this.scene.add(this.fill, this.fill.target);
+    this.quality = { density: 1, shadow: 2048 };
+    this.gradeName = 'day';
     this.mapGroup = new THREE.Group();
     this.scene.add(this.mapGroup);
     this.npcs = new Map();
@@ -124,10 +131,19 @@ export class World {
     this.onWildContact = null;
   }
 
+  setQuality(Q) {
+    this.quality = Q;
+    const sz = Q.shadow;
+    if (this.sun.shadow.mapSize.x !== sz) {
+      this.sun.shadow.mapSize.set(sz, sz);
+      if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
+    }
+  }
+
   setPlayerModel(model) {
     this.player = new Actor(this, model, 0, 0, 'down');
     this.scene.add(this.player.group);
-    this.player.group.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    this.player.group.traverse(o => { if (o.isMesh) o.castShadow = !o.userData.noOutline; });
   }
 
   // ------------------------------------------------ construção do mapa
@@ -166,6 +182,8 @@ export class World {
       this.roomLight.intensity = 0;
       this.sky = makeSky(pr);
       this.scene.add(this.sky);
+      this.gradeName = map.sky || (map.dark ? 'forest' : 'day');
+      this.fill.color.set(pr.hemiSky); this.fill.intensity = pr.sunI * 0.22;
       this.buildOutdoor(map);
       this.ambient.setup(pr, { x0: 0, x1: this.W - 1, z0: 0, z1: this.H - 1 });
     } else {
@@ -184,6 +202,8 @@ export class World {
         this.roomLight.color.set('#6ac8ff');
         this.roomLight.intensity = 14;
       }
+      this.gradeName = map.floor === 'cave' ? 'cave' : 'indoor';
+      this.fill.color.set('#ffe8d0'); this.fill.intensity = 0.3;
       this.buildInterior(map);
       this.ambient.setup(null);
     }
@@ -330,12 +350,6 @@ export class World {
     base.rotation.x = -Math.PI / 2;
     base.position.set(this.W / 2, hasSea ? -0.14 : -0.4, this.H / 2);
     this.mapGroup.add(base);
-    if (hasWater && !hasSea) {
-      const wp = new THREE.Mesh(new THREE.PlaneGeometry(this.W + 2 * PAD, this.H + 2 * PAD), waterMaterial(pr.water));
-      wp.rotation.x = -Math.PI / 2;
-      wp.position.set((this.W - 1) / 2, -0.13, (this.H - 1) / 2);
-      this.mapGroup.add(wp);
-    }
     // montanhas no horizonte (não sobre o mar)
     const R = Math.max(this.W, this.H) / 2 + PAD + 4;
     const mts = makeMountains((this.W - 1) / 2, (this.H - 1) / 2, R, pr, this.W * 31 + this.H);
@@ -346,13 +360,14 @@ export class World {
     });
     this.mapGroup.add(mts);
 
-    const trees = [], tall = [], small = [], flowers = [], fences = [], rocks = [];
+    const trees = [], tall = [], fences = [], rocks = [];
     const kinds = Object.entries(pr.kinds);
     const pickKind = (x, z) => {
       let r = ehash(x * 7 + 3, z * 5 + 1);
       for (const [k, w] of kinds) { r -= w; if (r <= 0) return k; }
       return kinds[0][0];
     };
+    const density = (this.quality && this.quality.density) || 1;
     for (let z = -PAD; z < this.H + PAD; z++) {
       for (let x = -PAD; x < this.W + PAD; x++) {
         const t = tileExt(x, z);
@@ -360,45 +375,38 @@ export class World {
         const dOut = inside ? 0 : Math.max(-x, x - this.W + 1, -z, z - this.H + 1, 0);
         const h = ehash(x * 13 + 7, z * 29 + 3);
         if (t === 'T') {
-          if (dOut > 4 && h < 0.35) { small.push({ x, y: heightAt(x, z), z, s: 1.1, r: h * 6 }); continue; }
+          if (dOut > 4 && h < 0.35) continue;
           const j = inside ? 0.12 : 0.3;
-          trees.push({ x: x + (ehash(x, z * 3) - 0.5) * j * 2, y: heightAt(x, z) - 0.02, z: z + (ehash(x * 3, z) - 0.5) * j * 2, s: 0.85 + h * 0.4, r: h * 6.28, kind: pickKind(x, z) });
+          let kind = pickKind(x, z);
+          if (kind === 'round' && pr === SKIES.day && ehash(x * 5, z * 9) < 0.12) kind = 'birch';
+          trees.push({
+            x: x + (ehash(x, z * 3) - 0.5) * j * 2, y: heightAt(x, z) - 0.02, z: z + (ehash(x * 3, z) - 0.5) * j * 2,
+            s: 0.8 + h * 0.5, r: h * 6.28, kind, lo: dOut > 2,
+          });
         } else if (t === 'G') {
-          for (let k = 0; k < 6; k++) {
-            tall.push({ x: x + (ehash(x * 7 + k, z) - 0.5) * 0.85, z: z + (ehash(x, z * 5 + k) - 0.5) * 0.85, s: 0.9 + ehash(k, x + z) * 0.3, r: ehash(x + k, z) * 6.28 });
+          const n = Math.max(4, Math.round(7 * density));
+          for (let k = 0; k < n; k++) {
+            tall.push({ x: x + (ehash(x * 7 + k, z) - 0.5) * 0.9, z: z + (ehash(x, z * 5 + k) - 0.5) * 0.9, s: 0.8 + ehash(k, x + z) * 0.45, r: ehash(x + k, z) * 6.28, v: k % 2 });
           }
-        } else if (t === '.' || t === 'f') {
-          const n = h < 0.45 ? 1 + (h < 0.15 ? 1 : 0) : 0;
-          for (let k = 0; k < n; k++) small.push({ x: x + (ehash(x * 3 + k, z) - 0.5) * 0.8, y: inside ? 0 : heightAt(x, z), z: z + (ehash(x, z * 3 + k) - 0.5) * 0.8, s: 0.8 + h * 0.6, r: h * 9 });
-          if (t === 'f') flowers.push([x, z]);
         } else if (t === 'F') fences.push([x, z]);
         else if (t === 'R') rocks.push([x, z]);
       }
     }
     if (trees.length) this.mapGroup.add(plantTrees(trees, pr));
     if (tall.length) {
-      const geo = tuftGeometry(0.68, 11, new THREE.Color(pr.tall).multiplyScalar(0.7).getStyle(), pr.grassLight);
-      this.mapGroup.add(plantTufts(tall, geo, { push: 0.55, shadows: true, amp: 0.13 }));
+      const dark = new THREE.Color(pr.tall).multiplyScalar(0.65).getStyle();
+      const gA = tuftGeometry(0.7, 12, dark, pr.grassLight, 0.18, 4);
+      const gB = tuftGeometry(0.6, 10, dark, new THREE.Color(pr.grassLight).lerp(new THREE.Color('#e8e090'), 0.25).getStyle(), 0.2, 5);
+      this.mapGroup.add(plantTufts(tall.filter(t => !t.v), gA, { push: 0.55, shadows: true, amp: 0.13, fade: 0 }));
+      this.mapGroup.add(plantTufts(tall.filter(t => t.v), gB, { push: 0.55, shadows: true, amp: 0.15, fade: 0 }));
     }
-    if (small.length) {
-      const geo = tuftGeometry(0.3, 6, pr.grassDark, pr.grassLight);
-      this.mapGroup.add(plantTufts(small, geo, { amp: 0.1 }));
-    }
+    // vegetação espalhada: capim baixo e seco, flores, plantas, samambaias,
+    // arbustos, folhas caídas, gravetos, pedrinhas e rochas
+    this.mapGroup.add(scatterDecor({
+      W: this.W, H: this.H, PAD, tileExt, heightAt, p: pr, density,
+      isBuilding: (x, z) => !!this.buildingAt(x, z) || this.tile(x, z) === 'S',
+    }));
     const m4 = new THREE.Matrix4();
-    if (flowers.length) {
-      const colors = ['#f05a7a', '#ffd23a', '#ffffff', '#b07af0', '#ff8a3a'];
-      const per = 5;
-      const heads = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.06, 0), toon('#ffffff'), flowers.length * per);
-      const stems = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 4), toon('#3a8a3a'), flowers.length * per);
-      let k = 0;
-      for (const [x, z] of flowers) for (let j = 0; j < per; j++) {
-        const fx = x + (ehash(x + j, z) - 0.5) * 0.75, fz = z + (ehash(x, z + j) - 0.5) * 0.75;
-        m4.makeTranslation(fx, 0.2, fz); heads.setMatrixAt(k, m4);
-        heads.setColorAt(k, new THREE.Color(colors[(x * 3 + z + j) % colors.length]));
-        m4.makeTranslation(fx, 0.1, fz); stems.setMatrixAt(k++, m4);
-      }
-      this.mapGroup.add(stems, heads);
-    }
     if (fences.length) {
       const wood = texMat(TEX.planks(), '#f4ece0');
       const post = new THREE.InstancedMesh(boxW(0.13, 0.62, 0.13), wood, fences.length);
@@ -416,18 +424,37 @@ export class World {
       this.mapGroup.add(post, cap, rail);
     }
     if (rocks.length) {
-      const rm = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.45, 0), toon('#a09a92'), rocks.length * 2);
-      const ol = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.49, 0), new THREE.MeshBasicMaterial({ color: '#1a1410', side: THREE.BackSide }), rocks.length * 2);
-      const q = new THREE.Quaternion(), sc = new THREE.Vector3();
-      rocks.forEach(([x, z], i) => {
-        q.setFromEuler(new THREE.Euler(ehash(x, z), ehash(z, x) * 6, 0));
-        sc.set(1, 0.8, 1);
-        m4.compose(new THREE.Vector3(x - 0.1, 0.28, z), q, sc); rm.setMatrixAt(i * 2, m4); ol.setMatrixAt(i * 2, m4);
-        sc.set(0.5, 0.45, 0.5);
-        m4.compose(new THREE.Vector3(x + 0.3, 0.15, z + 0.25), q, sc); rm.setMatrixAt(i * 2 + 1, m4); ol.setMatrixAt(i * 2 + 1, m4);
+      // rochas irregulares com rachaduras e musgo, em três formatos
+      const items = [[], [], []];
+      rocks.forEach(([x, z]) => {
+        const v = Math.floor(ehash(x * 3, z * 7) * 3);
+        items[v].push({ x: x - 0.08, y: 0.12, z, s: 0.5, sy: 0.55, r: ehash(z, x) * 6.28 });
+        items[(v + 1) % 3].push({ x: x + 0.3, y: 0.05, z: z + 0.26, s: 0.24, r: ehash(x, z) * 6.28 });
       });
-      rm.castShadow = true;
-      this.mapGroup.add(rm, ol);
+      items.forEach((l, v) => {
+        const geo = rockGeometry(20 + v);
+        this.mapGroup.add(plantTufts(l, geo, { material: rockMaterial(), outline: hullGeometry(geo), shadows: true }));
+      });
+    }
+    // espuma nas margens: mapa de proximidade da terra para o shader da água
+    if (hasWater) {
+      const TW = this.W + 2 * PAD, TH = this.H + 2 * PAD;
+      const d = new Uint8Array(TW * TH * 4);
+      for (let z = -PAD; z < this.H + PAD; z++) for (let x = -PAD; x < this.W + PAD; x++) {
+        const t = tileExt(x, z);
+        let v = t === 'W' ? 0 : 255;
+        if (t === 'W' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => tileExt(x + dx, z + dz) !== 'W')) v = 90;
+        const i = ((z + PAD) * TW + (x + PAD)) * 4;
+        d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+      }
+      const tex = new THREE.DataTexture(d, TW, TH, THREE.RGBAFormat);
+      tex.magFilter = tex.minFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
+      const shore = { tex, x0: -PAD - 0.5, z0: -PAD - 0.5, w: TW, h: TH };
+      const wp = new THREE.Mesh(new THREE.PlaneGeometry(TW, TH), waterMaterial(pr.water, 0.84, shore));
+      wp.rotation.x = -Math.PI / 2;
+      wp.position.set((this.W - 1) / 2, -0.125, (this.H - 1) / 2);
+      this.mapGroup.add(wp);
     }
   }
 
@@ -456,15 +483,15 @@ export class World {
     const cx = b.x + (b.w - 1) / 2, cz = b.z + (b.d - 1) / 2;
     g.position.set(cx, 0, cz);
     if (b.style === 'cave') {
-      const rock = toon('#8a8478');
       const W = b.w, D = b.d;
-      const main = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), rock);
-      main.scale.set(W * 0.62, 1.9, D * 0.62);
+      const main = new THREE.Mesh(rockGeometry(7, '#8a8478', '#6a9a4a', 2), rockMaterial());
+      main.scale.set(W * 0.58, 2.9, D * 0.58);
       main.position.set(0, 0.9, -0.1);
       g.add(main);
       for (const [x, z, s] of [[-W * 0.4, 0.3, 0.8], [W * 0.42, 0.2, 0.9], [W * 0.1, -D * 0.3, 1.1], [-W * 0.2, D * 0.35, 0.5]]) {
-        const r = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), toon('#9a948a'));
-        r.position.set(x, s * 0.6, z);
+        const r = new THREE.Mesh(rockGeometry(11 + Math.round(s * 10), '#9a948a', '#6a9a4a', 1), rockMaterial());
+        r.scale.set(s, s * 1.4, s);
+        r.position.set(x, s * 0.45, z);
         g.add(r);
       }
       const doorX = b.door - (b.w - 1) / 2;
@@ -712,6 +739,23 @@ export class World {
       this.mapGroup.add(wm);
     }
     for (const f of map.furniture || []) this.buildFurniture(f);
+    // oclusão de ambiente "assada": escurece o piso encostado nas paredes
+    const aoTex = TEX.aoStrip();
+    const aoMat = new THREE.MeshBasicMaterial({ map: aoTex, transparent: true, depthWrite: false, color: '#000000' });
+    const addStrip = (x, z, ry) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.7), aoMat);
+      m.rotation.set(-Math.PI / 2, 0, ry);
+      m.position.set(x, 0.012, z);
+      m.renderOrder = 1;
+      this.mapGroup.add(m);
+    };
+    for (let z = 1; z < this.H - 1; z++) for (let x = 1; x < this.W - 1; x++) {
+      const t = this.tile(x, z);
+      if (t === '#' || t === 'W') continue;
+      if (this.tile(x, z - 1) === '#') addStrip(x, z - 0.15, 0);
+      if (this.tile(x - 1, z) === '#') addStrip(x - 0.15, z, Math.PI / 2);
+      if (this.tile(x + 1, z) === '#') addStrip(x + 0.15, z, -Math.PI / 2);
+    }
   }
 
   buildFurniture(f) {
@@ -776,6 +820,12 @@ export class World {
         add(new THREE.CylinderGeometry(0.15, 0.2, 0.6, 8), '#b0b0b0', [0, 0.7, 0]);
         add(new THREE.SphereGeometry(0.28, 12, 10), '#e03a3a', [0, 1.15, 0]);
         break;
+    }
+    if (f.type !== 'rug' && f.type !== 'carpet') {
+      const blob = blobShadow(1);
+      blob.scale.set(w * 1.15, d * 1.15, 1);
+      blob.position.y = 0.014;
+      g.add(blob);
     }
     addOutline(g, 0.012);
     this.mapGroup.add(g);
@@ -863,6 +913,8 @@ export class World {
         this.camera.lookAt(p.x + fx * ahead + fz * 0.25, p.y + 0.6, p.z + fz * ahead - fx * 0.25);
       }
       this.sun.position.set(p.x + this.sunDir.x * 30, this.sunDir.y * 30, p.z + this.sunDir.z * 30);
+      this.fill.position.set(p.x - this.sunDir.x * 20, 12, p.z - this.sunDir.z * 20);
+      this.fill.target.position.set(p.x, 0, p.z);
       this.sun.target.position.set(p.x, 0, p.z);
       if (this.preset && this.preset.lightning) {
         this.boltT = (this.boltT === undefined ? 5 : this.boltT) - dt;
@@ -927,10 +979,11 @@ export class World {
       for (const e of enc.list) { r -= e[3]; if (r <= 0) { pick = e; break; } }
       const lvl = pick[1] + Math.floor(Math.random() * (pick[2] - pick[1] + 1));
       const sp = pick[0];
-      const model = makeCreature(SPECIES[sp].model);
+      const variant = Math.random();
+      const model = makeCreature(SPECIES[sp].model, variant);
       const dirs = Object.keys(DIRS);
       const a = new Actor(this, model, x, z, dirs[Math.floor(Math.random() * 4)]);
-      a.sp = sp; a.lvl = lvl;
+      a.sp = sp; a.lvl = lvl; a.variant = variant;
       a.life = 40 + Math.random() * 40;
       a.moveT = 0.5 + Math.random() * 2;
       a.spawnT = instant ? 1 : 0;

@@ -3,12 +3,14 @@ import * as THREE from '../lib/three.module.min.js';
 import { SPECIES, ITEMS, MOVES } from './data.js';
 import { createCreature, healFull, nameOf, reviveUid } from './creature.js';
 import { makeHuman, makeCreature, HERO_LOOK, LOOKS } from './models.js';
+import { loadGlbModels } from './glb.js';
 import { World, DIRS } from './world.js';
 import { MAPS, rivalFinalParty } from './maps.js';
 import { BattleScene, Battle, buildTrainerParty } from './battle.js';
 import * as UI from './ui.js';
 import { initInput, heldDir, isHeld, setWorldHandler, hasModal, pushHandler, popHandler, emit } from './input.js';
 import { initAudio, sfx, playMusic, setSound, soundOn, stopMusic } from './audio.js';
+import { Post } from './post.js';
 
 const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -24,6 +26,34 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const world = new World(renderer);
 const bs = new BattleScene();
+const post = new Post(renderer);
+renderer.info.autoReset = false; // soma todas as passadas do quadro (G.stats)
+
+// ------------------------------------------------ qualidade gráfica
+// Alta: pós-processamento completo, sombras 2048, mais vegetação.
+// Média: sem MSAA extra, sombras 1024. Baixa: sem pós-processamento, resolução 1x.
+const QUALITY = {
+  alta: { label: 'ALTA', post: true, msaa: 4, bloom: true, shadow: 2048, pr: 2, density: 1 },
+  media: { label: 'MÉDIA', post: true, msaa: 0, bloom: true, shadow: 1024, pr: 1.5, density: 0.75 },
+  baixa: { label: 'BAIXA', post: false, msaa: 0, bloom: false, shadow: 1024, pr: 1, density: 0.45 },
+};
+const QKEY = 'crescemon-qualidade';
+let quality = (() => {
+  try { const q = localStorage.getItem(QKEY); if (QUALITY[q]) return q; } catch (_) {}
+  return window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 'media' : 'alta';
+})();
+function applyQuality(q) {
+  quality = q;
+  try { localStorage.setItem(QKEY, q); } catch (_) {}
+  const Q = QUALITY[q];
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
+  post.setQuality({ enabled: Q.post, samples: Q.msaa, bloom: Q.bloom });
+  world.setQuality(Q);
+  const vig = document.querySelector('#vignette');
+  if (vig) vig.classList.toggle('hidden', Q.post);
+  resize();
+}
+await loadGlbModels(); // herói e Pingolote em GLB (se falhar, ficam os procedurais)
 const heroModel = makeHuman(HERO_LOOK);
 world.setPlayerModel(heroModel);
 
@@ -43,6 +73,7 @@ function applyCamFov() {
   world.camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+applyQuality(quality);
 
 // Mouse: clique na tela para "prender" o cursor; depois disso, mexer o mouse
 // gira a câmera, botão esquerdo = Z (A) e botão direito = X (B). Esc solta.
@@ -207,6 +238,7 @@ const G = {
   hideCreature() { showPreview(null); },
   async wildBattle(sp, lvl, opts = {}) {
     const c = createCreature(sp, lvl);
+    c.variant = opts.variant ?? (opts.legendary ? null : Math.random());
     return runBattle({ wild: c, legendary: opts.legendary });
   },
   async trainerBattle(t) {
@@ -218,6 +250,8 @@ const G = {
   },
   credits: () => rollCredits(),
   isBusy: () => busy || mode !== 'world' || hasModal(),
+  // diagnóstico de desempenho (chamadas de desenho e triângulos do último quadro)
+  stats: () => ({ quality, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, geometries: renderer.info.memory.geometries }),
 };
 window.G = G;
 
@@ -336,7 +370,7 @@ async function fightWild(w) {
   }
   sfx('cry');
   await w.emote('!');
-  await G.wildBattle(w.sp, w.lvl);
+  await G.wildBattle(w.sp, w.lvl, { variant: w.variant });
   world.removeWild(w);
 }
 
@@ -418,6 +452,15 @@ async function startMenu() {
     opts.push([state.name.toUpperCase(), () => UI.trainerCard(state)]);
     opts.push(['SALVAR', async () => { if (save(false)) await UI.say('{N} salvou o jogo.'); }]);
     opts.push([`SOM: ${soundOn() ? 'LIGADO' : 'DESLIGADO'}`, async () => { setSound(!soundOn()); state.sound = soundOn(); }]);
+    opts.push([`QUALIDADE: ${QUALITY[quality].label}`, async () => {
+      const order = ['alta', 'media', 'baixa'];
+      applyQuality(order[(order.indexOf(quality) + 1) % 3]);
+      // reconstrói o mapa atual com a nova densidade de vegetação
+      const p = world.player;
+      world.load(MAPS[currentMapId], G);
+      world.player.place(p.x, p.z, p.dir);
+      UI.toast(`Qualidade gráfica: ${QUALITY[quality].label}`);
+    }]);
     opts.push([`CÂMERA: ${world.camMode === 'cima' ? 'DE CIMA' : '3ª PESSOA'}`, async () => {
       setCamMode(world.camMode === 'cima' ? 'terceira' : 'cima');
     }]);
@@ -529,6 +572,7 @@ const pvCtx = pvCanvas.getContext('2d');
 function loop(now) {
   const dt = Math.min(0.05, (now - lastTime) / 1000);
   lastTime = now;
+  renderer.info.reset();
   if (state && mode !== 'title') state.playTime = (state.playTime || 0) + dt;
   bumpCd -= dt;
 
@@ -552,16 +596,19 @@ function loop(now) {
   if (mode === 'world' && state) {
     updateMovement(dt);
     world.update(dt, busy || hasModal());
-    renderer.render(world.scene, world.camera);
+    post.setGrade(world.gradeName);
+    post.render(world.scene, world.camera);
   } else if (mode === 'battle' || mode === 'intro') {
     bs.update(dt);
-    renderer.render(bs.scene, bs.camera);
+    post.setGrade(bs.gradeName);
+    post.render(bs.scene, bs.camera);
   } else if (mode === 'title') {
     bs.update(dt);
     const portrait = window.innerWidth < window.innerHeight;
     bs.camera.position.set(Math.sin(now / 3000) * 1.2, portrait ? 2.6 : 1.9, portrait ? 10 : 6.4);
     bs.camera.lookAt(0, 0.7, 0);
-    renderer.render(bs.scene, bs.camera);
+    post.setGrade('day');
+    post.render(bs.scene, bs.camera);
   }
   requestAnimationFrame(loop);
 }

@@ -108,7 +108,7 @@ export const SPECIES = {
     name: 'Pingolote', types: ['agua'], base: { hp: 44, atk: 50, def: 65, spd: 43 }, xp: 63, catch: 45,
     evo: { lvl: 16, to: 'marolote' },
     learn: [[1, 'investida'], [1, 'cauda'], [7, 'jato'], [13, 'endurecer'], [19, 'raiobolha'], [25, 'mordida'], [31, 'ondaforte'], [40, 'hidrobomba']],
-    model: { plan: 'quad', c1: '#7ec8e3', c2: '#fbe3ec', c3: '#f07aa8', size: 0.6, extras: ['gills', 'finTail'], low: true },
+    model: { plan: 'quad', c1: '#7ec8e3', c2: '#fbe3ec', c3: '#f07aa8', size: 0.6, extras: ['gills', 'finTail'], low: true, glb: 'pingolote' },
     dex: 'Um axolote curioso que vive em lagos limpos. Suas brânquias rosadas ficam vermelhas quando se anima.',
   },
   marolote: {
