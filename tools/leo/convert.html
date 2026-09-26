@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><title>Otimizar leo.glb</title><body style="font:16px sans-serif;padding:20px">Convertendo… <script type="module">
+import * as THREE from '../../lib/three.module.min.js';
+import { GLTFLoader } from '../../lib/addons/GLTFLoader.js';
+import { GLTFExporter } from './GLTFExporter.js';
+const gltf = await new GLTFLoader().loadAsync(new URLSearchParams(location.search).get('f') || 'Leo_FINAL_SKIN_PESOS.glb');
+// reduz uma textura para 1024 px e marca para exportar em JPEG
+const shrink = (tex, size, srgb) => {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  c.getContext('2d').drawImage(tex.image, 0, 0, size, size);
+  const t = new THREE.CanvasTexture(c); t.flipY = false; t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  t.userData.mimeType = 'image/jpeg'; t.name = tex.name; return t;
+};
+let info = {};
+gltf.scene.traverse(o => {
+  if (!o.isMesh) return;
+  const m = o.material;
+  const nm = new THREE.MeshStandardMaterial({ map: shrink(m.map, 1024, true), normalMap: shrink(m.normalMap, 1024, false), roughness: 0.8, metalness: 0, side: THREE.DoubleSide });
+  nm.name = 'leo';
+  o.material = nm;
+  info.mesh = o.name;
+});
+const buf = await new GLTFExporter().parseAsync(gltf.scene, { binary: true, animations: gltf.animations });
+let bin = ''; const u8 = new Uint8Array(buf); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' })); a.download = 'leo_raw.glb';
+a.textContent = `Baixar leo_raw.glb (${(u8.length / 1e6).toFixed(1)} MB)`; document.body.append(a);
+window.OUT = { ...info, size: u8.length, anims: gltf.animations.map(a => a.name), b64: btoa(bin) };
+</script>

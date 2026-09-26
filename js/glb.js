@@ -13,10 +13,9 @@ import { GRADIENT, addRim } from './models.js';
 
 // altura no jogo (unidades do mapa) e espessura do contorno de cada modelo
 const DEFS = {
-  // herói: malha esculpida, pintada e rigada (esqueleto de 17 ossos, 8 animações),
-  // comprimida com meshopt; peças coladas no original foram separadas, por isso
-  // os dois lados da malha são desenhados
-  leo: { file: 'assets/models/leo.glb', height: 1.66, outline: 0.012, fixWinding: false, doubleSide: true },
+  // herói: modelo final texturizado e rigado no Blender (Idle, Walk, Run, Jump,
+  // Attack), otimizado com gltfpack; mantém o material original com a textura
+  leo: { file: 'assets/models/leo.glb', height: 1.66, outline: 0.009, fixWinding: false, keepMaterial: true, speeds: { walk: 2.6, run: 2.2 } },
   // pupilas, nariz e espinhos pequenos ficam sem contorno para não borrar o rosto
   pingolote: { file: 'assets/models/pingolote.glb', height: 0.8, outline: 0.011, noOutline: /black|darkblue|spike/i },
 };
@@ -132,7 +131,9 @@ function instance(name, { tint = null, sizeMul = 1 } = {}) {
   scene.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const o of meshes) {
     const mats = Array.isArray(o.material) ? o.material : [o.material];
-    const conv = mats.map(m => toonFrom(m, tint && tint.only && !tint.only.test(m.name || '') ? null : tint, L.def));
+    const conv = L.def.keepMaterial
+      ? mats.map(m => { const c = m.clone(); c.side = THREE.DoubleSide; return c; })
+      : mats.map(m => toonFrom(m, tint && tint.only && !tint.only.test(m.name || '') ? null : tint, L.def));
     o.material = Array.isArray(o.material) ? conv : conv[0];
     o.castShadow = true;
     o.receiveShadow = false;
@@ -154,7 +155,7 @@ function instance(name, { tint = null, sizeMul = 1 } = {}) {
   const mixer = new THREE.AnimationMixer(scene);
   const clips = {};
   for (const clip of L.gltf.animations) clips[clip.name] = mixer.clipAction(clip);
-  return { group, inner, scene, mixer, clips, olMat, height: L.def.height * sizeMul };
+  return { group, inner, scene, mixer, clips, olMat, def: L.def, height: L.def.height * sizeMul };
 }
 
 // Controla qual animação toca, com transição suave e golpes de uma vez só.
@@ -186,24 +187,32 @@ function animator(mixer, clips, speeds = {}) {
   };
 }
 
-// Personagem: mesma interface de makeHuman (group, head, body, update, pose)
-const ACTIONS = { pular: 'Pular', interagir: 'Interagir', apontar: 'Apontar', atacar: 'Atacar', throw: 'Atacar', fist: 'Acenar', acenar: 'Acenar' };
+// Personagem: mesma interface de makeHuman (group, head, body, update, pose).
+// As animações são achadas pelo nome em português ou em inglês.
+const ALIASES = {
+  idle: ['Idle'], walk: ['Andar', 'Walk'], run: ['Correr', 'Run'], jump: ['Pular', 'Jump'],
+  attack: ['Atacar', 'Attack'], wave: ['Acenar', 'Jump'], interact: ['Interagir', 'Idle'], point: ['Apontar', 'Attack'],
+};
+const ACTIONS = { pular: 'jump', jump: 'jump', interagir: 'interact', apontar: 'point', atacar: 'attack', attack: 'attack', throw: 'attack', fist: 'wave', acenar: 'wave' };
 export function makeGlbHuman(name) {
   const it = instance(name);
-  const anim = animator(it.mixer, it.clips, { Andar: 1.55, Correr: 1.1 });
-  anim.loop('Idle', 0);
+  const clip = k => (ALIASES[k] || [k]).find(n => it.clips[n]);
+  const sp = it.def.speeds || {};
+  const speeds = { [clip('walk')]: sp.walk || 1.55, [clip('run')]: sp.run || 1.1 };
+  const anim = animator(it.mixer, it.clips, speeds);
+  anim.loop(clip('idle'), 0);
   it.mixer.update(Math.random() * 3);
   let head = null, body = null;
-  it.scene.traverse(o => { if (o.name === 'Head') head = o; if (o.name === 'Chest') body = o; });
+  it.scene.traverse(o => { if (/^head$/i.test(o.name)) head = o; if (/^chest$/i.test(o.name)) body = o; });
   const api = {
     group: it.group, head: head || it.inner, body: body || it.inner, height: it.height, glb: true, hero: true,
     update(dt, moving, speed = 1) {
-      if (!anim.busy()) anim.loop(moving ? (speed > 1.3 ? 'Correr' : 'Andar') : 'Idle');
+      if (!anim.busy()) anim.loop(clip(moving ? (speed > 1.3 ? 'run' : 'walk') : 'idle'));
       it.mixer.update(dt);
     },
     // interface antiga: 'throw' (arremessar orbe), 'fist' (comemorar), 'rest'
     pose(n) { if (n !== 'rest') api.play(n); },
-    play(n) { const c = ACTIONS[n] || ACTIONS[String(n).toLowerCase()] || n; if (it.clips[c]) anim.once(c); },
+    play(n) { const key = ACTIONS[String(n).toLowerCase()] || String(n).toLowerCase(); const c = clip(key) || (it.clips[n] ? n : null); if (c) anim.once(c); },
     setExpression() {},
   };
   return api;

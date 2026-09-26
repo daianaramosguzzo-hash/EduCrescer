@@ -1,7 +1,7 @@
 # Crescemon — Versão Brasa 3D
 
 Um RPG 3D de capturar e treinar criaturas que roda no navegador. A história segue a estrutura clássica de **Pokémon FireRed**: você sai de casa, escolhe um parceiro no laboratório, enfrenta um rival, vence ginásios, derrota uma equipe vilã e desafia a Liga.
-Todas as criaturas, nomes, mapas e músicas são **originais**. O herói é o personagem da ilustração em `assets/heroi.webp`: cabelo castanho espetado, olhos grandes, jaqueta marrom com capuz e punhos bege, camiseta **CRESCER**, bermuda cargo preta, meias com listras azuis, tênis branco e preto e mochila preta com losango marrom. O modelo 3D dele é a escultura `assets/models/leo.glb`, pintada com as cores da ficha, com esqueleto e 8 animações (parado, andar, correr, pular, interagir, apontar, arremessar e acenar). As ferramentas que geraram o arquivo a partir do FBX original estão em `tools/leo/`. Se o arquivo não carregar, o jogo usa o herói feito em código (`js/hero.js`). A **Pingolote** usa um modelo GLB próprio, `assets/models/pingolote.glb`.
+Todas as criaturas, nomes, mapas e músicas são **originais**. O herói é o personagem da ilustração em `assets/heroi.webp`: cabelo castanho espetado, olhos grandes, jaqueta marrom com capuz e punhos bege, camiseta **CRESCER**, bermuda cargo preta, meias com listras azuis, tênis branco e preto e mochila preta com losango marrom. O modelo 3D dele é o `assets/models/leo.glb`: texturizado e rigado no Blender, com as animações parado, andar, correr, pular e atacar (usada ao arremessar o orbe). O `tools/leo/` explica como otimizar uma nova versão exportada do Blender. Se o arquivo não carregar, o jogo usa o herói feito em código (`js/hero.js`). A **Pingolote** usa um modelo GLB próprio, `assets/models/pingolote.glb`.
 
 ## Como jogar
 
@@ -19,7 +19,7 @@ Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch
 
 O projeto também vira um programa de desktop com **Electron**.
 
-- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.3.1.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
+- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.4.0.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
 - **Tela cheia:** aperte **F11**.
 - **Aviso do Windows:** como o instalador não é assinado digitalmente, o Windows pode mostrar *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
 
@@ -28,7 +28,7 @@ Para gerar o instalador você mesmo:
 ```bash
 npm install
 npm start            # abre o jogo numa janela de desktop
-npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.3.1.exe (no Linux precisa do Wine)
+npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.4.0.exe (no Linux precisa do Wine)
 ```
 
 O fluxo do GitHub Actions `Instalador Windows` também gera o `.exe` numa máquina Windows. Rode-o pela aba **Actions** ou crie uma tag `v*` para publicar o instalador numa Release.
@@ -138,7 +138,7 @@ js/input.js        teclado e toque
 lib/               Three.js (r170) e addons/ (GLTFLoader, SkeletonUtils, decodificador meshopt)
 assets/heroi.webp  ilustração do herói
 assets/models/     modelos 3D rigados: leo.glb (herói) e pingolote.glb
-tools/leo/         FBX original do herói e o gerador do leo.glb
+tools/leo/         conversor que otimiza o GLB do herói exportado do Blender
 desktop/           versão de desktop (Electron): janela, ícone e instalador
 ```
 

@@ -1,26 +1,25 @@
 # Modelo do herói (Leo)
 
-`leo.fbx` é a malha esculpida original (Meshy AI), sem cor, esqueleto nem animações.
-Estes scripts transformam essa malha no `assets/models/leo.glb` usado pelo jogo:
+O herói do jogo é o `Leo_FINAL_SKIN_PESOS.glb` (texturizado e rigado no Blender,
+com as animações Idle, Walk, Run, Jump e Attack). O arquivo original tem 30 MB;
+o `assets/models/leo.glb` do jogo é a versão otimizada (1,7 MB):
 
-- `paint.js`: pinta cada região com as cores da ficha do herói (pele, cabelo,
-  jaqueta, camiseta, bermuda, meias, tênis, mochila) e gera a textura do rosto
-  (olhos, sobrancelhas, boca), da estampa CRESCER e das listras das meias.
-- `rig.js`: esqueleto de 17 ossos, pesos da malha e 8 animações
-  (Idle, Andar, Correr, Pular, Interagir, Apontar, Atacar, Acenar).
-  Também separa as partes que vêm coladas na malha original (mão no bolso,
-  manga na jaqueta), para não esticarem quando o personagem se mexe.
-- `build.html`: junta tudo e exporta `leo_raw.glb`.
+- texturas de 2048 px em PNG reduzidas para 1024 px em JPEG
+  (cor e relevo; a textura de metal/rugosidade sai, a rugosidade fica fixa em 0,8);
+- malha simplificada de 122 mil para ~45 mil triângulos, mantendo esqueleto,
+  pesos e animações, e comprimida com meshopt.
 
-## Como gerar de novo
+## Como gerar de novo (depois de mexer no Blender)
 
-1. Na raiz do projeto, suba um servidor (ex.: `python3 -m http.server 8000`).
-2. Abra `http://localhost:8000/tools/leo/build.html` e baixe o `leo_raw.glb`.
-3. Reduza e comprima com o gltfpack:
+1. Exporte o GLB do Blender e coloque-o nesta pasta como `Leo_FINAL_SKIN_PESOS.glb`.
+2. Na raiz do projeto, suba um servidor (ex.: `python3 -m http.server 8000`).
+3. Abra `http://localhost:8000/tools/leo/convert.html` e baixe o `leo_raw.glb`.
+4. Simplifique e comprima com o gltfpack:
 
 ```bash
-npx gltfpack -i leo_raw.glb -o assets/models/leo.glb -si 0.4 -slb -km -kn -cc
+npx gltfpack -i leo_raw.glb -o assets/models/leo.glb -si 0.35 -sp -cc -kn
 ```
 
-Para mudar uma cor, ajuste `PAL` em `paint.js`; para mudar um movimento, a
-função da animação em `makeClips()` de `rig.js`.
+O jogo acha as animações pelo nome, em português ou em inglês
+(Idle, Walk/Andar, Run/Correr, Jump/Pular, Attack/Atacar); novas animações com
+esses nomes passam a ser usadas automaticamente.
