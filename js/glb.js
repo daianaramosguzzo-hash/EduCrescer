@@ -25,7 +25,7 @@ export async function loadGlbModels() {
   const loader = new GLTFLoader();
   await Promise.all(Object.entries(DEFS).map(async ([name, def]) => {
     try {
-      const gltf = await loader.loadAsync(def.file);
+      const gltf = await fetchGlb(loader, def.file);
       prepare(gltf.scene);
       gltf.scene.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(gltf.scene, true);
@@ -35,6 +35,16 @@ export async function loadGlbModels() {
       console.warn('Modelo 3D não carregou, usando o procedural:', name, e && e.message);
     }
   }));
+}
+
+// Hospedagens que não servem .glb recebem uma cópia em base64 (arquivo .glb.txt)
+async function fetchGlb(loader, file) {
+  try { return await loader.loadAsync(file); } catch (e) {
+    const r = await fetch(file + '.txt');
+    if (!r.ok) throw e;
+    const bin = Uint8Array.from(atob((await r.text()).trim()), c => c.charCodeAt(0));
+    return await loader.parseAsync(bin.buffer, '');
+  }
 }
 
 // Normais para sombreamento + normais suaves à parte para o contorno.
