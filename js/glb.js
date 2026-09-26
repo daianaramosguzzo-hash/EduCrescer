@@ -1,17 +1,22 @@
 // Modelos 3D importados (glTF/GLB com esqueleto e animações).
-// A Pingolote usa um arquivo próprio em assets/models/. Os modelos
+// O herói (Leo) e a Pingolote usam arquivos próprios em assets/models/. Os modelos
 // recebem o mesmo acabamento do resto do jogo (sombreamento toon, luz de borda
 // e contorno de desenho) e expõem a mesma interface dos modelos procedurais,
 // então o resto do código não precisa saber de onde o modelo veio.
 // Se um arquivo não carregar, o jogo usa o modelo procedural de antes.
 import * as THREE from '../lib/three.module.min.js';
 import { GLTFLoader } from '../lib/addons/GLTFLoader.js';
+import { MeshoptDecoder } from '../lib/addons/meshopt_decoder.module.js';
 import { clone as cloneSkinned } from '../lib/addons/SkeletonUtils.js';
 import { mergeVertices } from '../lib/addons/BufferGeometryUtils.js';
 import { GRADIENT, addRim } from './models.js';
 
 // altura no jogo (unidades do mapa) e espessura do contorno de cada modelo
 const DEFS = {
+  // herói: malha esculpida, pintada e rigada (esqueleto de 17 ossos, 8 animações),
+  // comprimida com meshopt; peças coladas no original foram separadas, por isso
+  // os dois lados da malha são desenhados
+  leo: { file: 'assets/models/leo.glb', height: 1.66, outline: 0.012, fixWinding: false, doubleSide: true },
   // pupilas, nariz e espinhos pequenos ficam sem contorno para não borrar o rosto
   pingolote: { file: 'assets/models/pingolote.glb', height: 0.8, outline: 0.011, noOutline: /black|darkblue|spike/i },
 };
@@ -22,10 +27,11 @@ export function hasGlb(name) { return !!loaded[name]; }
 // Carrega todos os modelos; nunca falha (o que não carregar fica de fora).
 export async function loadGlbModels() {
   const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
   await Promise.all(Object.entries(DEFS).map(async ([name, def]) => {
     try {
       const gltf = await fetchGlb(loader, def.file);
-      prepare(gltf.scene);
+      prepare(gltf.scene, def);
       gltf.scene.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(gltf.scene, true);
       const size = box.getSize(new THREE.Vector3());
@@ -48,13 +54,13 @@ async function fetchGlb(loader, file) {
 
 // Normais para sombreamento + normais suaves à parte para o contorno.
 // Peças com poucos vértices (caixas) ficam facetadas, as arredondadas ficam lisas.
-function prepare(root) {
+function prepare(root, def = {}) {
   root.traverse(o => {
     if (!o.isMesh || o.geometry.userData.prepared) return;
     let g = o.geometry;
     const hadNormals = !!g.attributes.normal;
     if (!g.index) g = mergeVertices(g, 1e-4);
-    if (signedVolume(g) < 0) flipWinding(g);
+    if (def.fixWinding !== false && signedVolume(g) < 0) flipWinding(g);
     if (!hadNormals) g.computeVertexNormals();
     g.setAttribute('onormal', g.attributes.normal.clone());
     if (!hadNormals && g.attributes.position.count < 120) {
@@ -107,10 +113,10 @@ function outlineMaterial(width) {
   return m;
 }
 
-function toonFrom(src, tint) {
+function toonFrom(src, tint, def = {}) {
   const c = src.color ? src.color.clone() : new THREE.Color('#ffffff');
   if (tint) c.lerp(tint.color, tint.k);
-  const m = new THREE.MeshToonMaterial({ color: c, gradientMap: GRADIENT });
+  const m = new THREE.MeshToonMaterial({ color: c, gradientMap: GRADIENT, map: src.map || null, vertexColors: !!src.vertexColors, side: def.doubleSide ? THREE.DoubleSide : THREE.FrontSide });
   if (src.emissive && src.emissive.getHex()) { m.emissive = src.emissive.clone(); m.emissiveIntensity = src.emissiveIntensity ?? 1; }
   m.name = src.name;
   addRim(m, 0.28);
@@ -126,7 +132,7 @@ function instance(name, { tint = null, sizeMul = 1 } = {}) {
   scene.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const o of meshes) {
     const mats = Array.isArray(o.material) ? o.material : [o.material];
-    const conv = mats.map(m => toonFrom(m, tint && tint.only && !tint.only.test(m.name || '') ? null : tint));
+    const conv = mats.map(m => toonFrom(m, tint && tint.only && !tint.only.test(m.name || '') ? null : tint, L.def));
     o.material = Array.isArray(o.material) ? conv : conv[0];
     o.castShadow = true;
     o.receiveShadow = false;
@@ -178,6 +184,29 @@ function animator(mixer, clips, speeds = {}) {
     },
     busy: () => !!oneShot,
   };
+}
+
+// Personagem: mesma interface de makeHuman (group, head, body, update, pose)
+const ACTIONS = { pular: 'Pular', interagir: 'Interagir', apontar: 'Apontar', atacar: 'Atacar', throw: 'Atacar', fist: 'Acenar', acenar: 'Acenar' };
+export function makeGlbHuman(name) {
+  const it = instance(name);
+  const anim = animator(it.mixer, it.clips, { Andar: 1.55, Correr: 1.1 });
+  anim.loop('Idle', 0);
+  it.mixer.update(Math.random() * 3);
+  let head = null, body = null;
+  it.scene.traverse(o => { if (o.name === 'Head') head = o; if (o.name === 'Chest') body = o; });
+  const api = {
+    group: it.group, head: head || it.inner, body: body || it.inner, height: it.height, glb: true, hero: true,
+    update(dt, moving, speed = 1) {
+      if (!anim.busy()) anim.loop(moving ? (speed > 1.3 ? 'Correr' : 'Andar') : 'Idle');
+      it.mixer.update(dt);
+    },
+    // interface antiga: 'throw' (arremessar orbe), 'fist' (comemorar), 'rest'
+    pose(n) { if (n !== 'rest') api.play(n); },
+    play(n) { const c = ACTIONS[n] || ACTIONS[String(n).toLowerCase()] || n; if (it.clips[c]) anim.once(c); },
+    setExpression() {},
+  };
+  return api;
 }
 
 // Criatura: mesma interface de makeCreature (group, inner, height, update)

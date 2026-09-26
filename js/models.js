@@ -1,7 +1,7 @@
 // Modelos 3D procedurais (estilo cartoon) para humanos e Crescemon.
 import * as THREE from '../lib/three.module.min.js';
 import { MAT_TEX } from './textures.js';
-import { hasGlb, makeGlbCreature } from './glb.js';
+import { hasGlb, makeGlbCreature, makeGlbHuman } from './glb.js';
 import { makeHero } from './hero.js';
 
 // ---------- materiais toon ----------
@@ -121,8 +121,9 @@ export function textTexture(lines, opts = {}) {
 
 // ---------- HUMANOS ----------
 export function makeHuman(o = {}) {
-  // o herói tem modelo próprio, feito a partir da ficha de personagem (hero.js)
-  if (o.hero) return makeHero(o);
+  // o herói usa o modelo esculpido e rigado (assets/models/leo.glb); se não
+  // carregar, fica o modelo feito em código a partir da ficha (hero.js)
+  if (o.hero) return hasGlb('leo') ? makeGlbHuman('leo') : makeHero(o);
   const opt = {
     skin: '#f6c9a0', hair: '#3b2415', hairStyle: 'short', shirt: '#6a8ac8', pants: '#3a3a5a',
     shorts: false, shoes: '#6a4a3a', socks: null, sockStripe: null, jacket: null, lining: null,

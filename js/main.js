@@ -804,6 +804,9 @@ function setupTitle() {
     cont.onclick = () => startGame(saved);
   }
   let armed = false;
+  // o botão fica "Carregando…" até os modelos e a cena estarem prontos
+  $('#btn-new').disabled = false;
+  $('#btn-new').textContent = 'Novo Jogo';
   $('#btn-new').onclick = () => {
     // com jogo salvo, pede um segundo toque para confirmar (sem janelas do navegador)
     if (saved && !armed) {

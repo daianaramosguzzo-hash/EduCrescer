@@ -1,7 +1,7 @@
 # Crescemon — Versão Brasa 3D
 
 Um RPG 3D de capturar e treinar criaturas que roda no navegador. A história segue a estrutura clássica de **Pokémon FireRed**: você sai de casa, escolhe um parceiro no laboratório, enfrenta um rival, vence ginásios, derrota uma equipe vilã e desafia a Liga.
-Todas as criaturas, nomes, mapas e músicas são **originais**. O herói é o personagem da ilustração em `assets/heroi.webp`: cabelo castanho espetado, olhos grandes, jaqueta marrom com capuz e punhos bege, camiseta **CRESCER**, bermuda cargo preta, meias com listras azuis, tênis branco e preto e mochila preta com losango marrom. O modelo 3D dele é feito em código (`js/hero.js`) seguindo a ficha de personagem, com animações (parado, andar, correr, pular, interagir, apontar, arremessar), piscar e expressões faciais. A **Pingolote** usa um modelo GLB próprio, `assets/models/pingolote.glb`.
+Todas as criaturas, nomes, mapas e músicas são **originais**. O herói é o personagem da ilustração em `assets/heroi.webp`: cabelo castanho espetado, olhos grandes, jaqueta marrom com capuz e punhos bege, camiseta **CRESCER**, bermuda cargo preta, meias com listras azuis, tênis branco e preto e mochila preta com losango marrom. O modelo 3D dele é a escultura `assets/models/leo.glb`, pintada com as cores da ficha, com esqueleto e 8 animações (parado, andar, correr, pular, interagir, apontar, arremessar e acenar). As ferramentas que geraram o arquivo a partir do FBX original estão em `tools/leo/`. Se o arquivo não carregar, o jogo usa o herói feito em código (`js/hero.js`). A **Pingolote** usa um modelo GLB próprio, `assets/models/pingolote.glb`.
 
 ## Como jogar
 
@@ -19,7 +19,7 @@ Para publicar no **GitHub Pages**, vá em *Settings → Pages*, escolha a branch
 
 O projeto também vira um programa de desktop com **Electron**.
 
-- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.2.0.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
+- **Instalar:** execute `Crescemon-Brasa-3D-Setup-1.3.0.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
 - **Tela cheia:** aperte **F11**.
 - **Aviso do Windows:** como o instalador não é assinado digitalmente, o Windows pode mostrar *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
 
@@ -28,7 +28,7 @@ Para gerar o instalador você mesmo:
 ```bash
 npm install
 npm start            # abre o jogo numa janela de desktop
-npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.2.0.exe (no Linux precisa do Wine)
+npm run dist:win     # gera dist/Crescemon-Brasa-3D-Setup-1.3.0.exe (no Linux precisa do Wine)
 ```
 
 O fluxo do GitHub Actions `Instalador Windows` também gera o `.exe` numa máquina Windows. Rode-o pela aba **Actions** ou crie uma tag `v*` para publicar o instalador numa Release.
@@ -109,7 +109,7 @@ Cada lendário tem um golpe exclusivo. Se ele não for capturado, continua no lu
 - Vegetação espalhada de forma natural: vários tipos de capim, flores, plantinhas, samambaias, arbustos, folhas secas e galhos caídos perto das árvores, pedras com musgo
 - Personagens e criaturas com materiais de tecido, couro, cabelo, pele, pelo e escamas, olhos com brilho, sobrancelhas e luz de contorno; cada Crescemon selvagem tem leve variação de cor e tamanho
 - Iluminação com luz de preenchimento, sombras suaves, oclusão de ambiente pintada, correção de cor por clima e brilho discreto
-- Herói modelado a partir da ficha de personagem, com esqueleto, animações e expressões; Pingolote com modelo GLB rigado (andar, correr e atacar animados)
+- Herói (Leo) e Pingolote com modelos GLB rigados e animados; o herói feito em código fica de reserva
 - Um clima por lugar: dia nas vilas, floresta escura com vaga-lumes e folhas caindo, praia ensolarada e pôr do sol na Rota Vitória
 - Casas com telhado de telhas, chaminé, janelas com floreiras, toldos e postes; interiores com piso de madeira ou azulejo, papel de parede e janelas com cortinas
 - Músicas e efeitos chiptune sintetizados com Web Audio
@@ -129,15 +129,16 @@ js/models.js       modelos 3D procedurais (herói, NPCs, criaturas)
 js/env.js          céu, terreno, árvores, vegetação, água e partículas
 js/textures.js     texturas procedurais (tecidos, pele, cabelo, pelo, pedra, detalhes do chão)
 js/post.js         pós-processamento (MSAA, brilho, correção de cor, vinheta)
-js/hero.js         modelo 3D do herói (ficha de personagem), animações e expressões
-js/glb.js          carrega modelos GLB (Pingolote) e aplica o estilo desenho
+js/hero.js         herói de reserva feito em código (ficha de personagem)
+js/glb.js          carrega os modelos GLB (Leo e Pingolote) e aplica o estilo desenho
 js/creature.js     status, experiência e golpes
 js/ui.js           diálogos, menus e telas
 js/audio.js        efeitos e músicas
 js/input.js        teclado e toque
-lib/               Three.js (r170) e addons/ (GLTFLoader, SkeletonUtils)
+lib/               Three.js (r170) e addons/ (GLTFLoader, SkeletonUtils, decodificador meshopt)
 assets/heroi.webp  ilustração do herói
-assets/models/     modelo 3D rigado da Pingolote (pingolote.glb)
+assets/models/     modelos 3D rigados: leo.glb (herói) e pingolote.glb
+tools/leo/         FBX original do herói e o gerador do leo.glb
 desktop/           versão de desktop (Electron): janela, ícone e instalador
 ```
 

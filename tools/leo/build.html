@@ -1,0 +1,50 @@
+<!doctype html><meta charset="utf-8"><title>Gerar leo.glb</title><body style="font:16px sans-serif;padding:20px">Gerando o modelo… <script type="module">
+import * as THREE from '../../lib/three.module.min.js';
+import { GLTFExporter } from './GLTFExporter.js';
+import { loadLeo } from './common.js';
+import { paint, atlas } from './paint.js';
+import { makeSkeleton, skinWeights, makeClips, cutBridges } from './rig.js';
+const g = paint(await loadLeo());
+skinWeights(g);
+const { bones, skeleton } = makeSkeleton();
+const root = new THREE.Group(); root.name = 'Leo';
+root.add(bones[0]);
+// divide em duas malhas: cores por vértice e textura
+// corta as pontes em cada grupo (mantendo a divisão dos materiais)
+const cutInfo = [];
+{
+  const full = g.index.array, parts = g.groups.map(gr => { const tmp = new THREE.BufferGeometry(); tmp.setAttribute('skinIndex', g.attributes.skinIndex); tmp.setAttribute('skinWeight', g.attributes.skinWeight); tmp.setIndex(Array.from(full.subarray(gr.start, gr.start + gr.count))); const r = cutBridges(tmp); cutInfo.push(r.cut); return r.keep; });
+  // remove ilhas pequenas que sobraram (pedaços soltos presos ao osso errado)
+  const all = [...parts[0], ...parts[1]], nT = all.length / 3, par = new Int32Array(g.attributes.position.count).map((_, i) => i);
+  const f = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+  for (let t = 0; t < all.length; t += 3) { const a = f(all[t]), b = f(all[t + 1]), c = f(all[t + 2]); par[b] = a; par[f(c)] = a; }
+  const size = new Map(); for (let t = 0; t < all.length; t += 3) { const r = f(all[t]); size.set(r, (size.get(r) || 0) + 1); }
+  let dropped = 0;
+  const clean = arr => { const out = []; for (let t = 0; t < arr.length; t += 3) { if (size.get(f(arr[t])) < 400) { dropped++; continue; } out.push(arr[t], arr[t + 1], arr[t + 2]); } return out; };
+  const p0 = clean(parts[0]), p1 = clean(parts[1]);
+  cutInfo.push('ilhas', dropped, [...size.values()].filter(v => v >= 400).sort((a, b) => b - a).slice(0, 12));
+  g.setIndex([...p0, ...p1]); g.clearGroups(); g.addGroup(0, p0.length, 0); g.addGroup(p0.length, p1.length, 1);
+}
+const idx = g.index.array, [g0, g1] = g.groups;
+const make = (grp, withColor) => {
+  const m = new THREE.BufferGeometry();
+  for (const k of ['position', 'normal', 'uv', 'skinIndex', 'skinWeight']) m.setAttribute(k, g.attributes[k]);
+  if (withColor) m.setAttribute('color', g.attributes.color);
+  m.setIndex(Array.from(idx.subarray(grp.start, grp.start + grp.count)));
+  return m;
+};
+const tex = new THREE.CanvasTexture(atlas()); tex.colorSpace = THREE.SRGBColorSpace; tex.name = 'leo_rosto_camiseta';
+const mPlain = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0 }); mPlain.name = 'leo_cores';
+const mTex = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0 }); mTex.name = 'leo_textura';
+for (const [geo, mat, nm] of [[make(g0, true), mPlain, 'Leo_corpo'], [make(g1, false), mTex, 'Leo_detalhes']]) {
+  const sm = new THREE.SkinnedMesh(geo, mat); sm.name = nm;
+  root.add(sm); sm.bind(skeleton, new THREE.Matrix4());
+}
+const clips = makeClips();
+const buf = await new GLTFExporter().parseAsync(root, { binary: true, animations: clips });
+let bin = ''; const u8 = new Uint8Array(buf); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+// aberto no navegador: oferece o arquivo para baixar
+const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' })); a.download = 'leo_raw.glb';
+a.textContent = `Baixar leo_raw.glb (${(u8.length / 1e6).toFixed(1)} MB, ${clips.length} animações)`; document.body.append(a);
+window.OUT = { cut: cutInfo, size: u8.length, tris: [g0.count / 3, g1.count / 3], clips: clips.map(c => c.name), b64: btoa(bin) };
+</script>

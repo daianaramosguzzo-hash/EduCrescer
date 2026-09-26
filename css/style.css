@@ -201,3 +201,5 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1420; col
   #hud-ally { top: calc(106px + env(safe-area-inset-top)); bottom: auto !important; right: 12px; }
   #hud-balls { top: auto; left: 16px; bottom: calc(var(--ctrl-h) + 118px); }
 }
+
+.title-inner button:disabled { opacity: .6; cursor: progress; }
