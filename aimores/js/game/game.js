@@ -10,8 +10,6 @@ import { Unit, makeHero, makeZombie, turnAp, visionRange, recompute, addItem, re
 import { fov, computeStaticLight, los } from './vision.js';
 import { findPath, reachable, passCost } from './path.js';
 import { rng, bus, clamp, fmtTime, wait } from '../util.js';
-import { runAI } from './ai.js';
-import { tickSurvival, temperature } from './survival.js';
 import * as Story from './story.js';
 
 export const DIFF = {
@@ -73,6 +71,7 @@ export class Game {
     this.updateVision();
     this.phase = 'player';
     this.S.setTime(this.state.time, this.state.weather);
+    this.rtInit();
     bus.emit('hud');
   }
 
@@ -121,6 +120,7 @@ export class Game {
   spawnZombie(type, x, z, extra = {}) {
     const u = makeZombie(type, x, z, extra);
     this.units.push(u);
+    if (this.timers) this.rtPlace(u);
     if (this.S.units && this.phase !== 'none') this.S.units.add(u);
     return u;
   }
@@ -174,7 +174,10 @@ export class Game {
 
   // ------------------------------------------------------------ seleção
   select(u) {
-    if (!u || u.kind !== 'hero' || u.dead) return;
+    if (!u || u.kind !== 'hero' || u.dead || (u.st.downed && this.liveHeroes.some(h => !h.st.downed))) return;
+    const old = this.selected;
+    if (old && old !== u && this.cancelNav) { this.cancelNav(old, false); old.target = null; old.rtAnim = null; }
+    if (u !== old) { u.nav = null; u.target = null; }
     for (const h of this.heroes) h.selected = false;
     u.selected = true;
     this.selected = u;
@@ -320,67 +323,11 @@ export class Game {
     return mode;
   }
 
-  // ------------------------------------------------------------ turnos
-  async endTurn() {
-    if (this.phase !== 'player' || this.busy) return;
-    this.turnDue = false;
-    this.phase = 'ai';
-    bus.emit('hud');
-    for (const h of this.liveHeroes) {
-      if (h.st.downed) continue;
-      // descanso com fôlego sobrando
-      if (h.ap > 0) h.need.energia = Math.min(100, h.need.energia + h.ap * 0.25);
-    }
-    try { await runAI(this); } catch (e) { console.error(e); }
-    await this.advanceTime();
-    this.startPlayerTurn();
-  }
-  startPlayerTurn() {
-    this.state.turn++;
-    this.state.stats.turnos++;
-    for (const h of this.liveHeroes) {
-      h.st.defend = false; h.st.aim = 0; h.st.ran = false; h.st.surto = false; h.st.protetor = false; h.st.cmdUsed = false; h.st.stoneStun = false;
-      for (const k of Object.keys(h.cd)) if (h.cd[k] > 0) h.cd[k]--;
-      if (h.st.downed) {
-        h.st.downed--;
-        if (h.st.downed <= 0) this.heroDies(h);
-        continue;
-      }
-      h.ap = turnAp(h) + (h.st.bonusAp || 0);
-      h.st.bonusAp = 0;
-      if (h.st.stun) h.st.stun--;
-      if (h.st.panic) h.st.panic--;
-    }
-    if (!this.liveHeroes.some(h => !h.st.downed)) { this.gameOver(); return; }
-    if (!this.selected || this.selected.dead || this.selected.st.downed) this.select(this.liveHeroes.find(h => !h.st.downed));
-    this.phase = 'player';
-    this.updateVision();
-    this.updateMode();
-    Story.onTurn(this);
-    bus.emit('hud');
-    bus.emit('turn');
-  }
-  async advanceTime() {
-    const minutes = this.state.mode === 'combat' ? 1 : 5;
-    const before = this.state.time;
-    this.state.time += minutes;
-    const h0 = Math.floor(before / 60), h1 = Math.floor(this.state.time / 60);
-    this.S.setTime(this.state.time, this.state.weather);
-    tickSurvival(this, minutes);
-    if (Math.floor(before / 1440) !== Math.floor(this.state.time / 1440)) {
-      this.log(`☀️ Começa o dia ${this.day()} em Aimorés.`, 'info');
-      this.toast(`Dia ${this.day()}`);
-    }
-    if (h0 !== h1) {
-      const hh = h1 % 24;
-      if (hh === 18) { this.log('🌆 O sol está se pondo. À noite há mais zumbis e eles ficam mais agressivos.', 'alerta'); this.toast('Anoitecendo'); }
-      if (hh === 6) this.log('🌅 Amanheceu. Os zumbis ficam mais lentos com o calor.', 'info');
-      this.hourlySpawn(hh);
-    }
-    await Story.onTime(this, minutes);
-    // luzes de fogo mudam
-    this.refreshLights();
-    bus.emit('hud');
+  // "Esperar": deixa 5 minutos passarem de uma vez (sem inimigos por perto)
+  wait5() {
+    if (this.phase !== 'player') return;
+    if (this.state.mode === 'combat') { this.toast('Não dá para esperar com zumbi por perto.', 'erro'); return; }
+    for (let i = 0; i < 5; i++) this.passMinute();
   }
   hourlySpawn(hh) {
     const night = hh >= 19 || hh < 5;
@@ -419,9 +366,9 @@ export class Game {
     if (target.hp <= 0) {
       if (target.kind === 'hero') {
         if (!target.st.downed) {
-          target.hp = 0; target.st.downed = 3; target.ap = 0;
+          target.hp = 0; target.st.downed = 40; target.ap = 0; target.nav = null; target.target = null;
           view.play(target, 'die').then(() => {});
-          this.log(`💀 <b>${target.name}</b> caiu! Leve atadura ou kit médico até ${target.name} antes que os zumbis ajam 3 vezes.`, 'perigo');
+          this.log(`💀 <b>${target.name}</b> caiu! Leve atadura ou kit médico até ${target.name} em até 40 segundos.`, 'perigo');
           this.toast(`${target.name} caiu!`, 'perigo');
           Story.onHeroDown(this, target);
           if (this.selected === target) this.selectNext();

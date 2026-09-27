@@ -120,7 +120,7 @@ export class UnitView {
   }
   loop(unit, anim) { const v = this.get(unit); if (v && v.anim !== anim) this.setAnim(v, anim, true); }
   baseAnim(unit) {
-    if (unit.dead) return 'dead';
+    if (unit.dead || (unit.st && unit.st.downed)) return 'dead';
     if (unit.st && unit.st.hidden) return 'crouch';
     if (unit.st && unit.st.aiming) return 'aim';
     if (unit.st && unit.st.scared) return 'scared';
@@ -181,6 +181,14 @@ export class UnitView {
             if (v.idleWaiters) { const w = v.idleWaiters; v.idleWaiters = null; w.forEach(f => f()); }
           }
         } else { v.pos.x += dx / d * step; v.pos.z += dz / d * step; u.face = Math.atan2(dx, dz); }
+      }
+      // tempo real: a posição vem direto da simulação e a animação de base, do movimento
+      if (u.px !== undefined && u.px !== null && !v.moves.length) {
+        v.pos.set(u.px, 0, u.pz);
+        if (v.loop && !u.dead) {
+          const base = u.rtAnim || this.baseAnim(u);
+          if (v.anim !== base) this.setAnim(v, base, true);
+        }
       }
       v.group.position.copy(v.pos);
       // quadro

@@ -45,17 +45,10 @@ export function installActions(Game) {
         this.updateVision();
         this.updateMode();
         bus.emit('hud');
-        // acabou o fôlego de quem está agindo: o tempo passa sozinho
-        if (this.busy === 0 && this.phase === 'player' && (this.turnDue || (this.selected && this.selected.ap <= 0 && !this.selected.st.downed))) {
-          this.turnDue = false;
-          await this.endTurn();
-        }
       }
     },
-    spend(u, n) {
-      u.ap = Math.max(0, u.ap - n);
-      if (u === this.selected && u.ap <= 0) this.turnDue = true;
-    },
+    // (tempo real: as ações não gastam pontos; mantido para as histórias antigas)
+    spend(u, n) {},
     view() { return this.S.units; },
 
     // ------------------------------------------------------------ movimento
@@ -69,90 +62,6 @@ export function installActions(Game) {
         c += run ? (k % 3 === 2 ? 0 : 1) : 1;
       });
       return c;
-    },
-    async moveAlong(u, path, run, opts = {}) {
-      const map = this.map, view = this.view();
-      const seenBefore = new Set(this.seenEnemies().map(e => e.uid));
-      let k = 0, moved = 0, outOfAp = false;
-      for (const [x, z] of path) {
-        const i = map.idx(x, z);
-        const d = map.doors.get(i);
-        if (d && !d.open) {
-          if (d.locked || d.barricade) { this.toast('Porta trancada ou barricada.', 'erro'); break; }
-          if (u.ap < 1) { outOfAp = true; break; }
-          await this.openDoorRaw(u, d); this.spend(u, 1);
-        }
-        let cost = run ? (k % 3 === 2 ? 0 : 1) : 1;
-        const win = map.windows.get(i);
-        if (win) cost += 1;
-        const other = this.unitAt(x, z);
-        if (other && other !== u && !(u.kind === 'hero' && this.passFriend(x, z))) break;
-        if (u.ap < cost) { outOfAp = true; break; }
-        // atravessar um aliado só se der para sair da casa dele em seguida
-        if (other && other !== u) {
-          let j = moved + 1, need = cost + 1;
-          while (j < path.length && this.unitAt(path[j][0], path[j][1])) { j++; need++; }
-          if (j >= path.length) break;
-          if (u.ap < need) { outOfAp = true; break; }
-        }
-        this.spend(u, cost); k++; moved++;
-        if (!opts.sneak) u.st.hidden = false;
-        u.face = Math.atan2(x - u.x, z - u.z);
-        u.x = x; u.z = z;
-        if (run) { u.st.ran = true; u.need.energia = Math.max(0, u.need.energia - 0.35); }
-        await view.moveTo(u, x, z, (run ? 6.2 : 3.8) * (this.speed || 1), run ? 'run' : win ? 'vehicleOut' : 'walk');
-        if (win && rng.next() < 0.2 && u.kind === 'hero') { u.st.bleed = 1; this.log(`${u.name} se cortou no vidro da janela.`, 'alerta'); }
-        this.noise(x, z, run ? (u.hasPerk('pe_leve') ? 2 : 5) : (u.id === 'pablicio' ? 2.2 : 1.3), u);
-        this.updateVision();
-        if (u === this.selected) this.S.focus(x + 0.5, z + 0.5);
-        await Story.onEnter(this, u, x, z);
-        await this.checkTrap(u, x, z);
-        if (u.dead || u.st.downed) break;
-        const novos = this.seenEnemies().filter(e => !seenBefore.has(e.uid));
-        const sharing = this.units.some(o => o !== u && !o.dead && !o.gone && o.x === u.x && o.z === u.z);
-        if (novos.length && !opts.ignoreEnemies && !sharing) {
-          const e = novos[0];
-          this.say(u, rng.pick(['Opa! Zumbi!', 'Tem coisa ali!', 'Parados! Tem um ali.', 'Xiii...']).replace('Zumbi', e.kind === 'zombie' ? 'Zumbi' : 'alguém'));
-          this.updateMode();
-          return { moved, interrupted: true };
-        }
-        if (opts.until && opts.until()) return { moved, interrupted: false, reached: true };
-      }
-      if (outOfAp && u === this.selected) this.turnDue = true;
-      return { moved, interrupted: false, outOfAp };
-    },
-    // andar até uma célula, a qualquer distância: quando o fôlego acaba, o tempo passa
-    // (os zumbis agem) e o personagem continua andando. Para se aparecer inimigo novo,
-    // se levar dano ou se um inimigo chegar colado.
-    async walkTo(u, tx, tz, opts = {}) {
-      if (!this.can(u, 0)) return;
-      const run = opts.run ?? this.input.run;
-      for (let guard = 0; guard < 40; guard++) {
-        const path = this.pathTo(u, tx, tz, { goalAdjacent: !!opts.adjacent });
-        if (!path) { this.toast('Não dá para chegar lá.', 'erro'); return; }
-        if (!path.length) return;
-        const hp0 = u.hp;
-        const r = await this.act(async () => {
-          const res = await this.moveAlong(u, path, run, opts);
-          if (this.state.mode === 'explore' && opts.follow !== false) await this.followLeader(u);
-          return res;
-        });
-        if (!r) return;
-        const arrived = r.reached || (opts.adjacent ? ADJ(u, tx, tz) : (u.x === tx && u.z === tz)) || (opts.until && opts.until());
-        if (arrived || r.interrupted || u.dead || u.st.downed || this.phase !== 'player') return;
-        if (!r.outOfAp && r.moved === 0) return; // caminho bloqueado
-        if (u.hp < hp0 || this.units.some(e => e.alive && this.hostile(e) && cheb(e, u) <= 1 && this.unitVisible(e))) return;
-      }
-    },
-    async followLeader(leader) {
-      const others = this.liveHeroes.filter(h => h !== leader && !h.st.downed && !h.st.stun && h.ap > 0 && !h.st.stay);
-      const tasks = others.map(async h => {
-        if (cheb(h, leader) <= 2) return;
-        const path = this.pathTo(h, leader.x, leader.z, { goalAdjacent: true });
-        if (!path || !path.length) return;
-        await this.moveAlong(h, path, false, { ignoreEnemies: true });
-      });
-      await Promise.all(tasks);
     },
     async checkTrap(u, x, z) {
       const t = this.state.traps && this.state.traps[x + ',' + z];
@@ -170,92 +79,25 @@ export function installActions(Game) {
       const range = target ? inRange(this, u, target, w) : false;
       return { w, ch, range };
     },
-    async attack(u, t) {
-      let w = u.weaponStats();
-      const it = u.weapon();
-      if (w.tipo === 'arremesso') return this.throwAt(u, t.x, t.z);
-      if (w.tipo === 'distancia' && w.pente > 0 && w.classe !== 'sling' && (u.eq.mao.loaded || 0) <= 0) {
-        if (countItem(u, w.municao) > 0) { this.toast('Sem munição carregada. Recarregue (R).', 'erro'); }
-        else this.toast('Sem munição!', 'erro');
-        return;
-      }
-      if (w.tipo === 'distancia' && w.municao && w.pente === 1 && countItem(u, w.municao) <= 0) { this.toast('Sem pedrinhas para o estilingue.', 'erro'); return; }
-      if (w.tipo === 'distancia' && w.pente === 0 && it && it.id === 'chinelo') { /* chinelo volta sozinho */ }
-      // arma de longe: chega perto até ter alcance e linha de visão
-      if (w.tipo !== 'corpo' && !inRange(this, u, t, w)) {
-        if (!this.pathTo(u, t.x, t.z, { goalAdjacent: true })) { this.toast('Não dá para chegar perto.', 'erro'); return; }
-        await this.walkTo(u, t.x, t.z, { adjacent: true, follow: false, ignoreEnemies: true, until: () => inRange(this, u, t, w) });
-        if (!t.alive || this.phase !== 'player') return;
-      }
-      // corpo a corpo: vai até o alvo, a qualquer distância
-      if (w.tipo === 'corpo' && !ADJ(u, t.x, t.z)) {
-        if (!this.pathTo(u, t.x, t.z, { goalAdjacent: true })) { this.toast('Não dá para chegar perto.', 'erro'); return; }
-        await this.walkTo(u, t.x, t.z, { adjacent: true, follow: false, ignoreEnemies: true });
-        if (!ADJ(u, t.x, t.z) || !t.alive || this.phase !== 'player') return;
-      }
-      const cost = w.pa || 2;
-      if (!this.can(u, cost)) return;
-      if (!inRange(this, u, t, w)) { this.toast(w.tipo === 'corpo' ? 'Longe demais.' : 'Fora de alcance ou sem linha de visão.', 'erro'); return; }
-      await this.act(async () => {
-        this.spend(u, cost);
-        const view = this.view();
-        u.face = Math.atan2(t.x - u.x, t.z - u.z);
-        const ch = hitChance(this, u, t, w);
-        const sneak = w.tipo === 'corpo' && unaware(u, t);
-        const anim = w.tipo === 'corpo' ? 'attack' : 'shoot';
-        const p = view.play(u, anim);
-        if (w.tipo === 'distancia') {
-          if (w.classe === 'sling') {
-            if (it.id === 'estilingue') removeItem(u, 'pedrinhas', 1);
-            await wait(120); await view.projectile(u.x, u.z, t.x, t.z, it.id === 'chinelo' ? '#c93b33' : '#9a9a9a', 0.4, 0.25);
-          } else { u.eq.mao.loaded--; await wait(90); view.tracer(u.x, u.z, t.x, t.z); view.burst(u.x, u.z, '#ffd23a', 1.2); this.S.shake = 0.12; }
-        } else await wait(170);
-        this.noise(u.x, u.z, w.ruido || 2, u);
-        const hit = rng.next() * 100 < ch;
-        if (hit) {
-          const r = rollDamage(this, u, t, w, { aimed: u.st.aim > 0 });
-          if (r.sneak) { this.log(`🗡️ Ataque surpresa de <b>${u.name}</b>!`, 'bom'); view.floatText(t.x, t.z, 'SURPRESA!', 'crit'); }
-          this.damage(t, r.dmg, u, r);
-          if (t.alive && w.atordoar && (rng.next() < w.atordoar || (w.classe === 'sling' && u.skill('estilingada') >= 2 && !u.st.stoneStun))) { t.st.stun = 1; u.st.stoneStun = true; view.floatText(t.x, t.z, 'Atordoado!', 'miss'); }
-          if (t.alive && w.sangrar && rng.next() < w.sangrar && t.kind !== 'hero') t.st.bleedz = 2;
-          if (t.alive && w.empurrar) { const dx = Math.sign(t.x - u.x), dz = Math.sign(t.z - u.z); const nx = t.x + dx, nz = t.z + dz; if (!this.map.blocked(nx, nz) && !this.unitAt(nx, nz)) { t.x = nx; t.z = nz; view.moveTo(t, nx, nz, 7, 'hurt'); } }
-          if (t.alive && w.assusta && t.kind === 'npc') { t.st.stun = 2; view.say(t, 'Ai! O chinelo não!'); }
-          if (w.espalhar) for (const o of this.units) if (o !== t && o.alive && o !== u && cheb(o, t) <= 1 && rng.next() < 0.5) { this.damage(o, Math.round(r.dmg * 0.5), u); }
-          if (!t.alive) this.log(`✅ <b>${u.name}</b> derrubou ${t.name}.`, 'bom');
-          else this.log(`<b>${u.name}</b> acertou ${t.name} (${r.dmg}${r.crit ? ', crítico' : ''}).`, '');
-        } else {
-          view.floatText(t.x, t.z, 'Errou!', 'miss');
-          this.log(`${u.name} errou ${t.name}.`, '');
-          if (t.kind === 'zombie' && t.alive) { t.ai.state = 'hunt'; t.ai.target = u.uid; t.ai.last = [u.x, u.z]; }
-        }
-        if (t.kind === 'zombie' && t.alive && hit) { t.ai.state = 'hunt'; t.ai.target = u.uid; t.ai.last = [u.x, u.z]; }
-        // durabilidade
-        if (u.eq.mao && u.eq.mao.dur !== undefined && w.tipo === 'corpo') {
-          u.eq.mao.dur -= u.skill('mao_na_graxa') >= 2 ? 0.5 : 1;
-          if (u.eq.mao.dur <= 0) { this.log(`💔 ${ITEMS[u.eq.mao.id].nome} de ${u.name} quebrou!`, 'alerta'); this.toast(`${ITEMS[u.eq.mao.id].nome} quebrou!`, 'erro'); u.eq.mao = null; }
-        }
-        u.st.aim = 0; u.st.hidden = false;
-        await p;
-      });
+    // escolhe o alvo: o personagem vai até ele e ataca até derrubar (tempo real)
+    attack(u, t) {
+      if (!this.can(u, 0) || !t || !t.alive) return;
+      if (u.weaponStats().tipo === 'arremesso') return this.throwAt(u, t.x, t.z);
+      u.target = t;
     },
-    async reload(u) {
+    reload(u) {
       const it = u.weapon();
       if (!it || !it.w || it.w.tipo !== 'distancia' || !it.w.pente || it.w.pente <= 1) { this.toast('Essa arma não precisa recarregar.', 'erro'); return; }
-      const e = u.eq.mao;
-      const need = it.w.pente - (e.loaded || 0);
-      const have = countItem(u, it.w.municao);
-      if (need <= 0) { this.toast('Já está carregada.'); return; }
-      if (have <= 0) { this.toast('Sem munição no inventário.', 'erro'); return; }
-      const cost = it.w.recarga || 2;
-      if (!this.can(u, cost)) return;
-      await this.act(async () => {
-        this.spend(u, cost);
-        const n = Math.min(need, have);
-        removeItem(u, it.w.municao, n);
-        e.loaded = (e.loaded || 0) + n;
-        this.log(`🔄 ${u.name} recarregou (${e.loaded}/${it.w.pente}).`, '');
-        await this.view().play(u, 'interact');
-      });
+      if ((u.eq.mao.loaded || 0) >= it.w.pente) { this.toast('Já está carregada.'); return; }
+      if (countItem(u, it.w.municao) <= 0) { this.toast('Sem munição no inventário.', 'erro'); return; }
+      this.rtReload(u);
+    },
+    // agachar: anda devagar e quase sem barulho (os zumbis percebem bem menos)
+    toggleSneak(u) {
+      if (!u || u.st.downed) return;
+      u.st.sneak = !u.st.sneak;
+      this.S.units.floatText(u.x, u.z, u.st.sneak ? '🥷 Agachado' : 'De pé', 'info');
+      bus.emit('hud');
     },
     async aim(u) {
       if (!this.can(u, 1)) return;
@@ -378,15 +220,6 @@ export function installActions(Game) {
         this.log(`🪟 ${u.name} quebrou a janela. CRASH! (dá para pular por ela)`, 'alerta');
       });
     },
-    // chega perto de uma célula (adjacente)
-    async approach(u, x, z, extra = 0) {
-      if (ADJ(u, x, z)) return true;
-      if (!this.can(u, 0)) return false;
-      if (!this.pathTo(u, x, z, { goalAdjacent: true })) { this.toast('Não dá para chegar lá.', 'erro'); return false; }
-      await this.walkTo(u, x, z, { adjacent: true, follow: false });
-      return ADJ(u, x, z) && this.phase === 'player';
-    },
-
     // ------------------------------------------------------------ vasculhar e itens
     searchCost(u, p) {
       let c = PROPS[p.type].search || 2;
@@ -738,7 +571,6 @@ export function installActions(Game) {
       }
       this.S.setTime(this.state.time, this.state.weather);
       bus.emit('fade', false);
-      this.phase = 'player';
       if (interrupted) {
         this.log('💥 Um barulho acordou todo mundo! Tem zumbi forçando a porta!', 'perigo');
         this.toast('Acordaram com barulho!', 'perigo');
@@ -748,7 +580,8 @@ export function installActions(Game) {
         for (const h of this.liveHeroes) h.need.moral = Math.min(100, h.need.moral + 10);
         await Story.onWake(this);
       }
-      this.startPlayerTurn();
+      this.phase = 'player';
+      this.updateVision(); this.updateMode(); bus.emit('hud');
     },
 
     // ------------------------------------------------------------ habilidades
@@ -781,23 +614,23 @@ export function installActions(Game) {
         await this.act(async () => {
           this.spend(u, sk.pa); u.st.cmdUsed = true;
           const bonus = [2, 3, 4][r - 1];
-          target.ap += bonus;
+          target.st.haste = Math.ceil(bonus / 2) + 1;
           view.say(u, rng.pick([`${target.name}, AGORA! Vai, vai, vai!`, 'Organiza essa fila! Um de cada vez!', `Presta atenção, ${target.name}! Isso cai na prova!`]));
           view.floatText(target.x, target.z, '+fôlego', 'xp');
           this.log(`📣 ${u.name} deu uma ordem: ${target.name} ganhou fôlego extra.`, 'bom');
         });
       } else if (id === 'surto') {
         await this.act(async () => {
-          u.cd[id] = sk.recarga[r - 1]; u.st.surto = true; u.ap += [3, 4, 5][r - 1];
+          u.cd[id] = sk.recarga[r - 1]; u.st.surto = 2;
           await view.play(u, 'scared');
           view.say(u, rng.pick(['EU NÃO TÔ DE BOA! AAAAAH!', 'Chega! CHEGA DE ZUMBI!', 'Vocês mexeram com o cara errado!']));
           view.flash(u, '#ff4040');
-          u.need.moral = Math.max(0, u.need.moral - 15); u.need.energia = Math.max(0, u.need.energia - 15);
+          u.need.moral = Math.max(0, u.need.moral - 15);
           this.log(`😤 ${u.name} surtou! Fôlego extra e +50% de dano corpo a corpo nesta rodada.`, 'alerta');
         });
       } else if (id === 'couro_grosso') {
         await this.act(async () => {
-          this.spend(u, sk.pa); u.cd[id] = sk.recarga[r - 1]; u.st.protetor = true;
+          this.spend(u, sk.pa); u.cd[id] = sk.recarga[r - 1]; u.st.protetor = 2;
           view.say(u, 'Pode vir! Pode vir que eu aguento!');
           this.log(`🛡️ ${u.name} está atraindo os zumbis próximos para si.`, 'info');
         });

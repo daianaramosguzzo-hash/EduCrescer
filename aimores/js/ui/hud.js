@@ -51,7 +51,6 @@ export class Hud {
           u.dead ? h('div', { class: 'mini-needs' }, 'Morreu') : h('div', { class: 'mini-needs' },
             h('span', { class: warn(n.fome), title: 'Fome' }, '🍗' + Math.round(n.fome)),
             h('span', { class: warn(n.sede), title: 'Sede' }, '💧' + Math.round(n.sede)),
-            h('span', { class: warn(n.energia), title: 'Energia' }, '⚡' + Math.round(n.energia)),
             n.infeccao > 0 ? h('span', { class: 'warn', title: 'Infecção' }, '🦠' + Math.round(n.infeccao)) : null)),
         h('div', { class: 'badges' }, badges));
       wrap.append(card);
@@ -96,7 +95,6 @@ export class Hud {
         h('div', { class: 'needs' },
           needEl('🍗', 'Fome (cheio = satisfeito)', n.fome, 'linear-gradient(#ffd08a,#e08a2a)'),
           needEl('💧', 'Sede', n.sede, 'linear-gradient(#8ad8ff,#2a8ad8)'),
-          needEl('⚡', 'Energia', n.energia, 'linear-gradient(#fff08a,#d8b820)'),
           needEl('🙂', 'Moral', n.moral, 'linear-gradient(#f0a8d8,#b84a98)'),
           needEl('🦠', 'Infecção', n.infeccao, 'linear-gradient(#b8f07a,#4a8a1a)'))));
     // arma
@@ -112,20 +110,24 @@ export class Hud {
     const weapon = h('div', { class: 'weapon', title: 'Arma equipada — clique para o inventário (I)', onclick: () => ui.open('inv') },
       h('div', { class: 'ic' }, it ? it.icon : '👊'), h('div', {}, it ? it.nome : 'Mãos nuas'), h('small', {}, sub));
     // ações
-    const busy = g.phase !== 'player' || g.busy;
+    const busy = g.phase !== 'player';
     const B = (ic, title, fn, key = '', cls = '', disabled = false, extra = null) => {
       const b = h('button', { class: cls, title: title + (key ? ` (${key})` : ''), onclick: () => { if (!busy) fn(); }, disabled: busy || disabled }, ic, key ? h('span', { class: 'k' }, key) : null, extra);
       return b;
     };
+    const hold = (el) => {
+      el.addEventListener('pointerdown', e => { e.preventDefault(); ui.attackBtn = true; });
+      for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, () => { ui.attackBtn = false; });
+      return el;
+    };
     const acts = h('div', { class: 'acts' },
-      B('⚔️', 'Atacar: clique num inimigo', () => ui.setMode('attack'), 'A', ui.mode === 'attack' ? 'on' : ''),
-      B('🎯', 'Mirar (+15% de acerto no próximo tiro)', () => g.aim(u), 'G'),
-      B('🛡️', 'Defender (−50% de dano; os zumbis agem em seguida)', () => g.defend(u), 'X'),
-      B('🥷', 'Esconder-se', () => g.hide(u), 'H'),
-      B('🏃', `Correr: ${g.input.run ? 'LIGADO' : 'desligado'} (mais rápido, mas faz barulho)`, () => { g.input.run = !g.input.run; this.dirty = true; ui.refreshHover(); }, 'Shift', g.input.run ? 'on' : ''),
+      hold(B('⚔️', 'Atacar (segure Espaço) — ou clique num zumbi', () => {}, 'Espaço', 'big-atk')),
+      B('✋', 'Interagir: vasculhar, abrir, pegar, conversar, coletar', () => g.rtInteract(u), 'E'),
+      B('🥷', u.st.sneak ? 'Agachado (anda devagar e sem barulho)' : 'Agachar', () => g.toggleSneak(u), 'C', u.st.sneak ? 'on' : ''),
+      B('🏃', `Correr (segure Shift) ${ui.runToggle ? '— LIGADO' : ''}`, () => { ui.runToggle = !ui.runToggle; this.dirty = true; }, 'Shift', ui.runToggle ? 'on' : ''),
       B('🔄', 'Recarregar', () => g.reload(u), 'R'),
       B('🎒', 'Inventário', () => ui.open('inv'), 'I'),
-      B('🛠️', 'Fabricar e cozinhar', () => ui.open('craft'), 'B'),
+      B('🛠️', 'Fabricar', () => ui.open('craft'), 'B'),
       B('🔦', u.eq.mao2 && u.eq.mao2.id === 'lanterna' ? `Lanterna ${u.flash ? 'ligada' : 'desligada'} (${Math.round(u.eq.mao2.carga || 0)}%)` : 'Sem lanterna equipada', () => g.toggleFlashlight(u), 'F', u.eq.mao2 && u.flash && u.eq.mao2.id === 'lanterna' ? 'on' : ''),
     );
     for (const sid of HEROES[u.id].skills) {
@@ -136,10 +138,7 @@ export class Hud {
       if (sk.ativa) acts.append(B(sk.icon, title, () => sid === 'voz_de_comando' ? ui.setMode('skill:' + sid) : g.useSkill(u, sid), '', 'skill', !r || cd > 0, cd > 0 ? h('span', { class: 'cd' }, cd) : null));
       else acts.append(h('button', { class: 'skill', title: title + ' (passiva)', disabled: true, style: { opacity: 0.75 } }, sk.icon));
     }
-    const end = h('div', { class: 'end' },
-      h('button', { class: busy ? 'wait' : '', onclick: () => g.endTurn(), disabled: busy, title: 'Esperar: deixa o tempo passar e os zumbis agirem (Enter)' }, busy ? 'Aguarde...' : '⏳ Esperar'),
-      h('small', {}, g.state.mode === 'combat' ? 'os zumbis agem' : 'passa 5 minutos'));
-    bar_.append(me, weapon, acts, end);
+    bar_.append(me, weapon, acts);
   }
   // ------------------------------------------------------------ missões
   renderTracker() {

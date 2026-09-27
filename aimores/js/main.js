@@ -2,6 +2,7 @@
 import { Scene3D } from './render/scene.js';
 import { Game, DIFF } from './game/game.js';
 import { installActions } from './game/actions.js';
+import { installRealtime } from './game/realtime.js';
 import { UI } from './ui/ui.js';
 import { Audio } from './audio.js';
 import { openGallery } from './ui/gallery.js';
@@ -11,6 +12,7 @@ import { bus } from './util.js';
 import * as Save from './game/save.js';
 
 installActions(Game);
+installRealtime(Game);
 
 const S = new Scene3D($('#gl'), $('#world-ui'));
 const g = new Game(S);
@@ -140,15 +142,14 @@ function frame(now) {
   last = now;
   if (g.state && g.phase !== 'none') {
     try {
-      g.frameUpdate(dt);
-      S.units.update(dt * (g.speed || 1), (x, z) => S.lightAt(x, z), u => g.unitVisible(u));
-      // câmera acompanha quem está andando
-      const sel = g.selected;
-      if (sel && ui.opts.follow) {
-        const v = S.units.get(sel);
-        if (v && v.moves.length) { S.focus(v.pos.x, v.pos.z); ui.userPanned = false; }
-      }
       ui.updateKeysCamera(dt);
+      // o mundo só anda quando não há janela ou conversa aberta
+      if (!ui.panels.cur && !ui.dialogOpen) g.tick(dt);
+      g.frameUpdate(dt);
+      S.units.update(dt, (x, z) => S.lightAt(x, z), u => g.unitVisible(u));
+      // câmera acompanha quem você controla
+      const sel = g.selected;
+      if (sel && sel.px !== undefined && (!ui.userPanned || sel.rtAnim)) { S.focus(sel.px, sel.pz); ui.userPanned = false; }
       ui.updateRange();
       ui.hud.update(dt);
       S.render(dt);

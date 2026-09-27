@@ -177,6 +177,8 @@ export class UI {
     cv.addEventListener('pointerleave', () => this.hideTip());
     window.addEventListener('keydown', e => this.onKey(e));
     window.addEventListener('keyup', e => this.keys.delete(e.key.toLowerCase()));
+    window.addEventListener('blur', () => { this.keys.clear(); this.attackBtn = false; this.joy = null; });
+    this.bindJoystick();
     for (const b of document.querySelectorAll('#cam-btns button')) b.addEventListener('click', () => {
       const a = b.dataset.cam;
       if (a === 'rotl') this.S.rotate(-1); if (a === 'rotr') this.S.rotate(1);
@@ -184,6 +186,37 @@ export class UI {
       if (a === 'cut') { this.g.cutAll = !this.g.cutAll; b.classList.toggle('on', this.g.cutAll); this.g.updateCutaway(); }
     });
     for (const b of document.querySelectorAll('#mini-btns button')) b.addEventListener('click', () => this.open(b.dataset.ui));
+  }
+  // joystick virtual (telas de toque) e botões de ação grandes
+  bindJoystick() {
+    const touch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    document.body.classList.toggle('touch', touch);
+    const pad = h('div', { id: 'joystick' }, h('div', { class: 'knob' }));
+    document.body.append(pad);
+    const knob = pad.firstChild;
+    let id = null, cx = 0, cy = 0;
+    const R = 50;
+    pad.addEventListener('pointerdown', e => { id = e.pointerId; pad.setPointerCapture(id); const r = pad.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; move(e); });
+    const move = e => {
+      if (e.pointerId !== id) return;
+      let dx = e.clientX - cx, dy = e.clientY - cy;
+      const l = Math.hypot(dx, dy);
+      if (l > R) { dx *= R / l; dy *= R / l; }
+      knob.style.transform = `translate(${dx}px, ${dy}px)`;
+      this.joy = l < 8 ? null : { x: dx / R, z: dy / R };
+    };
+    const end = e => { if (e.pointerId !== id) return; id = null; this.joy = null; knob.style.transform = ''; };
+    pad.addEventListener('pointermove', move);
+    pad.addEventListener('pointerup', end); pad.addEventListener('pointercancel', end);
+    // botões grandes (toque)
+    const hold = (el, on) => { el.addEventListener('pointerdown', e => { e.preventDefault(); on(true); }); for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, () => on(false)); };
+    const atk = h('button', { class: 'tb atk', title: 'Atacar' }, '⚔️');
+    hold(atk, v => { this.attackBtn = v; });
+    const use = h('button', { class: 'tb use', title: 'Interagir', onclick: () => this.g.selected && this.g.rtInteract(this.g.selected) }, '✋');
+    const run = h('button', { class: 'tb run', title: 'Correr', onclick: () => { this.runToggle = !this.runToggle; run.classList.toggle('on', this.runToggle); } }, '🏃');
+    const sneak = h('button', { class: 'tb sneak', title: 'Agachar', onclick: () => this.g.selected && this.g.toggleSneak(this.g.selected) }, '🥷');
+    document.body.append(h('div', { id: 'touch-btns' }, atk, use, run, sneak));
+    document.addEventListener('pointerup', () => { this.attackBtn = false; });
   }
   onKey(e) {
     const k = e.key.toLowerCase();
@@ -195,29 +228,27 @@ export class UI {
     if (k === 'f5') { e.preventDefault(); if (Save.save(g, 1)) this.toast('Salvo no espaço 1.', 'bom'); return; }
     if (k === 'f9') { e.preventDefault(); if (Save.meta(1)) this.loadGame(1); return; }
     if (this.panels.cur) {
-      const map = { i: 'inv', c: 'char', j: 'journal', m: 'map', b: 'craft' };
+      const map = { i: 'inv', k: 'char', j: 'journal', m: 'map', b: 'craft', n: 'build' };
       if (map[k] && this.panels.cur === map[k]) this.panels.close();
       return;
     }
+    if (k === ' ' || k.startsWith('arrow') || k === 'tab') e.preventDefault();
+    if (e.repeat) return;
     this.keys.add(k);
     const u = g.selected;
-    if (['1', '2', '3', '4'].includes(k)) { const hh = g.heroes[+k - 1]; if (hh && !hh.dead) g.select(hh); return; }
+    if (['1', '2', '3', '4'].includes(k)) { const hh = g.heroes[+k - 1]; if (hh && !hh.dead && !hh.st.downed) g.select(hh); return; }
     switch (k) {
-      case 'tab': e.preventDefault(); g.selectNext(e.shiftKey ? -1 : 1); break;
-      case 'enter': case 't': g.endTurn(); break;
-      case 'q': this.S.rotate(-1); break;
-      case 'e': this.S.rotate(1); break;
-      case ' ': e.preventDefault(); if (u) this.S.focus(u.x + 0.5, u.z + 0.5); this.userPanned = false; break;
-      case 'shift': g.input.run = !g.input.run; this.hud.dirty = true; this.refreshHover(); break;
+      case 'tab': g.selectNext(e.shiftKey ? -1 : 1); break;
+      case 'e': if (u) g.rtInteract(u); break;
+      case 'c': if (u) g.toggleSneak(u); break;
+      case 'z': this.S.rotate(-1); break;
+      case 'x': this.S.rotate(1); break;
       case 'i': this.open('inv'); break;
-      case 'c': this.open('char'); break;
+      case 'k': this.open('char'); break;
       case 'j': this.open('journal'); break;
       case 'm': this.open('map'); break;
       case 'b': this.open('craft'); break;
-      case 'a': this.setMode('attack'); break;
-      case 'g': if (u) g.aim(u); break;
-      case 'x': if (u) g.defend(u); break;
-      case 'h': if (u) g.hide(u); break;
+      case 'n': this.open('build'); break;
       case 'r': if (u) g.reload(u); break;
       case 'f': if (u) g.toggleFlashlight(u); break;
       case 'v': { g.cutAll = !g.cutAll; document.querySelector('[data-cam=cut]').classList.toggle('on', g.cutAll); g.updateCutaway(); break; }
@@ -225,17 +256,24 @@ export class UI {
       case '-': this.S.zoomBy(0.87); break;
     }
   }
-  // câmera por teclado (chamado a cada quadro)
+  // controles contínuos (a cada quadro): andar com WASD/setas/joystick, correr, atacar segurando
   updateKeysCamera(dt) {
-    if (this.dialogOpen || this.panels.cur) return;
-    let dx = 0, dz = 0;
+    const g = this.g;
+    if (!g.input) return;
     const K = this.keys;
-    if (K.has('w') || K.has('arrowup')) dz -= 1;
-    if (K.has('s') || K.has('arrowdown')) dz += 1;
-    if (K.has('a') && false) dx -= 1;
-    if (K.has('arrowleft')) dx -= 1;
-    if (K.has('d') || K.has('arrowright')) dx += 1;
-    if (dx || dz) { const sp = 16 / this.S.zoom * dt; this.S.pan(dx * sp, dz * sp); this.userPanned = true; }
+    const free = !this.dialogOpen && !this.panels.cur;
+    let mx = 0, mz = 0;
+    if (free) {
+      if (K.has('w') || K.has('arrowup')) mz -= 1;
+      if (K.has('s') || K.has('arrowdown')) mz += 1;
+      if (K.has('a') || K.has('arrowleft')) mx -= 1;
+      if (K.has('d') || K.has('arrowright')) mx += 1;
+      if (this.joy) { mx += this.joy.x; mz += this.joy.z; }
+    }
+    g.input.move.x = mx; g.input.move.z = mz;
+    g.input.attack = free && (K.has(' ') || !!this.attackBtn);
+    g.input.run = free && (K.has('shift') || !!this.runToggle);
+    if (mx || mz) this.userPanned = false;
   }
 
   // ------------------------------------------------------------ clique e prévia
@@ -247,13 +285,7 @@ export class UI {
     if (!cell) return;
     const u = g.selected;
     if (!u) return;
-    if (touch && (!this.touchSel || this.touchSel.x !== cell.x || this.touchSel.z !== cell.z || this.touchSel.unit !== unit)) {
-      // no toque: primeiro toque mostra a prévia, o segundo confirma
-      this.touchSel = { x: cell.x, z: cell.z, unit };
-      this.onHover(cx, cy);
-      return;
-    }
-    this.touchSel = null;
+    if (unit && g.hostile(unit) && g.unitVisible(unit) && !this.mode) { g.attack(u, unit); return; }
     if (this.mode === 'attack') {
       this.setMode(null);
       if (unit && g.hostile(unit)) { g.attack(u, unit); return; }
