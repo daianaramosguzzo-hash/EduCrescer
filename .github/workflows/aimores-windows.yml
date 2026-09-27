@@ -2,7 +2,8 @@ name: Instalador Windows — Aimorés dos Mortos
 
 # Gera o instalador .exe do Aimorés dos Mortos numa máquina Windows e publica na Release
 # "aimores-v<versão>" (a versão fica em aimores/desktop/electron-builder.json).
-# Roda sozinho quando algo do jogo muda, pela aba Actions ou com uma tag aimores-v*.
+# Roda sozinho quando algo do jogo muda; publica só quando a versão é nova
+# (suba extraMetadata.version para lançar).
 on:
   workflow_dispatch:
   push:
@@ -41,7 +42,16 @@ jobs:
         id: ver
         shell: bash
         run: echo "v=$(node -p "require('./aimores/desktop/electron-builder.json').extraMetadata.version")" >> "$GITHUB_OUTPUT"
+      - name: Essa versão já foi publicada?
+        id: rel
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "aimores-v${{ steps.ver.outputs.v }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then echo "existe=1" >> "$GITHUB_OUTPUT"; else echo "existe=0" >> "$GITHUB_OUTPUT"; fi
+      # só publica versões novas (mudanças em andamento não substituem o instalador já lançado)
       - name: Publicar na Release
+        if: steps.rel.outputs.existe == '0'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/aimores-v') && github.ref_name || format('aimores-v{0}', steps.ver.outputs.v) }}
