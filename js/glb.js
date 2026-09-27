@@ -15,7 +15,7 @@ import { GRADIENT, addRim } from './models.js';
 const DEFS = {
   // herói: modelo final texturizado e rigado no Blender (Idle, Walk, Run, Jump,
   // Attack), otimizado com gltfpack; mantém o material original com a textura
-  leo: { file: 'assets/models/leo.glb', height: 1.66, outline: 0.009, fixWinding: false, keepMaterial: true, speeds: { walk: 2.6, run: 2.2 } },
+  leo: { file: 'assets/models/leo.glb', height: 1.66, outline: 0.009, fixWinding: false, keepMaterial: true, speeds: { walk: 1.6, run: 2.2, runWalk: 2.5 } },
   // pupilas, nariz e espinhos pequenos ficam sem contorno para não borrar o rosto
   pingolote: { file: 'assets/models/pingolote.glb', height: 0.8, outline: 0.011, noOutline: /black|darkblue|spike/i },
 };
@@ -191,28 +191,94 @@ function animator(mixer, clips, speeds = {}) {
 // As animações são achadas pelo nome em português ou em inglês.
 const ALIASES = {
   idle: ['Idle'], walk: ['Andar', 'Walk'], run: ['Correr', 'Run'], jump: ['Pular', 'Jump'],
-  attack: ['Atacar', 'Attack'], wave: ['Acenar', 'Jump'], interact: ['Interagir', 'Idle'], point: ['Apontar', 'Attack'],
+  attack: ['Atacar', 'Attack'], wave: ['Acenar', 'Wave'], interact: ['Interagir', 'Idle'], point: ['Apontar', 'Attack'],
 };
 const ACTIONS = { pular: 'jump', jump: 'jump', interagir: 'interact', apontar: 'point', atacar: 'attack', attack: 'attack', throw: 'attack', fist: 'wave', acenar: 'wave' };
+// Movimentos feitos por código para quando o arquivo não traz a animação
+// (arremessar, pular, acenar). Giram os ossos por cima da animação que está tocando.
+const PROC = {
+  attack: { len: 0.7 }, jump: { len: 0.8 }, wave: { len: 1.5 },
+};
+const AX = { x: new THREE.Vector3(1, 0, 0), z: new THREE.Vector3(0, 0, 1) };
 export function makeGlbHuman(name) {
   const it = instance(name);
   const clip = k => (ALIASES[k] || [k]).find(n => it.clips[n]);
   const sp = it.def.speeds || {};
-  const speeds = { [clip('walk')]: sp.walk || 1.55, [clip('run')]: sp.run || 1.1 };
+  const idleC = clip('idle'), walkC = clip('walk'), runC = clip('run');
+  const speeds = { [walkC]: sp.walk || 1.55 };
+  if (runC) speeds[runC] = sp.run || 1.1;
   const anim = animator(it.mixer, it.clips, speeds);
-  anim.loop(clip('idle'), 0);
+  anim.loop(idleC, 0);
   it.mixer.update(Math.random() * 3);
-  let head = null, body = null;
-  it.scene.traverse(o => { if (/^head$/i.test(o.name)) head = o; if (/^chest$/i.test(o.name)) body = o; });
+  // ossos por nome, sem depender de pontos e sublinhados (upper_arm.R, UpperArm_R...)
+  const bones = {};
+  it.scene.traverse(o => { if (o.isBone || o.type === 'Bone' || o.children) bones[o.name.toLowerCase().replace(/[^a-z]/g, '')] = bones[o.name.toLowerCase().replace(/[^a-z]/g, '')] || o; });
+  const bone = (...names) => names.map(n => bones[n]).find(Boolean) || null;
+  const B = {
+    armR: bone('upperarmr'), armL: bone('upperarml'), foreR: bone('forearmr'), foreL: bone('forearml'),
+    thighL: bone('thighl'), thighR: bone('thighr'), shinL: bone('shinl'), shinR: bone('shinr'), chest: bone('upperchest', 'chest'),
+  };
+  const head = bone('head') || it.inner, body = bone('chest') || it.inner;
+  // gira um osso em torno de um eixo do personagem (x = lado, z = frente)
+  const q = new THREE.Quaternion(), qp = new THREE.Quaternion(), qs = new THREE.Quaternion(), v = new THREE.Vector3();
+  const turn = (b, axis, ang) => {
+    if (!b || !ang) return;
+    it.scene.getWorldQuaternion(qs);
+    b.parent.getWorldQuaternion(qp);
+    v.copy(AX[axis]).applyQuaternion(qs).applyQuaternion(qp.invert());
+    b.quaternion.premultiply(q.setFromAxisAngle(v, ang));
+    b.updateMatrixWorld(true);
+  };
+  let proc = null, pT = 0;
+  const baseY = it.inner.position.y;
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const api = {
-    group: it.group, head: head || it.inner, body: body || it.inner, height: it.height, glb: true, hero: true,
+    group: it.group, head, body, height: it.height, glb: true, hero: true,
     update(dt, moving, speed = 1) {
-      if (!anim.busy()) anim.loop(clip(moving ? (speed > 1.3 ? 'run' : 'walk') : 'idle'));
+      const running = moving && speed > 1.3;
+      const want = moving ? (running ? (runC || walkC) : walkC) : idleC;
+      if (!anim.busy()) anim.loop(want);
+      // sem animação de corrida: a de andar fica mais rápida
+      if (!runC && walkC) it.clips[walkC].setEffectiveTimeScale(running ? (sp.runWalk || 2.4) : (sp.walk || 1.55));
       it.mixer.update(dt);
+      it.inner.position.y = baseY;
+      if (proc) {
+        pT += dt;
+        const k = Math.min(1, pT / PROC[proc].len);
+        it.scene.updateMatrixWorld(true);
+        if (proc === 'attack') {
+          // arremesso: braço direito vai para trás e lança para a frente (ângulos
+          // moderados: a jaqueta do modelo estica se o braço sobe demais)
+          const back = k < 0.4 ? ss(0, 0.4, k) : 1 - ss(0.4, 0.55, k);
+          const fwd = k >= 0.4 ? Math.sin(Math.PI * ss(0.4, 1, k)) : 0;
+          turn(B.armR, 'x', 0.7 * back - 0.65 * fwd);
+          turn(B.foreR, 'x', -1.0 * back - 0.5 * fwd);
+        } else if (proc === 'jump') {
+          const up = Math.sin(Math.PI * ss(0.15, 0.85, k));
+          const crouch = Math.max(0, 1 - Math.abs(k - 0.1) / 0.1) + Math.max(0, 1 - Math.abs(k - 0.92) / 0.08);
+          it.inner.position.y = baseY + up * 0.32 * (it.def.height / 1.66) - crouch * 0.04;
+          turn(B.armR, 'x', -0.9 * up); turn(B.armL, 'x', -0.6 * up);
+          turn(B.thighL, 'x', -0.6 * up); turn(B.thighR, 'x', -0.3 * up);
+          turn(B.shinL, 'x', 1.1 * up); turn(B.shinR, 'x', 0.7 * up);
+        } else if (proc === 'wave') {
+          // comemoração: dois pulinhos com o punho fechado dobrado para cima
+          const e = Math.min(ss(0, 0.15, k), 1 - ss(0.85, 1, k));
+          it.inner.position.y = baseY + Math.abs(Math.sin(pT * 7)) * 0.1 * e * (it.def.height / 1.66);
+          turn(B.armR, 'x', -0.5 * e);
+          turn(B.foreR, 'x', -1.6 * e);
+          turn(B.foreL, 'x', -0.5 * e);
+        }
+        if (k >= 1) proc = null;
+      }
     },
     // interface antiga: 'throw' (arremessar orbe), 'fist' (comemorar), 'rest'
     pose(n) { if (n !== 'rest') api.play(n); },
-    play(n) { const key = ACTIONS[String(n).toLowerCase()] || String(n).toLowerCase(); const c = clip(key) || (it.clips[n] ? n : null); if (c) anim.once(c); },
+    play(n) {
+      const key = ACTIONS[String(n).toLowerCase()] || String(n).toLowerCase();
+      const c = clip(key) || (it.clips[n] ? n : null);
+      if (c) anim.once(c);
+      else if (PROC[key]) { proc = key; pT = 0; }
+    },
     setExpression() {},
   };
   return api;
