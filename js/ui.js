@@ -207,7 +207,7 @@ export async function bagScreen(bag, filter) {
 }
 
 export async function dexScreen(state, show3d) {
-  const s = screen(`Crescedex — Vistos: ${Object.keys(state.seen).length} · Capturados: ${Object.keys(state.caught).length}`);
+  const s = screen(`Criaturadex — Vistas: ${Object.keys(state.seen).length} · Capturados: ${Object.keys(state.caught).length}`);
   const cont = document.createElement('div');
   s.body.appendChild(cont);
   const items = DEX_ORDER.map((id, i) => {
@@ -262,7 +262,7 @@ export async function trainerCard(state) {
       <div>
         <p><b>Nome:</b> ${state.name}</p>
         <p><b>Dinheiro:</b> ₢${state.money}</p>
-        <p><b>Crescedex:</b> ${Object.keys(state.caught).length}</p>
+        <p><b>Criaturadex:</b> ${Object.keys(state.caught).length}</p>
         <p><b>Tempo:</b> ${Math.floor(mins / 60)}h ${mins % 60}min</p>
         <div class="badges">${BADGES.map(b => `<span class="badge ${state.badges.includes(b.id) ? 'on' : ''}" style="--c:${b.color}" title="${b.name}">◆</span>`).join('')}</div>
         ${state.flags.campeao ? '<p class="champ">★ CAMPEÃO DA LIGA ★</p>' : ''}

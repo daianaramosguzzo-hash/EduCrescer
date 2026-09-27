@@ -67,6 +67,54 @@ export const SKIES = {
     mountain: '#4a4a6a', snow: true, clouds: true, cloud: '#8a8aa8', cloudShade: '#3a3a5a',
     kinds: { pine: 1 }, lightning: true, motes: true,
   },
+  // caatinga: sol forte, chão de terra avermelhada, capim seco, mandacarus e árvores secas
+  caatinga: {
+    top: '#3a8ee0', horizon: '#ffe6b8', bottom: '#f0cf9a', fog: '#f4dcb0', fogNear: 24, fogFar: 66,
+    sunDir: [0.5, 0.82, 0.3], sunGlow: '#fff0c0', sunLight: '#fff0d0', sunI: 1.95,
+    hemiSky: '#fff2d8', hemiGround: '#a8784a', hemiI: 1.05,
+    grass: '#b8a458', grassDark: '#8e7a3a', grassLight: '#d4c070', tall: '#a08a40',
+    path: '#d89a62', pathEdge: '#a8663a', sand: '#e0a868', bank: '#b87a48',
+    waterShallow: '#8ac8c0', waterDeep: '#2a6a8a', water: '#4a9ab0',
+    trunk: '#8a6a4a', pine: ['#6a8a4a', '#7a9a52', '#8aa85a'], leaf: ['#9aa050', '#b0b060', '#c8b870'], palm: '#8aa050',
+    mountain: '#c8845a', snow: false, clouds: true, cloud: '#fff8ec', cloudShade: '#e0c0a0',
+    kinds: { cactus: 0.55, dead: 0.3, round: 0.15 }, motes: true,
+  },
+  // chapada: planalto de pedra sob tempestade elétrica, capim ralo e céu roxo
+  chapada: {
+    top: '#241c4a', horizon: '#8a78b0', bottom: '#5a4a7a', fog: '#6e6290', fogNear: 16, fogFar: 52,
+    sunDir: [0.3, 0.88, 0.35], sunGlow: '#c8b8ff', sunLight: '#d8d0ff', sunI: 1.1,
+    hemiSky: '#c0b8f0', hemiGround: '#5a4a52', hemiI: 0.9,
+    grass: '#7a9a5a', grassDark: '#587a44', grassLight: '#96b070', tall: '#5a8a44',
+    path: '#b8a08a', pathEdge: '#8a7462', sand: '#c8b098', bank: '#9a8470',
+    waterShallow: '#7a90c0', waterDeep: '#2a2a6a', water: '#4a5a9a',
+    trunk: '#5a4a40', pine: ['#3a5a4a', '#46685a', '#567a66'], leaf: ['#5a7a4a', '#6a8a52', '#7a9a5a'], palm: '#5a7a4a',
+    mountain: '#6a5a8a', snow: false, clouds: true, cloud: '#9a8ac0', cloudShade: '#3a2e5a',
+    kinds: { dead: 0.4, pine: 0.35, cactus: 0.25 }, lightning: true, motes: true,
+  },
+  // Amazônia: floresta densa e úmida, árvores gigantes com cipós, rios escuros
+  amazonia: {
+    top: '#2a7a70', horizon: '#b8e8c8', bottom: '#80c0a0', fog: '#9ad0b4', fogNear: 11, fogFar: 40,
+    sunDir: [0.35, 0.9, 0.25], sunGlow: '#f0ffd0', sunLight: '#f4ffe0', sunI: 1.25,
+    hemiSky: '#d0f4d8', hemiGround: '#2e5a2a', hemiI: 0.95,
+    grass: '#3a9a3e', grassDark: '#257a30', grassLight: '#50b048', tall: '#2a8a34',
+    path: '#a07a4e', pathEdge: '#7a5a34', sand: '#c8a878', bank: '#6a5a34',
+    waterShallow: '#6a9a70', waterDeep: '#2a4a30', water: '#4a7a50',
+    trunk: '#6a4a2e', pine: ['#1f6a34', '#2a7e3e', '#3a9448'], leaf: ['#1f7a34', '#2e9a3e', '#48b44c'], palm: '#2e9a3e',
+    mountain: '#2f6a50', snow: false, clouds: true, cloud: '#f0fff4', cloudShade: '#a8d0b8',
+    kinds: { jungle: 0.35, palm: 0.3, round: 0.35 }, butterflies: true, leaves: true,
+  },
+  // pântano noturno: névoa densa, água escura, árvores secas e vaga-lumes
+  pantano: {
+    top: '#0c0c24', horizon: '#3a3a64', bottom: '#22223e', fog: '#2c2c4a', fogNear: 8, fogFar: 30,
+    sunDir: [-0.3, 0.8, 0.5], sunGlow: '#c8d0ff', sunLight: '#a8b4e8', sunI: 0.75,
+    hemiSky: '#8890c8', hemiGround: '#1e2a24', hemiI: 0.75,
+    grass: '#3a5a44', grassDark: '#2a4434', grassLight: '#4a6a50', tall: '#2e5040',
+    path: '#6a6258', pathEdge: '#4a443c', sand: '#5a5a50', bank: '#3a3a30',
+    waterShallow: '#3a5a5a', waterDeep: '#101a22', water: '#24383e',
+    trunk: '#3a3030', pine: ['#1e3a30', '#284a3a', '#345a44'], leaf: ['#2a4a38', '#345a40', '#406a48'], palm: '#345a40',
+    mountain: '#24243e', snow: false, clouds: false,
+    kinds: { dead: 0.55, round: 0.25, jungle: 0.2 }, fireflies: true,
+  },
 };
 
 export function hash(x, z) {
@@ -656,6 +704,51 @@ function treeParts(kind, variant, p, lo) {
       parts.push({ geo: new THREE.ConeGeometry(0.21, 1.2, 4), m: mm, color: i % 2 ? p.palm : p.leaf[1], shade: 'grad' });
     }
     for (let i = 0; i < 3; i++) parts.push({ geo: new THREE.SphereGeometry(0.08, 6, 5), m: M(top[0] + Math.cos(i * 2.1) * 0.1, top[1] - 0.1, Math.sin(i * 2.1) * 0.1), color: '#6a4424' });
+  } else if (kind === 'cactus') {
+    // mandacaru: coluna com gomos e braços que sobem
+    const col = '#4f8a44', dark = '#3a6e36';
+    const H = variant === 1 ? 2.2 : 1.7;
+    parts.push({ geo: new THREE.CylinderGeometry(0.2, 0.24, H, lo ? 6 : 10), m: M(0, H / 2, 0), color: col, shade: 'trunk' });
+    parts.push({ geo: new THREE.SphereGeometry(0.2, lo ? 6 : 10, 6), m: M(0, H, 0), color: col });
+    const arms = variant === 2 ? [[1, 0.7, 0.55]] : [[1, 0.8, 0.6], [-1, 1.1, 0.5]];
+    for (const [sx, y, h] of arms) {
+      parts.push({ geo: new THREE.CylinderGeometry(0.11, 0.11, 0.35, lo ? 5 : 8), m: M(sx * 0.3, y, 0, 0, 0, Math.PI / 2), color: col });
+      parts.push({ geo: new THREE.CylinderGeometry(0.11, 0.12, h, lo ? 5 : 8), m: M(sx * 0.46, y + h / 2, 0), color: col, shade: 'trunk' });
+      parts.push({ geo: new THREE.SphereGeometry(0.11, lo ? 5 : 8, 5), m: M(sx * 0.46, y + h, 0), color: col });
+    }
+    if (!lo) for (let i = 0; i < 6; i++) {
+      const a = i * Math.PI / 3;
+      parts.push({ geo: new THREE.BoxGeometry(0.03, H * 0.92, 0.03), m: M(Math.cos(a) * 0.215, H / 2, Math.sin(a) * 0.215, 0, -a, 0), color: dark });
+    }
+    if (!lo && variant !== 2) parts.push({ geo: new THREE.SphereGeometry(0.09, 8, 6), m: M(0, H + 0.14, 0, 0, 0, 0, 1, 0.5, 1), color: '#fff8f0' });
+  } else if (kind === 'dead') {
+    // árvore seca: tronco retorcido e galhos sem folhas (algumas folhinhas secas)
+    parts.push(...trunkParts(p, 1.3, 0.13, 0.06, p.trunk, lo));
+    const br = variant === 1 ? [[0.8, 0.9, 0.7], [-0.9, 1.1, 0.6], [0.2, 1.3, 0.55], [-0.3, 0.7, 0.45]] : [[0.9, 1.0, 0.65], [-0.7, 1.2, 0.6], [0.1, 1.35, 0.5]];
+    for (const [a, y, l] of br) {
+      const dir = new THREE.Vector3(Math.cos(a * 2), 0.9, Math.sin(a * 2)).normalize();
+      const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      const mm = new THREE.Matrix4().compose(new THREE.Vector3(dir.x * l * 0.5, y + dir.y * l * 0.5, dir.z * l * 0.5), q, new THREE.Vector3(1, 1, 1));
+      parts.push({ geo: new THREE.CylinderGeometry(0.018, 0.045, l, lo ? 4 : 5), m: mm, color: p.trunk, shade: 'trunk' });
+      if (!lo) {
+        const tip = new THREE.Vector3(dir.x * l, y + dir.y * l, dir.z * l);
+        parts.push({ geo: new THREE.IcosahedronGeometry(0.14, 0), m: M(tip.x, tip.y, tip.z, a, a, 0), color: p.leaf[2], shade: 'canopy' });
+      }
+    }
+  } else if (kind === 'jungle') {
+    // árvore gigante da floresta: sapopemas (raízes-tábua), copa em camadas e cipós
+    parts.push(...trunkParts(p, 2.0, 0.24, 0.14, p.trunk, lo));
+    if (!lo) for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2 + 0.3;
+      parts.push({ geo: new THREE.BoxGeometry(0.06, 0.7, 0.42), m: M(Math.cos(a) * 0.26, 0.3, Math.sin(a) * 0.26, 0, -a, 0), color: p.trunk, shade: 'trunk' });
+    }
+    blob(0.95, 0, 2.3, 0, p.leaf[0], 0.2); blob(0.7, 0.62, 2.05, 0.2, p.leaf[1], 0.6); blob(0.66, -0.6, 2.15, -0.2, p.leaf[1], 1.1);
+    blob(0.55, 0.1, 2.85, 0.1, p.leaf[2], 0.4);
+    if (variant === 1) blob(0.5, 0.2, 1.8, -0.62, p.leaf[2], 0.8);
+    if (!lo) for (let i = 0; i < 5; i++) {
+      const a = i * 1.3 + variant;
+      parts.push({ geo: new THREE.CylinderGeometry(0.012, 0.012, 1.3, 4), m: M(Math.cos(a) * 0.62, 1.55, Math.sin(a) * 0.62), color: '#3a6a2a' });
+    }
   }
   return parts;
 }
@@ -676,7 +769,7 @@ function treeGeometry(kind, variant, p, lo) {
   treeCache.set(key, r);
   return r;
 }
-const VARIANTS = { pine: 3, round: 3, birch: 1, palm: 2 };
+const VARIANTS = { pine: 3, round: 3, birch: 1, palm: 2, cactus: 3, dead: 2, jungle: 2 };
 
 // list: [{ x, y, z, s, r, kind, lo }]  (lo = versão simplificada para longe)
 export function plantTrees(list, p, { shadows = true } = {}) {

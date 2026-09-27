@@ -1,4 +1,4 @@
-// Instâncias de Crescemon: status, experiência, golpes.
+// Instâncias de criaturas: status, experiência, golpes.
 import { SPECIES, MOVES } from './data.js';
 
 let uidCounter = 1;

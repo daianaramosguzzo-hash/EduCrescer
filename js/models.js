@@ -1,4 +1,4 @@
-// Modelos 3D procedurais (estilo cartoon) para humanos e Crescemon.
+// Modelos 3D procedurais (estilo cartoon) para humanos e criaturas.
 import * as THREE from '../lib/three.module.min.js';
 import { MAT_TEX } from './textures.js';
 import { hasGlb, makeGlbCreature, makeGlbHuman } from './glb.js';
@@ -297,7 +297,16 @@ export function makeHuman(o = {}) {
   // só as peças com contorno projetam sombra: detalhes minúsculos e cascas de contorno não mudam a sombra
   root.traverse(o => { if (o.isMesh) o.castShadow = !o.userData.noOutline; });
 
-  let phase = 0;
+  // aura dos líderes de ginásio: partículas do tipo deles em volta do corpo
+  const aura = opt.leader ? makeAura(opt.leader) : null;
+  if (aura) root.add(aura.group);
+
+  // "vida" quando parado: respira, olha em volta e solta os braços; os líderes
+  // ainda fazem gestos próprios de tempos em tempos
+  const GESTURES = { pedra: ['cross', 'flex'], agua: ['wave', 'twirl'], fogo: ['fist', 'head'], eletrico: ['point', 'head'], planta: ['wide', 'bow'], sombra: ['wide', 'point'] };
+  let phase = 0, life = Math.random() * 10, lookT = 0, lookTo = 0;
+  let gesture = null, gT = 0, nextG = 2 + Math.random() * 3;
+  const G_LEN = 1.8;
   const api = {
     group: root, head, body,
     update(dt, moving, speed = 1) {
@@ -309,6 +318,43 @@ export function makeHuman(o = {}) {
       arms[0].rotation.x = -s * amp * 0.9;
       arms[1].rotation.x = s * amp * 0.9;
       body.position.y = moving ? Math.abs(Math.cos(phase)) * 0.04 : 0;
+      life += dt;
+      const idle = moving ? 0 : 1;
+      const breath = Math.sin(life * 2.1);
+      // respiração e peso do corpo
+      body.scale.y = 1 + breath * 0.014 * idle;
+      body.rotation.z = Math.sin(life * 0.7) * 0.025 * idle;
+      arms[0].rotation.z = -0.08 - (0.03 + breath * 0.02) * idle;
+      arms[1].rotation.z = 0.08 + (0.03 + breath * 0.02) * idle;
+      // olhar em volta
+      lookT -= dt;
+      if (lookT <= 0) { lookTo = (Math.random() - 0.5) * (opt.leader ? 1.1 : 0.8); lookT = 1.6 + Math.random() * 3; }
+      head.rotation.y += (lookTo * idle - head.rotation.y) * Math.min(1, dt * 3);
+      head.rotation.x = Math.sin(life * 1.3) * 0.04 * idle;
+      body.rotation.x = 0; body.rotation.y = 0;
+      // gestos dos líderes
+      if (opt.leader && GESTURES[opt.leader]) {
+        if (moving) gesture = null;
+        else if (!gesture) { nextG -= dt; if (nextG <= 0) { const l = GESTURES[opt.leader]; gesture = l[Math.floor(Math.random() * l.length)]; gT = 0; } }
+        if (gesture) {
+          gT += dt;
+          const k = gT / G_LEN, e = Math.min(1, k / 0.2, (1 - k) / 0.2);
+          const R = arms[1], L = arms[0];
+          if (gesture === 'wave') { R.rotation.z = 0.08 + 2.4 * e + Math.sin(gT * 14) * 0.35 * e; }
+          else if (gesture === 'fist') { R.rotation.x = -2.8 * e; body.position.y += Math.abs(Math.sin(gT * 9)) * 0.05 * e; }
+          else if (gesture === 'cross') { L.rotation.x = -1.3 * e; R.rotation.x = -1.3 * e; L.rotation.z = -0.08 + 0.75 * e; R.rotation.z = 0.08 - 0.75 * e; }
+          else if (gesture === 'flex') { L.rotation.z = -0.08 - 1.5 * e; R.rotation.z = 0.08 + 1.5 * e; L.rotation.x = -0.5 * e; R.rotation.x = -0.5 * e; }
+          else if (gesture === 'wide') { L.rotation.z = -0.08 - 1.25 * e; R.rotation.z = 0.08 + 1.25 * e; head.rotation.x = -0.2 * e; }
+          else if (gesture === 'point') { R.rotation.x = -3.0 * e; head.rotation.x = -0.3 * e; }
+          else if (gesture === 'head') { R.rotation.x = -2.3 * e; R.rotation.z = 0.08 - 0.55 * e; }
+          else if (gesture === 'bow') { body.rotation.x = 0.38 * e; L.rotation.x = 0.3 * e; R.rotation.x = 0.3 * e; }
+          else if (gesture === 'twirl') { body.rotation.y = Math.PI * 2 * Math.min(1, Math.max(0, (k - 0.15) / 0.7)); R.rotation.z = 0.08 + 1.2 * e; L.rotation.z = -0.08 - 1.2 * e; }
+          if (gT >= G_LEN) { gesture = null; nextG = 3 + Math.random() * 4; }
+        }
+        // a líder das sombras flutua de leve
+        if (opt.leader === 'sombra') body.position.y += (0.06 + Math.sin(life * 1.6) * 0.04) * idle;
+      }
+      if (aura) aura.update(dt, life);
     },
     pose(name) {
       if (name === 'throw') { arms[1].rotation.x = -2.6; }
@@ -317,6 +363,56 @@ export function makeHuman(o = {}) {
     },
   };
   return api;
+}
+
+// Partículas temáticas em volta dos líderes (brasas, faíscas, folhas, névoa, pedrinhas, bolhas)
+function makeAura(kind) {
+  const g = new THREE.Group();
+  const CFG = {
+    fogo: { color: ['#ff6a1a', '#ffb02a', '#ffe060'], n: 14, mode: 'rise', size: 0.035, speed: 0.55, r: 0.45 },
+    eletrico: { color: ['#fff080', '#ffffff', '#ffe040'], n: 10, mode: 'spark', size: 0.03, r: 0.5 },
+    planta: { color: ['#5ac04a', '#8ad060', '#3a9a3a'], n: 10, mode: 'orbit', size: 0.05, speed: 0.9, r: 0.55 },
+    sombra: { color: ['#8a5ad0', '#5a3a9a', '#c0a0ff'], n: 14, mode: 'rise', size: 0.07, speed: 0.35, r: 0.4 },
+    pedra: { color: ['#9a8a70', '#7a6e5a', '#b8a888'], n: 6, mode: 'orbit', size: 0.05, speed: 0.6, r: 0.55 },
+    agua: { color: ['#8ad8ff', '#c8f0ff', '#5ab8f0'], n: 12, mode: 'rise', size: 0.04, speed: 0.5, r: 0.45 },
+  }[kind];
+  if (!CFG) return null;
+  const parts = [];
+  const geoP = kind === 'planta' ? new THREE.PlaneGeometry(1, 0.6) : kind === 'eletrico' ? new THREE.BoxGeometry(0.4, 1, 0.4) : kind === 'pedra' ? new THREE.DodecahedronGeometry(1, 0) : new THREE.SphereGeometry(1, 6, 5);
+  for (let i = 0; i < CFG.n; i++) {
+    const m = new THREE.Mesh(geoP, new THREE.MeshBasicMaterial({ color: CFG.color[i % CFG.color.length], transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false }));
+    m.scale.setScalar(CFG.size * (0.7 + Math.random() * 0.6));
+    m.userData.noOutline = true; m.castShadow = false;
+    m.userData.ph = Math.random(); m.userData.a = Math.random() * Math.PI * 2;
+    g.add(m); parts.push(m);
+  }
+  let flick = 0;
+  return {
+    group: g,
+    update(dt, t) {
+      flick -= dt;
+      for (const m of parts) {
+        const d = m.userData;
+        if (CFG.mode === 'rise') {
+          const y = ((d.ph + t * CFG.speed * 0.5) % 1);
+          const a = d.a + t * 0.8;
+          const r = CFG.r * (0.6 + 0.4 * Math.sin(d.ph * 20));
+          m.position.set(Math.cos(a) * r, 0.1 + y * 1.6, Math.sin(a) * r);
+          m.material.opacity = Math.sin(y * Math.PI) * (kind === 'sombra' ? 0.45 : 0.85);
+        } else if (CFG.mode === 'orbit') {
+          const a = d.a + t * CFG.speed;
+          m.position.set(Math.cos(a) * CFG.r, 0.35 + d.ph * 0.9 + Math.sin(t * 2 + d.a) * 0.08, Math.sin(a) * CFG.r);
+          m.rotation.set(t * 2 + d.a, t * 3, 0);
+        } else if (CFG.mode === 'spark' && flick <= 0) {
+          const a = Math.random() * Math.PI * 2;
+          m.position.set(Math.cos(a) * CFG.r * (0.6 + Math.random() * 0.5), 0.3 + Math.random() * 1.2, Math.sin(a) * CFG.r * (0.6 + Math.random() * 0.5));
+          m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+          m.visible = Math.random() < 0.6;
+        }
+      }
+      if (CFG.mode === 'spark' && flick <= 0) flick = 0.09;
+    },
+  };
 }
 
 function buildHair(head, opt, hairM) {
@@ -393,8 +489,8 @@ export const LOOKS = {
   garota: { hair: '#c86a2a', hairStyle: 'long', dress: '#7ad0a0', shoes: '#4a8a6a' },
   inseto: { hair: '#4a3a1a', shirt: '#9ad04a', pants: '#8a6a3a', shorts: true, hat: '#e0c040', socks: '#fff' },
   campista: { hair: '#2a1a0a', shirt: '#a0703a', pants: '#5a6a3a', hat: '#6a7a3a' },
-  basalto: { hair: '#2a1a0a', hairStyle: 'spiky', shirt: '#8a7a6a', pants: '#5a4a3a', jacket: '#6a5a4a', skin: '#c8906a' },
-  marina: { hair: '#f0a040', hairStyle: 'long', dress: '#3aa0e0', shoes: '#fff' },
+  basalto: { hair: '#2a1a0a', hairStyle: 'spiky', shirt: '#8a7a6a', pants: '#5a4a3a', jacket: '#6a5a4a', skin: '#c8906a', leader: 'pedra' },
+  marina: { hair: '#f0a040', hairStyle: 'long', dress: '#3aa0e0', shoes: '#fff', leader: 'agua' },
   nadador: { hair: '#1a1a1a', shirt: '#f4c7a1', pants: '#2a6ad0', shorts: true, skin: '#e8a878' },
   sombra: { hair: '#1a1a1a', shirt: '#2a2a2a', pants: '#1a1a1a', hat: '#1a1a1a', logo: 'S', shoes: '#111' },
   breu: { hair: '#1a1a1a', shirt: '#3a1a4a', pants: '#1a1a1a', jacket: '#1a1a1a', lining: '#8a2a2a', shoes: '#111', skin: '#e0b090' },
@@ -406,10 +502,21 @@ export const LOOKS = {
   grafite: { hair: '#1a1a1a', hairStyle: 'bald', shirt: '#4a4a4a', pants: '#2a2a2a', jacket: '#2a2a2a', lining: '#8a2a2a', skin: '#c8906a', scale: 1.15, shoes: '#111' },
   vulto: { hair: '#f0f0f0', hairStyle: 'spiky', shirt: '#2a2a3a', coat: true, pants: '#1a1a2a', shoes: '#111', skin: '#e0c0a8' },
   eclipse: { hair: '#f0e8ff', hairStyle: 'long', dress: '#3a0a5a', hat: '#1a0a2a', shoes: '#1a0a2a', skin: '#f4dcd0' },
+  // líderes dos ginásios novos (leader = tipo da aura e dos gestos)
+  jandira: { hair: '#1a1008', hairStyle: 'long', shirt: '#e8d8b8', jacket: '#8a5a2a', lining: '#c89a5a', pants: '#5a3a1a', hat: '#6a4020', shoes: '#4a2a10', skin: '#c88a5a', leader: 'fogo' },
+  tiao: { hair: '#e8e8e8', hairStyle: 'spiky', shirt: '#3a5aa0', coat: true, pants: '#2a2a3a', shoes: '#222', skin: '#e8b890', leader: 'eletrico' },
+  ceci: { hair: '#1a1008', hairStyle: 'long', dress: '#3a8a3a', shoes: '#6a4a2a', skin: '#b87a4a', leader: 'planta' },
+  luar: { hair: '#d8d0ff', hairStyle: 'long', dress: '#2a1a4a', hat: '#1a1030', shoes: '#1a1030', skin: '#f0dcd0', leader: 'sombra' },
+  // treinadores das regiões novas
+  vaqueiro: { hair: '#3a2a1a', shirt: '#c8a070', pants: '#5a4030', hat: '#7a5030', skin: '#c88a5a' },
+  eletricista: { hair: '#2a1a0a', shirt: '#f08a2a', pants: '#2a3a6a', hat: '#f0c830' },
+  botanica: { hair: '#6a3a1a', hairStyle: 'long', dress: '#6ab04a', hat: '#e0d090', shoes: '#5a4a2a' },
+  medium: { hair: '#2a1a3a', hairStyle: 'long', dress: '#5a3a7a', shoes: '#2a1a3a', skin: '#e8c8b0' },
+  mateiro: { hair: '#1a1a1a', shirt: '#4a6a3a', pants: '#3a4a2a', hat: '#5a6a3a', skin: '#a8704a' },
 };
 
-// ---------- CRESCEMON ----------
-const SKIN_BY_PLAN = { quad: 'fur', bird: 'feathers', bat: 'fur', fish: 'scales', serpent: 'scales', rock: 'rock', beetle: 'chitin', worm: 'chitin', cocoon: 'chitin', butterfly: 'chitin', crab: 'chitin', ghost: 'smooth', star: 'smooth', mushroom: 'smooth', crystal: null };
+// ---------- CRIATURAS ----------
+const SKIN_BY_PLAN = { quad: 'fur', bird: 'feathers', bat: 'fur', fish: 'scales', serpent: 'scales', rock: 'rock', beetle: 'chitin', worm: 'chitin', cocoon: 'chitin', butterfly: 'chitin', crab: 'chitin', ghost: 'smooth', star: 'smooth', mushroom: 'smooth', crystal: null, plant: 'smooth' };
 
 // variant (0..1): cada indivíduo selvagem tem leve diferença de tom e tamanho
 export function makeCreature(spec, variant = null) {
@@ -879,6 +986,143 @@ export function makeCreature(spec, variant = null) {
       inner.add(sp);
     }
     anim.spin = core;
+  } else if (plan === 'plant') {
+    // flora do Brasil: corpo de planta com rosto, raízes como pezinhos e
+    // variações (cacto, vitória-régia, frutos, guaraná, orquídea, castanha, cipós)
+    const leafM = charMat(spec.c2 || '#4aa246', 'smooth');
+    const leafGeo = new THREE.SphereGeometry(1, 12, 8);
+    const leaf = (parent, pos, sc, rot, side = 1, sway = true) => {
+      const g = new THREE.Group();
+      g.position.set(...pos);
+      g.rotation.set(...rot);
+      g.add(mesh(leafGeo, leafM, [0, sc[1], 0], sc));
+      g.add(mesh(geo.cyl, toon(shade(spec.c2 || '#4aa246', -0.25)), [0, sc[1], sc[2] * 0.9], [0.008, sc[1] * 1.8, 0.008]));
+      parent.add(g);
+      if (sway) anim.wings.push({ g, side });
+      return g;
+    };
+    // raízes (pezinhos)
+    for (let i = 0; i < 3; i++) {
+      const a = i * 2.1 + 0.5;
+      inner.add(mesh(geo.sphere, c3, [Math.cos(a) * 0.14, 0.04, Math.sin(a) * 0.14], [0.08, 0.05, 0.1]));
+    }
+    let faceY = 0.34, faceZ = 0.24, bodyTop = 0.62;
+    if (ex.has('cactus')) {
+      // mandacaru: coluna com gomos, braços erguidos, espinhos e flor no alto
+      inner.add(mesh(geo.cyl, c1, [0, 0.42, 0], [0.2, 0.72, 0.2]));
+      inner.add(mesh(geo.sphere, c1, [0, 0.78, 0], [0.2, 0.12, 0.2]));
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        inner.add(mesh(geo.box, toon(shade(spec.c1, -0.18)), [Math.cos(a) * 0.19, 0.42, Math.sin(a) * 0.19], [0.025, 0.68, 0.025], [0, -a, 0]));
+      }
+      for (const sx of [-1, 1]) {
+        const arm = new THREE.Group();
+        arm.position.set(sx * 0.2, 0.42, 0);
+        arm.add(mesh(geo.cyl, c1, [sx * 0.1, 0, 0], [0.08, 0.2, 0.08], [0, 0, Math.PI / 2]));
+        arm.add(mesh(geo.cyl, c1, [sx * 0.19, 0.15, 0], [0.08, 0.32, 0.08]));
+        arm.add(mesh(geo.sphere, c1, [sx * 0.19, 0.31, 0], [0.08, 0.06, 0.08]));
+        inner.add(arm);
+        anim.wings.push({ g: arm, side: sx, claw: true });
+      }
+      const spineM = toon('#fff8e0');
+      for (let i = 0; i < 16; i++) {
+        const a = i * 1.7, y = 0.15 + (i % 8) * 0.08;
+        const sp = mesh(geo.cone, spineM, [Math.cos(a) * 0.215, y, Math.sin(a) * 0.215], [0.012, 0.06, 0.012], [Math.sin(a) * Math.PI / 2, 0, -Math.cos(a) * Math.PI / 2]);
+        sp.userData.noOutline = true;
+        inner.add(sp);
+      }
+      faceY = 0.52; faceZ = 0.2; bodyTop = 0.86;
+    } else if (ex.has('pad')) {
+      // vitória-régia: folha redonda enorme boiando, com borda levantada
+      inner.add(mesh(geo.cyl, leafM, [0, 0.05, 0], [0.62, 0.06, 0.62]));
+      const rim = mesh(new THREE.TorusGeometry(0.62, 0.045, 8, 32), toon(shade(spec.c2, -0.08)), [0, 0.09, 0], 1, [Math.PI / 2, 0, 0]);
+      rim.userData.noOutline = true;
+      inner.add(rim);
+      inner.add(mesh(geo.sphere, c1, [0, 0.3, 0], [0.26, 0.24, 0.24]));
+      faceY = 0.32; faceZ = 0.2; bodyTop = 0.52;
+    } else if (ex.has('guarana')) {
+      // guaraná: fruto vermelho que se abre mostrando a polpa branca e a semente preta (um "olho")
+      inner.add(mesh(geo.sphere, c1, [0, 0.34, 0], [0.3, 0.3, 0.28]));
+      const pulp = mesh(geo.sphere, c2 === leafM ? charMat('#fbf6ea') : charMat('#fbf6ea'), [0, 0.52, 0.12], [0.15, 0.13, 0.08]);
+      inner.add(pulp);
+      const seed = mesh(geo.sphere, toon('#141010'), [0, 0.53, 0.18], [0.08, 0.08, 0.05]);
+      seed.userData.noOutline = true; inner.add(seed);
+      const glint = mesh(geo.sphere, toon('#ffffff'), [0.025, 0.56, 0.225], 0.018);
+      glint.userData.noOutline = true; inner.add(glint);
+      faceY = 0.28; faceZ = 0.26; bodyTop = 0.64;
+    } else if (ex.has('shell')) {
+      // castanha-do-pará: ouriço duro e lenhoso com sementes
+      inner.add(mesh(geo.sphere, c3, [0, 0.34, 0], [0.32, 0.3, 0.3]));
+      // gomos da casca: anéis finos que seguem a superfície
+      for (let i = 0; i < 3; i++) {
+        const ring = mesh(new THREE.TorusGeometry(1, 0.035, 6, 28), toon(shade(spec.c3 || '#6a4a2a', -0.22)), [0, 0.34, 0], [0.322, 0.302, 0.302], [0, i * Math.PI / 3, 0]);
+        ring.userData.noOutline = true;
+        inner.add(ring);
+      }
+      inner.add(mesh(geo.cyl, toon(shade(spec.c3 || '#6a4a2a', -0.3)), [0, 0.64, 0], [0.08, 0.05, 0.08]));
+      faceY = 0.34; faceZ = 0.27;
+    } else if (ex.has('orchid')) {
+      // orquídea: haste fina e flor grande que emoldura o rosto
+      inner.add(mesh(geo.cyl, leafM, [0, 0.22, 0], [0.04, 0.4, 0.04]));
+      const petalM = charMat(spec.c1, 'smooth');
+      for (let i = 0; i < 5; i++) {
+        const a = i * (Math.PI * 2 / 5) + Math.PI / 2;
+        inner.add(mesh(geo.sphere, petalM, [Math.cos(a) * 0.2, 0.5 + Math.sin(a) * 0.2, -0.02], [0.14, 0.2, 0.04], [0, 0, a - Math.PI / 2]));
+      }
+      inner.add(mesh(geo.sphere, c4, [0, 0.4, 0.05], [0.12, 0.1, 0.06]));
+      inner.add(mesh(geo.sphere, charMat('#fff4e8'), [0, 0.5, 0.02], [0.14, 0.14, 0.08]));
+      faceY = 0.52; faceZ = 0.1; bodyTop = 0.74;
+    } else {
+      // broto/bulbo arredondado
+      inner.add(mesh(geo.sphere, c1, [0, 0.32, 0], [0.28, 0.3, 0.26]));
+    }
+    eyes(inner, 0, faceY, faceZ, 0.06, 0.09);
+    const sm = mesh(new THREE.TorusGeometry(0.045, 0.01, 6, 14, Math.PI), toon('#2a1a10'), [0, faceY - 0.09, faceZ + 0.01], 1, [0, 0, Math.PI]);
+    sm.userData.noOutline = true; inner.add(sm);
+    for (const sx of [-1, 1]) {
+      const b = mesh(geo.sphere, toon('#f49a86', { transparent: true, opacity: 0.6 }), [sx * 0.13, faceY - 0.06, faceZ - 0.01], [0.035, 0.02, 0.01]);
+      b.userData.noOutline = true; b.castShadow = false; inner.add(b);
+    }
+    // folhas no alto (menos no cacto e na orquídea)
+    if (!ex.has('cactus') && !ex.has('orchid') && !ex.has('pad')) {
+      const n = ex.has('palmLeaves') ? 6 : 3;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        leaf(inner, [0, bodyTop - 0.04, 0], ex.has('palmLeaves') ? [0.05, 0.22, 0.018] : [0.1, 0.16, 0.03], [0.9, a, 0], i % 2 ? 1 : -1);
+      }
+    }
+    // folhas laterais como bracinhos
+    if (!ex.has('cactus')) for (const sx of [-1, 1]) leaf(inner, [sx * 0.24, 0.3, 0.02], [0.07, 0.12, 0.025], [0, 0, -sx * 1.2], sx);
+    if (ex.has('berries')) {
+      // cachos de frutinhas (açaí, maracujá)
+      const bm = charMat(spec.c4 || '#4a1a5a', 'smooth');
+      for (let i = 0; i < 14; i++) {
+        const a = i * 2.4, r = 0.1 + (i % 3) * 0.05;
+        inner.add(mesh(geo.sphereLow, bm, [Math.cos(a) * r, bodyTop + 0.02 + (i % 4) * 0.03, Math.sin(a) * r - 0.05], 0.045));
+      }
+    }
+    if (ex.has('petals')) {
+      // flor no alto da cabeça
+      const pm = charMat(spec.c4 || '#ffffff', 'smooth');
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        inner.add(mesh(geo.sphere, pm, [Math.cos(a) * 0.1, bodyTop + 0.06, Math.sin(a) * 0.1], [0.08, 0.025, 0.05], [0, -a, 0]));
+      }
+      inner.add(mesh(geo.sphere, toon(spec.c3 || '#ffd23a'), [0, bodyTop + 0.08, 0], [0.05, 0.03, 0.05]));
+    }
+    if (ex.has('vines')) for (const sx of [-1, 1]) {
+      const v = new THREE.Group();
+      v.position.set(sx * 0.2, 0.45, -0.05);
+      for (let i = 0; i < 4; i++) v.add(mesh(geo.sphere, leafM, [sx * (0.06 + i * 0.07), -i * 0.06, 0], [0.04, 0.04, 0.04]));
+      v.add(mesh(leafGeo, leafM, [sx * 0.34, -0.26, 0], [0.06, 0.09, 0.02]));
+      inner.add(v);
+      anim.wings.push({ g: v, side: sx });
+    }
+    if (ex.has('glow')) {
+      const gl = mesh(geo.sphere, new THREE.MeshBasicMaterial({ color: spec.c4 || '#c8f0ff', transparent: true, opacity: 0.35 }), [0, bodyTop + 0.1, 0], 0.09);
+      gl.userData.noOutline = true; gl.castShadow = false; inner.add(gl);
+      anim.glow = gl;
+    }
   }
 
   const s = spec.size * 1.6 * (variant === null ? 1 : 0.94 + variant * 0.12);

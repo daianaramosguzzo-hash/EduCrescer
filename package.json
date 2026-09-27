@@ -1,9 +1,9 @@
 {
   "name": "crescemon-brasa-3d",
-  "productName": "Crescemon Brasa 3D",
+  "productName": "Criaturas Imaginárias",
   "version": "1.4.0",
-  "description": "RPG 3D de capturar e treinar Crescemon",
-  "author": "EduCrescer",
+  "description": "Criaturas Imaginárias — RPG 3D de capturar e treinar criaturas, criação Arthur Guzzo",
+  "author": "Arthur Guzzo",
   "license": "UNLICENSED",
   "private": true,
   "main": "desktop/main.js",
@@ -13,8 +13,8 @@
   },
   "build": {
     "appId": "br.educrescer.crescemon",
-    "productName": "Crescemon Brasa 3D",
-    "copyright": "EduCrescer",
+    "productName": "Criaturas Imaginárias",
+    "copyright": "Arthur Guzzo",
     "directories": {
       "output": "dist",
       "buildResources": "desktop"
@@ -45,8 +45,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Crescemon Brasa 3D",
-      "artifactName": "Crescemon-Brasa-3D-Setup-${version}.${ext}",
+      "shortcutName": "Criaturas Imaginárias",
+      "artifactName": "Criaturas-Imaginarias-Setup-${version}.${ext}",
       "installerIcon": "desktop/icon.ico",
       "uninstallerIcon": "desktop/icon.ico",
       "language": "1046"

@@ -202,7 +202,14 @@ export class World {
         this.roomLight.color.set('#6ac8ff');
         this.roomLight.intensity = 14;
       }
-      this.gradeName = map.floor === 'cave' ? 'cave' : 'indoor';
+      // cor da luz de cada ginásio temático
+      const GYM_LIGHT = { lava: ['#ffa060', 12], metal: ['#c8d4ff', 11], jungle: ['#e0ffc8', 10], dark: ['#b080ff', 12] };
+      if (GYM_LIGHT[map.floor]) {
+        this.roomLight.color.set(GYM_LIGHT[map.floor][0]);
+        this.roomLight.intensity = GYM_LIGHT[map.floor][1];
+        if (map.floor === 'dark') { this.hemi.color.set('#8a7ac8'); this.hemi.groundColor.set('#1a1428'); this.hemi.intensity = 0.6; this.sun.intensity = 0.45; }
+      }
+      this.gradeName = map.floor === 'cave' || map.floor === 'dark' ? 'cave' : 'indoor';
       this.fill.color.set('#ffe8d0'); this.fill.intensity = 0.3;
       this.buildInterior(map);
       this.ambient.setup(null);
@@ -675,6 +682,11 @@ export class World {
       pool: { tex: () => TEX.poolTile(), color: '#ffffff', s: 1, wall: ['#dcecf8', '#cce2f2', '#3a88c4'] },
       liga: { tex: () => TEX.checker('#f4ead4', '#d8c8a0'), color: '#ffffff', s: 0.5, wall: ['#c84444', '#b83a3a', '#5a1a1a'] },
       cave: { tex: () => TEX.stone(), color: '#6a6c7a', s: 1, wall: null, wallColor: '#5a5c6a' },
+      // ginásios novos
+      lava: { tex: () => TEX.stone(), color: '#c8785a', s: 1, wall: null, wallColor: '#8a4a36' },
+      metal: { tex: () => TEX.checker('#c8ccd8', '#8a90a4'), color: '#ffffff', s: 0.5, wall: ['#5a6078', '#4e5470', '#f0c830'] },
+      jungle: { tex: () => TEX.planks(), color: '#9ac080', s: 1, wall: ['#5a8a4a', '#4e7e42', '#3a5a2a'] },
+      dark: { tex: () => TEX.stone(), color: '#5a5070', s: 1, wall: null, wallColor: '#3a3450' },
     };
     const fl = FL[map.floor] || FL.wood;
     const floor = new THREE.Mesh(boxW(this.W, 0.2, this.H, fl.s), texMat(fl.tex(), fl.color));
@@ -815,6 +827,53 @@ export class World {
       case 'boulder':
         add(new THREE.DodecahedronGeometry(0.45, 0), '#8a8074', [0, 0.35, 0]);
         break;
+      case 'brazier': {
+        // braseiro com chama que tremula
+        add(new THREE.CylinderGeometry(0.12, 0.16, 0.7, 8), '#4a3a34', [0, 0.35, 0]);
+        add(new THREE.CylinderGeometry(0.3, 0.18, 0.2, 10), '#6a4a3a', [0, 0.8, 0]);
+        const fl = new THREE.Group(); fl.position.set(0, 0.9, 0);
+        for (const [c, r, h] of [['#ff5a1a', 0.2, 0.55], ['#ffa02a', 0.14, 0.4], ['#ffe25a', 0.08, 0.25]]) {
+          const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 8), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.92 }));
+          m.position.y = h / 2; m.userData.noOutline = true; fl.add(m);
+        }
+        g.add(fl);
+        const seed = Math.random() * 10;
+        this.animated.push(t => { fl.scale.set(1 + Math.sin(t * 17 + seed) * 0.1, 1 + Math.sin(t * 13 + seed) * 0.2, 1 + Math.cos(t * 15 + seed) * 0.1); });
+        break;
+      }
+      case 'coil': {
+        // bobina elétrica com esfera que pisca
+        add(new THREE.CylinderGeometry(0.22, 0.28, 0.25, 10), '#5a5e70', [0, 0.12, 0]);
+        add(new THREE.CylinderGeometry(0.07, 0.09, 1.1, 8), '#b8bcc8', [0, 0.75, 0]);
+        for (let i = 0; i < 4; i++) add(new THREE.TorusGeometry(0.16 - i * 0.02, 0.025, 6, 16), '#c88a3a', [0, 0.45 + i * 0.18, 0]).rotation.x = Math.PI / 2;
+        const orb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), new THREE.MeshBasicMaterial({ color: '#fff080' }));
+        orb.position.y = 1.4; orb.userData.noOutline = true; g.add(orb);
+        const seed = Math.random() * 10;
+        this.animated.push(t => { const k = Math.sin(t * 9 + seed) > 0.6 ? 1.35 : 1; orb.scale.setScalar(k); orb.material.color.set(k > 1 ? '#ffffff' : '#fff080'); });
+        break;
+      }
+      case 'tree': {
+        // árvore dentro do ginásio de planta
+        add(new THREE.CylinderGeometry(0.12, 0.18, 1.2, 8), '#6a4a2e', [0, 0.6, 0]);
+        add(new THREE.IcosahedronGeometry(0.55, 1), '#2e8a3a', [0, 1.45, 0]);
+        add(new THREE.IcosahedronGeometry(0.38, 1), '#48a848', [0.3, 1.25, 0.15]);
+        add(new THREE.IcosahedronGeometry(0.34, 1), '#3a9a40', [-0.28, 1.3, -0.1]);
+        break;
+      }
+      case 'lantern': {
+        // lanterna de cristal roxo que pulsa
+        add(new THREE.CylinderGeometry(0.1, 0.14, 0.9, 6), '#2a2438', [0, 0.45, 0]);
+        const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), new THREE.MeshBasicMaterial({ color: '#b080ff', transparent: true, opacity: 0.9 }));
+        cr.position.y = 1.15; cr.userData.noOutline = true; g.add(cr);
+        const seed = Math.random() * 10;
+        this.animated.push(t => { cr.rotation.y = t * 0.8 + seed; cr.position.y = 1.15 + Math.sin(t * 2 + seed) * 0.06; cr.material.opacity = 0.65 + Math.sin(t * 3 + seed) * 0.25; });
+        break;
+      }
+      case 'cactus':
+        add(new THREE.CylinderGeometry(0.2, 0.18, 0.3, 10), '#c8683a', [0, 0.15, 0]);
+        add(new THREE.CylinderGeometry(0.12, 0.14, 0.8, 8), '#4f8a44', [0, 0.7, 0]);
+        add(new THREE.CylinderGeometry(0.07, 0.07, 0.35, 6), '#4f8a44', [0.18, 0.8, 0]).rotation.z = 0.6;
+        break;
       case 'statue':
         add(new THREE.BoxGeometry(0.6, 0.4, 0.6), '#8a8a8a', [0, 0.2, 0]);
         add(new THREE.CylinderGeometry(0.15, 0.2, 0.6, 8), '#b0b0b0', [0, 0.7, 0]);
@@ -835,6 +894,7 @@ export class World {
   update(dt, busy) {
     this.time += dt;
     shared.time.value = this.time;
+    for (const fn of this.animated) fn(this.time);
     if (this.player) {
       this.player.update(dt);
       shared.player.value.copy(this.player.group.position);
@@ -951,7 +1011,7 @@ export class World {
     return best;
   }
 
-  // ------------------------------------------------ Crescemon selvagens no mapa
+  // ------------------------------------------------ criaturas selvagens no mapa
   initWilds() {
     this.wilds = [];
     this.grassTiles = [];
@@ -1045,7 +1105,7 @@ export class World {
       w.moveT -= dt;
       if (w.moveT > 0) continue;
       w.moveT = 1 + Math.random() * 2.2;
-      // se o herói estiver perto, o Crescemon fica curioso e se aproxima
+      // se o herói estiver perto, a criatura fica curiosa e se aproxima
       let d;
       if (dist <= 3 && Math.random() < 0.6) {
         const dx = p.x - w.x, dz = p.z - w.z;

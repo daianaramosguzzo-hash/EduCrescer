@@ -1,4 +1,4 @@
-// Crescemon Brasa 3D — versão desktop (Electron)
+// Criaturas Imaginárias — versão desktop (Electron)
 const { app, BrowserWindow, protocol, net, Menu, shell } = require('electron');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -11,6 +11,10 @@ protocol.registerSchemesAsPrivileged([
 
 const ROOT = path.join(__dirname, '..');
 
+// O jogo mudou de nome (antes "Crescemon Brasa 3D"): a pasta de dados continua
+// a mesma para não perder o progresso salvo de quem já jogava.
+app.setPath('userData', path.join(app.getPath('appData'), 'Crescemon Brasa 3D'));
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
@@ -18,7 +22,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 500,
     backgroundColor: '#1a1420',
-    title: 'Crescemon Brasa 3D',
+    title: 'Criaturas Imaginárias',
     icon: path.join(__dirname, 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, sandbox: true },

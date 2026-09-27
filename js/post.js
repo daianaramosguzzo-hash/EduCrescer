@@ -58,6 +58,10 @@ export const GRADES = {
   sunset: { saturation: 1.08, contrast: 1.06, tint: [1.05, 0.99, 0.94], lift: [0.012, 0.004, 0.012], exposure: 1.02, bloom: 0.5, vignette: 0.28 },
   storm: { saturation: 1.02, contrast: 1.07, tint: [0.97, 0.99, 1.04], lift: [0.006, 0.006, 0.016], exposure: 1.08, bloom: 0.5, vignette: 0.3 },
   indoor: { saturation: 1.06, contrast: 1.04, tint: [1.03, 1.0, 0.96], lift: [0.008, 0.004, 0.0], exposure: 1.04, bloom: 0.35, vignette: 0.26 },
+  caatinga: { saturation: 1.08, contrast: 1.06, tint: [1.05, 1.0, 0.93], lift: [0.012, 0.006, 0.0], exposure: 1.02, bloom: 0.45, vignette: 0.24 },
+  chapada: { saturation: 1.04, contrast: 1.08, tint: [0.98, 0.97, 1.05], lift: [0.008, 0.004, 0.02], exposure: 1.08, bloom: 0.55, vignette: 0.3 },
+  amazonia: { saturation: 1.12, contrast: 1.05, tint: [0.97, 1.03, 0.98], lift: [0.0, 0.01, 0.008], exposure: 1.06, bloom: 0.5, vignette: 0.28 },
+  pantano: { saturation: 1.0, contrast: 1.08, tint: [0.95, 0.98, 1.06], lift: [0.01, 0.012, 0.03], exposure: 1.22, bloom: 0.75, vignette: 0.36 },
   cave: { saturation: 1.05, contrast: 1.07, tint: [0.96, 1.0, 1.06], lift: [0.0, 0.008, 0.02], exposure: 1.12, bloom: 0.6, vignette: 0.34 },
 };
 

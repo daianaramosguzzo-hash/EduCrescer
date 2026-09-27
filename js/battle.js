@@ -567,7 +567,7 @@ export class Battle {
     } else if (result === 'lose') {
       if (this.trainer && this.trainer.winText) await this.msg(this.trainer.winText, this.trainer.name);
       if (!(this.trainer && this.trainer.canLose)) {
-        await this.msg('{N} não tem mais Crescemon em condições de lutar!');
+        await this.msg('{N} não tem mais criaturas em condições de lutar!');
         const lost = Math.floor(G.state.money / 2);
         G.state.money -= lost;
         await this.msg(`{N} entrou em pânico e perdeu ₢${lost}... Tudo ficou escuro!`);
@@ -711,10 +711,10 @@ export class Battle {
         if (!id) continue;
         const it = ITEMS[id];
         if (it.use === 'ball') {
-          if (this.trainer) { await this.msg('Não é possível capturar o Crescemon de outro treinador!'); continue; }
+          if (this.trainer) { await this.msg('Não é possível capturar a criatura de outro treinador!'); continue; }
           return { type: 'item', item: id };
         }
-        const t = await partyScreen(this.party, { title: `Usar ${it.name} em...`, hint: 'Escolha um Crescemon.' });
+        const t = await partyScreen(this.party, { title: `Usar ${it.name} em...`, hint: 'Escolha uma criatura.' });
         if (t < 0) continue;
         const target = this.party[t];
         if (it.use === 'heal' && (target.hp <= 0 || target.hp >= target.maxhp)) { await this.msg('Não vai ter efeito.'); continue; }
@@ -723,7 +723,7 @@ export class Battle {
       }
       if (r === 2) {
         hideDialog();
-        const t = await partyScreen(this.party, { title: 'Trocar Crescemon', hint: 'Escolha quem vai entrar.' });
+        const t = await partyScreen(this.party, { title: 'Trocar criatura', hint: 'Escolha quem vai entrar.' });
         if (t < 0) continue;
         const c = this.party[t];
         if (c === this.ally) { await this.msg(`${nameOf(c)} já está lutando!`); continue; }
@@ -902,7 +902,7 @@ export class Battle {
       this.participants.delete(this.ally);
       if (!this.party.some(c => c.hp > 0)) { this.endResult = 'lose'; return 'end'; }
       if (!this.trainer) {
-        const r = await ask('Usar o próximo Crescemon?', ['Sim', 'Fugir']);
+        const r = await ask('Usar a próxima criatura?', ['Sim', 'Fugir']);
         if (r === 1) {
           const chance = (this.ally.spd * 32 / Math.max(1, this.foe.spd) + 30) / 255 + 0.3;
           if (Math.random() < chance) { await this.msg('Você fugiu em segurança!'); this.endResult = 'fled'; return 'end'; }
@@ -911,7 +911,7 @@ export class Battle {
       }
       let idx = -1;
       while (idx < 0) {
-        idx = await partyScreen(this.party, { title: 'Escolha o próximo Crescemon', cancel: false, disable: c => c.hp <= 0 });
+        idx = await partyScreen(this.party, { title: 'Escolha a próxima criatura', cancel: false, disable: c => c.hp <= 0 });
       }
       this.ally = this.party[idx];
       this.stages.ally = { atk: 0, def: 0, spd: 0 };

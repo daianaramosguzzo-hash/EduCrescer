@@ -1,4 +1,4 @@
-// Crescemon — Versão Brasa 3D
+// Criaturas Imaginárias — criação Arthur Guzzo
 import * as THREE from '../lib/three.module.min.js';
 import { SPECIES, ITEMS, MOVES } from './data.js';
 import { createCreature, healFull, nameOf, reviveUid } from './creature.js';
@@ -62,7 +62,7 @@ function resize() {
   renderer.setSize(w, h);
   for (const cam of [world.camera, bs.camera]) { cam.aspect = w / h; cam.updateProjectionMatrix(); }
   // em telas em pé, afasta um pouco a câmera de batalha
-  // em tela em pé, a câmera fica atrás do nosso Crescemon (inimigo aparece acima)
+  // em tela em pé, a câmera fica atrás da nossa criatura (inimigo aparece acima)
   if (w < h) { bs.baseCam.set(-4.4, 4.2, 8.4); bs.lookTarget.set(0.3, -1.1, 0.2); }
   else { bs.baseCam.set(0.2, 1.9, 6.4); bs.lookTarget.set(0.3, 0.7, 0); }
   applyCamFov();
@@ -243,7 +243,7 @@ const G = {
   },
   async trainerBattle(t) {
     if (t.intro) await UI.say(t.intro, t.name);
-    const spec = t.party === 'rivalFinal' ? rivalFinalParty(G) : t.party;
+    const spec = t.party === 'rivalFinal' ? rivalFinalParty(G) : typeof t.party === 'function' ? t.party(G) : t.party;
     const party = buildTrainerParty(spec);
     const r = await runBattle({ trainer: { ...t, party } });
     return r === 'win';
@@ -289,8 +289,8 @@ async function whiteout() {
   G.healParty();
   await warpTo(lc.map, lc.x, lc.z, lc.map === 'casa' ? 'down' : 'up', true);
   await UI.fade(false);
-  if (lc.map === 'casa') await UI.say('Que susto, {N}! Você e seus Crescemon precisam descansar. Pronto, estão novinhos em folha!', 'Mãe');
-  else await UI.say('Seus Crescemon desmaiaram... Nós cuidamos deles. Tome mais cuidado lá fora!', 'Enfermeira Clara');
+  if (lc.map === 'casa') await UI.say('Que susto, {N}! Você e suas criaturas precisam descansar. Pronto, estão novinhos em folha!', 'Mãe');
+  else await UI.say('Suas criaturas desmaiaram... Nós cuidamos delas. Tome mais cuidado lá fora!', 'Enfermeira Clara');
 }
 
 // ------------------------------------------------ mapas
@@ -360,7 +360,7 @@ async function fightWild(w) {
   const p = world.player;
   if (!state.party.some(c => c.hp > 0)) {
     w.cooldown = 8;
-    await UI.say('Seus Crescemon estão sem energia! Cure-os antes de batalhar.');
+    await UI.say('Suas criaturas estão sem energia! Cure-as antes de batalhar.');
     return;
   }
   const dx = w.x - p.x, dz = w.z - p.z;
@@ -446,7 +446,7 @@ async function startMenu() {
   let sel = 0;
   while (true) {
     const opts = [];
-    if (G.flag('dex')) opts.push(['CRESCEDEX', dexMenu]);
+    if (G.flag('dex')) opts.push(['CRIATURADEX', dexMenu]);
     if (state.party.length) opts.push(['EQUIPE', partyMenu]);
     opts.push(['BOLSA', bagMenu]);
     opts.push([state.name.toUpperCase(), () => UI.trainerCard(state)]);
@@ -494,8 +494,8 @@ async function bagMenu() {
     const id = await UI.bagScreen(state.bag);
     if (!id) return;
     const it = ITEMS[id];
-    if (!['heal', 'revive', 'pp'].includes(it.use)) { await UI.say(it.use === 'ball' ? 'Use orbes durante uma batalha contra Crescemon selvagens!' : it.desc); continue; }
-    if (!state.party.length) { await UI.say('Você não tem Crescemon.'); continue; }
+    if (!['heal', 'revive', 'pp'].includes(it.use)) { await UI.say(it.use === 'ball' ? 'Use orbes durante uma batalha contra criaturas selvagens!' : it.desc); continue; }
+    if (!state.party.length) { await UI.say('Você não tem criaturas.'); continue; }
     const t = await UI.partyScreen(state.party, { title: `Usar ${it.name} em...` });
     if (t < 0) continue;
     const c = state.party[t];
@@ -524,20 +524,20 @@ async function dexMenu() {
 
 async function pcMenu() {
   sfx('select');
-  await UI.say('{N} ligou o computador. Sistema de Armazenamento de Crescemon acessado.');
+  await UI.say('{N} ligou o computador. Sistema de Armazenamento de Criaturas acessado.');
   while (true) {
     const r = await UI.list($('#choice'), ['RETIRAR', 'DEPOSITAR', 'SAIR'], { title: `Caixa: ${state.box.length}` });
     if (r === 0) {
-      if (!state.box.length) { await UI.say('Não há Crescemon guardados.'); continue; }
+      if (!state.box.length) { await UI.say('Não há criaturas guardadas.'); continue; }
       if (state.party.length >= 6) { await UI.say('Sua equipe está cheia!'); continue; }
       const i = await UI.partyScreen(state.box, { title: 'Retirar qual?' });
       if (i >= 0) { const c = state.box.splice(i, 1)[0]; healFull(c); state.party.push(c); await UI.say(`${nameOf(c)} entrou na equipe.`); }
     } else if (r === 1) {
-      if (state.party.length <= 1) { await UI.say('Você precisa ficar com pelo menos um Crescemon!'); continue; }
+      if (state.party.length <= 1) { await UI.say('Você precisa ficar com pelo menos uma criatura!'); continue; }
       const i = await UI.partyScreen(state.party, { title: 'Depositar qual?' });
       if (i < 0) continue;
       const rest = state.party.filter((_, k) => k !== i);
-      if (!rest.some(c => c.hp > 0)) { await UI.say('Você precisa ter um Crescemon capaz de lutar na equipe!'); continue; }
+      if (!rest.some(c => c.hp > 0)) { await UI.say('Você precisa ter uma criatura capaz de lutar na equipe!'); continue; }
       const c = state.party.splice(i, 1)[0];
       state.box.push(c);
       await UI.say(`${nameOf(c)} foi guardado no computador.`);
@@ -671,17 +671,17 @@ async function intro() {
   bs.trainerModel = prof;
   playMusic('home');
   await UI.fade(false);
-  await UI.say('Olá, olá! Desculpe a demora. Bem-vindo ao mundo dos CRESCEMON!', 'Prof. Ipê');
-  await UI.say('Meu nome é IPÊ. Todos me chamam de Professor Crescemon.', 'Prof. Ipê');
+  await UI.say('Olá, olá! Desculpe a demora. Bem-vindo ao mundo das CRIATURAS IMAGINÁRIAS!', 'Prof. Ipê');
+  await UI.say('Meu nome é IPÊ. Todos me chamam de Professor das Criaturas.', 'Prof. Ipê');
   const mon = makeCreature(SPECIES.capibroto.model);
   mon.group.position.set(1.6, 0.12, 1.8);
   mon.group.rotation.y = -0.6;
   bs.scene.add(mon.group);
   bs.ally = mon;
   sfx('cry');
-  await UI.say('Este mundo é habitado por criaturas chamadas CRESCEMON!', 'Prof. Ipê');
-  await UI.say('Para algumas pessoas, os Crescemon são bichinhos de estimação. Outras os usam para batalhas.', 'Prof. Ipê');
-  await UI.say('Eu estudo os Crescemon como profissão. E descobri que eles crescem junto com quem cuida deles!', 'Prof. Ipê');
+  await UI.say('Este mundo é habitado por CRIATURAS incríveis, que nascem da imaginação e da natureza!', 'Prof. Ipê');
+  await UI.say('Para algumas pessoas, as criaturas são bichinhos de estimação. Outras as treinam para batalhas.', 'Prof. Ipê');
+  await UI.say('Eu estudo as criaturas como profissão. E descobri que elas crescem junto com quem cuida deles!', 'Prof. Ipê');
   bs.scene.remove(mon.group); bs.ally = null;
   bs.scene.remove(prof.group);
   const hero = makeHuman(HERO_LOOK);
@@ -703,8 +703,8 @@ async function intro() {
   bs.scene.remove(rival.group);
   bs.scene.add(hero.group);
   hero.pose('rest');
-  await UI.say('{N}! Sua própria lenda Crescemon está prestes a começar!', 'Prof. Ipê');
-  await UI.say('Um mundo de sonhos e aventuras com Crescemon espera por você! Vamos lá!', 'Prof. Ipê');
+  await UI.say('{N}! Sua própria lenda com as criaturas está prestes a começar!', 'Prof. Ipê');
+  await UI.say('Um mundo de sonhos e aventuras com criaturas espera por você! Vamos lá!', 'Prof. Ipê');
   await UI.fade(true);
   bs.clear();
   bs.scene.remove(hero.group);
@@ -719,8 +719,9 @@ async function rollCredits() {
     <h1>SALÃO DOS CAMPEÕES</h1>
     <img src="assets/heroi.webp" alt="">
     <h2>${state.name}</h2>${party}
-    <p class="gap">Parabéns por vencer a Liga Crescemon!</p>
-    <h3>CRESCEMON — VERSÃO BRASA 3D</h3>
+    <p class="gap">Parabéns por vencer a Liga das Criaturas!</p>
+    <h3>CRIATURAS IMAGINÁRIAS</h3>
+    <p>Criação: Arthur Guzzo</p>
     <p>Um jogo de fã inspirado nas clássicas aventuras de monstrinhos de bolso.</p>
     <p>Personagens, criaturas, mapas e músicas originais.</p>
     <h3>Elenco</h3><p>${state.name} — Herói</p><p>Gael — Rival e Campeão</p><p>Prof. Ipê — Pesquisador</p>
@@ -790,7 +791,7 @@ async function startGame(fromSave) {
   await runScript(async () => {
     await UI.say('Seu quarto em Vila Aurora. Hoje é o dia em que tudo começa!');
     await UI.say('Controles: clique na tela e depois é só mexer o mouse para olhar em volta. Botão esquerdo = Z (interagir), botão direito = X (voltar/correr), rodinha = zoom. As setas andam para onde você olha. Esc solta o mouse; M abre o menu.');
-    await UI.say('Crescemon selvagens aparecem no mato alto. Chegue perto de um e toque em A (ou esbarre nele) para batalhar e tentar capturar! A câmera pode ser trocada no menu.');
+    await UI.say('Criaturas selvagens aparecem no mato alto. Chegue perto de um e toque em A (ou esbarre nele) para batalhar e tentar capturar! A câmera pode ser trocada no menu.');
   });
 }
 
