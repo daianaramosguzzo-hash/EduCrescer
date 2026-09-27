@@ -16,6 +16,7 @@ export function passCost(map, x, z, opts) {
     if (d.locked) return opts.breakDoors ? 6 : -1;
     return opts.allowDoors ? 2 : -1;
   }
+  if (s === S.WINDOW) { const w = map.windows.get(i); if (w && w.broken && !(w.barricade > 0)) return 2; }
   if (map.blocked(x, z)) return -1;
   if (map.fire.has(i) && opts.avoidFire) return 6;
   return 1;

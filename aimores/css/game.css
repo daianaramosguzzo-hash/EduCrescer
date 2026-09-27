@@ -374,3 +374,19 @@ b { color: var(--gold); }
   .gal-head p { display: none; }
 }
 #dialog { z-index: 94; }
+
+/* ---------------------------------------------------------------- tempo real: fabricar, construir, toque */
+.craft-h { margin: 12px 0 4px; font-family: var(--font-title); font-weight: 400; letter-spacing: 1px; color: var(--gold); font-size: 20px; }
+.recipe.locked { opacity: 0.55; }
+.recipe .lvl { color: var(--muted); font-weight: 800; }
+.stock { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+.stock span { background: var(--panel2); border: 2px solid var(--ink); border-radius: 10px; padding: 3px 9px; font-weight: 900; }
+#actionbar .acts button.big-atk { background: linear-gradient(180deg, #ff8a7a, #d8423a); }
+#joystick, #touch-btns { display: none; }
+body.touch #joystick { display: block; position: fixed; left: 22px; bottom: 150px; width: 140px; height: 140px; border-radius: 50%; background: rgba(20, 14, 28, 0.45); border: 3px solid rgba(255, 255, 255, 0.25); z-index: 40; touch-action: none; }
+body.touch #joystick .knob { position: absolute; left: 40px; top: 40px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #b8a8d8); border: 3px solid var(--ink); pointer-events: none; }
+body.touch #touch-btns { display: grid; grid-template-columns: 70px 70px; gap: 10px; position: fixed; right: 18px; bottom: 150px; z-index: 40; }
+body.touch #touch-btns .tb { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--ink); font-size: 30px; background: linear-gradient(180deg, #4a3a5e, #33264a); box-shadow: 0 4px 0 var(--ink); touch-action: none; }
+body.touch #touch-btns .tb.atk { grid-column: 1 / span 2; justify-self: center; width: 92px; height: 92px; font-size: 40px; background: linear-gradient(180deg, #ff8a7a, #d8423a); }
+body.touch #touch-btns .tb.on { background: linear-gradient(180deg, #ffd24a, #f08a2c); }
+#hud.hidden ~ #joystick, #hud.hidden ~ #touch-btns { display: none !important; }

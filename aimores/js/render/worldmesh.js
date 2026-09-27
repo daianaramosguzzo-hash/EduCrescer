@@ -107,15 +107,25 @@ export class WorldView {
 
   // ------------------------------------------------------------ móveis, árvores, muros (estáticos, por blocos)
   buildStatic() {
+    this.chunkMeshes = new Map();
+    const chunks = this.collectStatic(null);
+    for (const [k, g] of chunks) this.addChunk(k, g);
+  }
+  // monta a geometria estática (móveis, muros, coberturas) por blocos; only = só este bloco
+  collectStatic(only) {
     const { map } = this;
     const chunks = new Map();
+    const keyOf = (x, z) => Math.floor(x / CHUNK) + ',' + Math.floor(z / CHUNK);
+    const sink = new Geo(true);
     const geoFor = (x, z) => {
-      const k = Math.floor(x / CHUNK) + ',' + Math.floor(z / CHUNK);
+      const k = keyOf(x, z);
+      if (only && k !== only) return sink;
       if (!chunks.has(k)) chunks.set(k, new Geo(true));
       return chunks.get(k);
     };
     for (const p of map.props) {
       if (p.removed || p.dynamic) continue;
+      if (only && keyOf(p.x, p.z) !== only) continue;
       const g = geoFor(p.x, p.z);
       g.push();
       g.translate(p.x + p.w / 2, 0, p.z + p.d / 2);
@@ -131,13 +141,24 @@ export class WorldView {
       for (const [x, z] of [[c.x0 + 0.5, c.z0 + 0.5], [c.x1 + 0.5, c.z0 + 0.5], [c.x0 + 0.5, c.z1 + 0.5], [c.x1 + 0.5, c.z1 + 0.5]]) g.box(x, 0, z, 0.35, c.h, 0.35, '#e8e8e0');
       g.box((c.x0 + c.x1 + 1) / 2, c.h, (c.z0 + c.z1 + 1) / 2, c.x1 - c.x0 + 1.6, 0.35, c.z1 - c.z0 + 1.6, { side: c.trim, top: c.color, bottom: '#f4f4ec' });
     }
-    for (const [k, g] of chunks) {
-      if (!g.count) continue;
-      const m = new THREE.Mesh(g.toGeometry(), this.matToon);
-      m.castShadow = true; m.receiveShadow = true;
-      this.root.add(m);
-      if (g.ol.count) { const o = new THREE.Mesh(g.ol.toGeometry(), this.matOutline); this.root.add(o); }
-    }
+    return chunks;
+  }
+  addChunk(k, g) {
+    if (!g.count) return;
+    const m = new THREE.Mesh(g.toGeometry(), this.matToon);
+    m.castShadow = true; m.receiveShadow = true;
+    this.root.add(m);
+    const meshes = [m];
+    if (g.ol.count) { const o = new THREE.Mesh(g.ol.toGeometry(), this.matOutline); this.root.add(o); meshes.push(o); }
+    this.chunkMeshes.set(k, meshes);
+  }
+  // refaz o bloco onde fica (x, z) — árvore cortada, parede construída, portão aberto...
+  rebuildChunkAt(x, z) {
+    const k = Math.floor(x / CHUNK) + ',' + Math.floor(z / CHUNK);
+    for (const m of this.chunkMeshes.get(k) || []) { this.root.remove(m); m.geometry.dispose(); }
+    this.chunkMeshes.delete(k);
+    const chunks = this.collectStatic(k);
+    if (chunks.has(k)) this.addChunk(k, chunks.get(k));
   }
   buildBoundaries(geoFor) {
     const map = this.map;

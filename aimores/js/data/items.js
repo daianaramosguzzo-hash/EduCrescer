@@ -166,6 +166,26 @@ export const ITEMS = {
   bilhete_cofre: { nome: 'Bilhete do chefe da estação', cat: 'especial', peso: 0, valor: 0, icon: '📝', nota: true, quest: true,
     desc: '"Segredo do cofre da bilheteria: 7-4-2-1. A chave da locomotiva fica lá dentro. Não esquecer de novo. — Osvaldo, chefe da estação"' },
   foto: { nome: 'Foto amassada', cat: 'especial', peso: 0, valor: 0, icon: '🖼️', nota: true, desc: 'Uma família sorrindo na Prainha do Rio Doce. Atrás: "Volta logo, pai."' },
+  // ------------------------------------------------------------ recursos coletados (estilo sobrevivência)
+  madeira: { nome: 'Madeira', cat: 'material', peso: 0.6, valor: 2, icon: '🪵', desc: 'Cortada das árvores. Base de quase tudo que se constrói.' },
+  pedra: { nome: 'Pedra', cat: 'material', peso: 0.8, valor: 2, icon: '🪨', desc: 'Quebrada de pedras grandes e entulho.' },
+  metal: { nome: 'Sucata de metal', cat: 'material', peso: 0.7, valor: 4, icon: '🔩', desc: 'Tirada de carros abandonados. Para a bancada de trabalho.' },
+  fibra: { nome: 'Fibra de capim', cat: 'material', peso: 0.1, valor: 1, icon: '🌾', desc: 'Colhida dos arbustos. Vira corda e curativo.' },
+  ervas: { nome: 'Ervas medicinais', cat: 'material', peso: 0.1, valor: 3, icon: '🌿', desc: 'Boldo, erva-cidreira e o que a avó ensinou. Vira chá e curativo.' },
+  corda: { nome: 'Corda', cat: 'material', peso: 0.2, valor: 4, icon: '🪢', desc: 'Trançada com fibra. Amarra ferramentas e construções.' },
+  // ferramentas (também servem de arma)
+  machado_pedra: { nome: 'Machado de pedra', cat: 'arma', peso: 1.4, valor: 8, icon: '🪓', desc: 'Corta árvores mais rápido. Serve de arma em último caso.',
+    w: { tipo: 'corpo', classe: 'axe', dano: [6, 10], prec: 76, pa: 3, ruido: 2, alcance: 1, dur: 40 }, ferramenta: 'machado' },
+  picareta: { nome: 'Picareta improvisada', cat: 'arma', peso: 1.8, valor: 9, icon: '⛏️', desc: 'Quebra pedra bem mais rápido.',
+    w: { tipo: 'corpo', classe: 'pipe', dano: [7, 11], prec: 74, pa: 3, ruido: 3, alcance: 1, dur: 45 }, ferramenta: 'picareta' },
+  lanca: { nome: 'Lança de bambu', cat: 'arma', peso: 1.0, valor: 7, icon: '🔱', desc: 'Alcança o zumbi antes que ele alcance você.',
+    w: { tipo: 'corpo', classe: 'pipe', dano: [7, 12], prec: 80, pa: 3, ruido: 1, alcance: 2, dur: 35 } },
+  clava: { nome: 'Clava com pregos', cat: 'arma', peso: 1.6, valor: 12, icon: '🏏', desc: 'Madeira grossa e sucata. Rústica e eficiente.',
+    w: { tipo: 'corpo', classe: 'batpregos', dano: [10, 15], prec: 78, pa: 3, ruido: 3, alcance: 1, dur: 55, sangrar: 0.3 } },
+  cha_ervas: { nome: 'Chá de ervas', cat: 'medicamento', peso: 0.3, valor: 6, icon: '🍵', uso: { hp: 12, sede: 15, moral: 5 }, desc: 'Feito na fogueira. Cura um pouco e acalma.' },
+  curativo_ervas: { nome: 'Curativo de ervas', cat: 'medicamento', peso: 0.1, valor: 6, icon: '🩹', uso: { hp: 10, estanca: true }, desc: 'Fibra e ervas amassadas. Estanca sangramento.' },
+  manga_assada: { nome: 'Manga assada', cat: 'comida', peso: 0.3, valor: 4, icon: '🍑', uso: { fome: 20, moral: 4 }, desc: 'Parece estranho. É uma delícia.' },
+  colete_sucata: { nome: 'Colete de sucata', cat: 'equipamento', peso: 3.5, valor: 30, icon: '🛡️', equip: 'corpo', armadura: 0.3, mordida: 0.35, desc: 'Placas de lata de carro amarradas com corda. Barulhento, mas salva vidas.' },
 };
 
 for (const [id, it] of Object.entries(ITEMS)) it.id = id;

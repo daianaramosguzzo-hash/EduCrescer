@@ -16,14 +16,35 @@ import * as Story from './story.js';
 
 const ADJ = (a, x, z) => Math.max(Math.abs(a.x - x), Math.abs(a.z - z)) <= 1;
 
+// fogao: precisa de fogo (fogão, churrasqueira ou fogueira) · bancada: bancada de trabalho · nivel: nível mínimo
 export const RECIPES = [
-  { id: 'marmita', nome: 'Marmita de arroz e feijão', precisa: [['arroz', 1], ['feijao', 1], ['agua', 1]], da: ['marmita', 2], fogao: true, pa: 3 },
-  { id: 'macarrao', nome: 'Macarrão cozido', precisa: [['miojo', 2], ['agua', 1]], da: ['macarronada', 1], fogao: true, pa: 2 },
-  { id: 'molotov', nome: 'Coquetel molotov', precisa: [['garrafa', 1], ['pano', 1], ['combustivel|cachaca|alcool', 1]], da: ['molotov', 1], pa: 2 },
-  { id: 'taco_pregos', nome: 'Taco com pregos', precisa: [['taco', 1], ['pregos', 1]], da: ['taco_pregos', 1], pa: 2 },
-  { id: 'armadura', nome: 'Armadura de revista', precisa: [['revistas', 2], ['fita', 1]], da: ['armadura_revista', 1], pa: 2 },
-  { id: 'atadura', nome: 'Atadura improvisada', precisa: [['pano', 1], ['alcool|cachaca', 1]], da: ['atadura', 2], pa: 1 },
-  { id: 'reparo', nome: 'Consertar arma branca (silver tape)', precisa: [['fita', 1]], repara: true, pa: 1 },
+  // na mão, em qualquer lugar
+  { id: 'corda', nome: 'Corda', precisa: [['fibra', 3]], da: ['corda', 1], nivel: 1 },
+  { id: 'tabuas', nome: 'Tábuas', precisa: [['madeira', 2]], da: ['tabuas', 2], nivel: 1 },
+  { id: 'pedrinhas', nome: 'Pedrinhas para estilingue', precisa: [['pedra', 1]], da: ['pedrinhas', 6], nivel: 1 },
+  { id: 'machado_pedra', nome: 'Machado de pedra', precisa: [['madeira', 2], ['pedra', 2], ['corda', 1]], da: ['machado_pedra', 1], nivel: 1 },
+  { id: 'picareta', nome: 'Picareta improvisada', precisa: [['madeira', 2], ['pedra', 3], ['corda', 1]], da: ['picareta', 1], nivel: 1 },
+  { id: 'curativo', nome: 'Curativo de ervas', precisa: [['fibra', 1], ['ervas', 1]], da: ['curativo_ervas', 1], nivel: 1 },
+  { id: 'estilingue', nome: 'Estilingue', precisa: [['madeira', 1], ['corda', 1]], da: ['estilingue', 1], nivel: 2 },
+  { id: 'lanca', nome: 'Lança de bambu', precisa: [['madeira', 3], ['corda', 1]], da: ['lanca', 1], nivel: 2 },
+  { id: 'atadura', nome: 'Atadura improvisada', precisa: [['pano', 1], ['alcool|cachaca', 1]], da: ['atadura', 2], nivel: 1 },
+  { id: 'molotov', nome: 'Coquetel molotov', precisa: [['garrafa', 1], ['pano', 1], ['combustivel|cachaca|alcool', 1]], da: ['molotov', 1], nivel: 3 },
+  { id: 'armadura', nome: 'Armadura de revista', precisa: [['revistas', 2], ['fita', 1]], da: ['armadura_revista', 1], nivel: 2 },
+  { id: 'reparo', nome: 'Consertar arma branca (silver tape)', precisa: [['fita', 1]], repara: true, nivel: 1 },
+  // no fogo
+  { id: 'marmita', nome: 'Marmita de arroz e feijão', precisa: [['arroz', 1], ['feijao', 1], ['agua', 1]], da: ['marmita', 2], fogao: true, nivel: 1 },
+  { id: 'macarrao', nome: 'Macarrão cozido', precisa: [['miojo', 2], ['agua', 1]], da: ['macarronada', 1], fogao: true, nivel: 1 },
+  { id: 'cha', nome: 'Chá de ervas', precisa: [['ervas', 2], ['agua', 1]], da: ['cha_ervas', 1], fogao: true, nivel: 1 },
+  { id: 'manga_assada', nome: 'Manga assada', precisa: [['manga', 2]], da: ['manga_assada', 2], fogao: true, nivel: 1 },
+  // na bancada de trabalho
+  { id: 'pregos', nome: 'Pregos', precisa: [['metal', 1]], da: ['pregos', 4], bancada: true, nivel: 2 },
+  { id: 'taco_pregos', nome: 'Taco com pregos', precisa: [['taco', 1], ['pregos', 1]], da: ['taco_pregos', 1], bancada: true, nivel: 2 },
+  { id: 'clava', nome: 'Clava com pregos', precisa: [['madeira', 3], ['metal', 1], ['pregos', 2]], da: ['clava', 1], bancada: true, nivel: 3 },
+  { id: 'facao', nome: 'Facão de sucata', precisa: [['metal', 4], ['madeira', 1], ['corda', 1]], da: ['facao', 1], bancada: true, nivel: 4 },
+  { id: 'colete', nome: 'Colete de sucata', precisa: [['metal', 6], ['corda', 2], ['pano', 1]], da: ['colete_sucata', 1], bancada: true, nivel: 4 },
+  { id: 'machado', nome: 'Machado de verdade', precisa: [['metal', 5], ['madeira', 2]], da: ['machado', 1], bancada: true, nivel: 5 },
+  { id: 'mun_pistola', nome: 'Recarregar balas de pistola', precisa: [['metal', 2], ['fosforos', 1]], da: ['mun_pistola', 6], bancada: true, nivel: 6 },
+  { id: 'mochila', nome: 'Mochila de camping', precisa: [['pano', 4], ['corda', 2], ['fibra', 4]], da: ['mochila_camping', 1], bancada: true, nivel: 4 },
 ];
 
 export function installActions(Game) {
@@ -509,22 +530,40 @@ export function installActions(Game) {
       if (id === 'taco' && u.eq.mao && u.eq.mao.id === 'taco' && !u.inv.find(e => e.id === 'taco')) { u.eq.mao = null; return; }
       if (id) removeItem(u, id, n);
     },
-    async craft(u, recipeId, stove = null) {
+    // estações ao alcance (fogo e bancada) de quem vai fabricar
+    stationsNear(u) {
+      let fogo = null, bancada = null;
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+        const p = this.map.prop(u.x + dx, u.z + dz);
+        if (!p || p.removed) continue;
+        if (PROPS[p.type].stove) fogo = p;
+        if (PROPS[p.type].estacao === 'bancada' || p.type === 'bancada') bancada = p;
+      }
+      return { fogo, bancada };
+    },
+    recipeBlock(u, r) {
+      const st = this.stationsNear(u);
+      if ((u.lvl || 1) < (r.nivel || 1)) return `Nível ${r.nivel}`;
+      if (r.fogao && !st.fogo) return 'Perto do fogo';
+      if (r.fogao && !(st.fogo && st.fogo.type === 'fogueira') && countItem(u, 'fosforos') <= 0) return 'Fósforos';
+      if (r.bancada && !st.bancada) return 'Na bancada';
+      if (!r.precisa.every(req => this.haveReq(u, req))) return 'Faltam itens';
+      if (r.repara && !(u.eq.mao && u.eq.mao.dur !== undefined)) return 'Equipe a arma';
+      return null;
+    },
+    async craft(u, recipeId) {
       const r = RECIPES.find(r => r.id === recipeId);
       if (!r) return;
-      if (r.fogao && !stove) { this.toast('Precisa estar perto de um fogão ou churrasqueira.', 'erro'); return; }
-      if (r.fogao && countItem(u, 'fosforos') <= 0) { this.toast('Precisa de fósforos para acender o fogo.', 'erro'); return; }
-      for (const req of r.precisa) if (!this.haveReq(u, req)) { this.toast('Faltam ingredientes/materiais.', 'erro'); return; }
-      if (r.repara && !(u.eq.mao && u.eq.mao.dur !== undefined)) { this.toast('Equipe a arma branca que quer consertar.', 'erro'); return; }
-      if (!this.can(u, r.pa)) return;
+      const why = this.recipeBlock(u, r);
+      if (why) { this.toast(why === 'Perto do fogo' ? 'Fique ao lado de um fogão, churrasqueira ou fogueira.' : why === 'Na bancada' ? 'Fique ao lado de uma bancada de trabalho.' : why === 'Fósforos' ? 'Precisa de fósforos para acender o fogão.' : why, 'erro'); return; }
+      if (!this.can(u, 0)) return;
       await this.act(async () => {
-        this.spend(u, r.pa);
         for (const req of r.precisa) this.takeReq(u, req);
         await this.view().play(u, 'interact');
         if (r.repara) { const it = ITEMS[u.eq.mao.id]; u.eq.mao.dur = Math.min(it.w.dur, u.eq.mao.dur + Math.round(it.w.dur * 0.5)); this.log(`🩶 ${u.name} remendou a arma com silver tape.`, 'bom'); }
         else { addItem(u, r.da[0], r.da[1]); this.log(`🛠️ ${u.name} fez: ${ITEMS[r.da[0]].nome}${r.da[1] > 1 ? ' ×' + r.da[1] : ''}.`, 'bom'); }
-        if (r.fogao) this.noise(u.x, u.z, 3, u);
-        this.gainXp(u, 6);
+        if (r.fogao || r.bancada) this.noise(u.x, u.z, 3, u);
+        this.gainXp(u, r.bancada ? 10 : 5);
       });
     },
     async drinkTap(u, p) {
@@ -544,7 +583,8 @@ export function installActions(Game) {
       const b = this.map.buildings.find(b => b.safehouse || this.state.flags['refugio_' + b.id]);
       if (this.state.mode !== 'explore') return 'Não dá para dormir com perigo por perto.';
       const hs = this.liveHeroes.filter(h => !h.st.downed);
-      const inside = hs.every(h => { const bb = this.map.buildingAt(h.x, h.z); return bb && (bb.safehouse || this.state.flags['refugio_' + bb.id]); });
+      const bedInBase = this.map.props.some(p => !p.removed && PROPS[p.type].camaBase && p.extra && p.extra.built);
+      const inside = hs.every(h => { const bb = this.map.buildingAt(h.x, h.z); return (bb && (bb.safehouse || this.state.flags['refugio_' + bb.id])) || (bedInBase && this.inBase(h.x, h.z)); });
       if (!inside) return 'Todos precisam estar dentro de um esconderijo seguro (Casa da Turma ou Igreja).';
       if (this.units.some(z => z.alive && this.hostile(z) && this.liveHeroes.some(h => Math.hypot(h.x - z.x, h.z - z.z) < 10))) return 'Tem zumbi perto demais para dormir.';
       return null;
@@ -708,7 +748,8 @@ export function installActions(Game) {
       const p = map.prop(x, z);
       if (p && !p.removed) {
         const def = PROPS[p.type];
-        if (p.stash || def.stash) opts.push({ label: 'Abrir o baú do esconderijo', ap: 0, fn: async () => { if (await this.approach(u, x, z, 0)) bus.emit('loot', { source: p, hero: u, stash: true }); } });
+        for (const o of this.baseOptions(u, p)) opts.push(o);
+        if (p.stash || def.stash) opts.push({ label: `Abrir ${p.nome.toLowerCase()}`, ap: 0, fn: async () => { if (await this.approach(u, x, z, 0)) bus.emit('loot', { source: p, hero: u, stash: true }); } });
         else if (p.locked) { if (countItem(u, 'pe_de_cabra')) opts.push({ label: 'Forçar o cofre com pé de cabra (barulho!)', ap: 5, fn: () => this.forceSafe(u, p), danger: true }); }
         else if (def.loot || p.lootTable) opts.push({ label: p.searched ? `Ver ${p.nome.toLowerCase()} (já vasculhado)` : `Vasculhar ${p.nome.toLowerCase()}`, ap: this.searchCost(u, p), fn: () => this.search(u, p) });
         if (def.stove) opts.push({ label: 'Cozinhar aqui', ap: 2, fn: async () => { if (await this.approach(u, x, z, 0)) bus.emit('craft', u, p); } });
@@ -729,7 +770,6 @@ export function installActions(Game) {
       }
       if (x === u.x && z === u.z) {
         opts.push({ label: 'Esconder-se', ap: 2, fn: () => this.hide(u) });
-        opts.push({ label: 'Defender (os zumbis agem em seguida)', ap: u.ap, fn: () => this.defend(u) });
       }
       for (const o of opts) if (o.ap === null || o.ap === undefined || Number.isNaN(o.ap)) o.ap = '?';
       return opts;

@@ -639,6 +639,18 @@ export function generateMap(seed = 1) {
   mark('rua', 32, 25); mark('rua', 62, 25); mark('rua', 90, 25); mark('rua', 17, 40); mark('rua', 47, 40); mark('rua', 79, 40);
   mark('rua', 30, 53); mark('rua', 62, 53); mark('rua', 95, 53); mark('rua', 17, 65); mark('rua', 47, 65); mark('rua', 79, 65); mark('rua', 60, 73); mark('rua', 103, 70);
 
+  // ---------------- pedras e mato à beira do Rio Doce (recursos para coletar)
+  for (let k = 0, placed = 0; k < 900 && placed < 26; k++) {
+    const x = rint(1, W - 2), z = rint(60, H - 2);
+    const i = map.idx(x, z);
+    if (map.struct[i] || map.propAt[i] >= 0 || map.building[i] >= 0) continue;
+    if (![F.grama, F.terra, F.areia].includes(map.floor[i])) continue;
+    let nearWater = false;
+    for (let dz = -3; dz <= 3 && !nearWater; dz++) for (let dx = -3; dx <= 3; dx++) { const xx = x + dx, zz = z + dz; if (map.inb(xx, zz) && (map.struct[map.idx(xx, zz)] === S.WATER || map.floor[map.idx(xx, zz)] === F.agua)) { nearWater = true; break; } }
+    if (!nearWater) continue;
+    if (add(R() < 0.6 ? 'rocha' : 'arbusto', x, z)) placed++;
+  }
+
   // ---------------- loot inicial
   for (const p of map.props) rollLoot(p, R);
   map.version++;

@@ -46,7 +46,7 @@ export class GameMap {
     if (s === S.WINDOW) return true;
     if (s && STRUCT_INFO[s]?.blocks) return true;
     const p = this.propAt[i];
-    if (p >= 0 && this.props[p].blocks) return true;
+    if (p >= 0 && this.props[p].blocks && !(this.props[p].extra && this.props[p].extra.open)) return true;
     return false;
   }
   // bloqueia a visão
@@ -62,7 +62,7 @@ export class GameMap {
     if (s === S.WINDOW) { const w = this.windows.get(i); return !!(w && w.barricade > 1); }
     if (s && STRUCT_INFO[s]?.opaque) return true;
     const p = this.propAt[i];
-    if (p >= 0 && this.props[p].opaque) return true;
+    if (p >= 0 && this.props[p].opaque && !(this.props[p].extra && this.props[p].extra.open)) return true;
     return false;
   }
   // cobertura (0 nenhuma, 1 meia, 2 total) oferecida pela célula

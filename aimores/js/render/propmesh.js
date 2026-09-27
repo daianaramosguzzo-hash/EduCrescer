@@ -10,7 +10,7 @@ export const PROP_H = {
   guarda_roupa: 2.0, estante: 2.0, geladeira: 1.85, armario_escola: 1.9, prateleira: 1.9, gondola: 1.7,
   carro: 1.4, carro_pol: 1.6, opala: 1.35, onibus: 2.8, caminhao: 2.8, locomotiva: 3.2, vagao: 3.0, sucata: 1.2,
   arvore: 3.4, ipe: 3.4, ipe_rosa: 3.3, palmeira: 4.2, poste: 5.2, antena: 16, coreto: 3.4, monumento: 3.2,
-  banca: 2.2, orelhao: 2.1, quiosque: 2.6, tanque_lab: 2.2, cacamba: 1.2, caixa_dagua: 2.2, sino: 1.2,
+  banca: 2.2, orelhao: 2.1, parede_madeira: 2.2, parede_pedra: 2.2, parede_metal: 2.3, portao_madeira: 2.1, rocha: 1.1, estacas: 1.1, quiosque: 2.6, tanque_lab: 2.2, cacamba: 1.2, caixa_dagua: 2.2, sino: 1.2,
 };
 export function propHeight(type) { return PROP_H[type] ?? 0.9; }
 
@@ -63,6 +63,24 @@ const tree = (g, R, leaf, trunkH = 1.5, size = 1) => {
 };
 
 const B = {
+  // ------------------------------------------------------------ recursos e peças construídas
+  rocha: (g, w, d, R) => { g.blob(0, 0.42, 0, 0.5, 0.45, 0.46, '#8a8680', 1, true, 0.25, 3); g.blob(0.22, 0.25, 0.2, 0.26, 0.25, 0.24, '#a09a92', 1, true, 0.3, 5); if (R() < 0.5) g.blob(-0.25, 0.2, 0.18, 0.18, 0.16, 0.16, '#7a766e', 1, true, 0.3, 8); },
+  toco: (g) => { g.cyl(0, 0, 0, 0.22, 0.35, 8, '#7a4e2a', 0.2, '#d8b070'); },
+  parede_madeira: (g) => { g.box(0, 0, 0, 0.98, 2.1, 0.3, '#9a6a3c'); for (const y of [0.5, 1.2, 1.8]) g.box(0, y, 0.16, 0.98, 0.1, 0.04, '#6a4420', false); for (const x of [-0.32, 0, 0.32]) g.box(x, 0, 0.16, 0.05, 2.1, 0.03, '#7a4e2a', false); },
+  parede_pedra: (g, w, d, R) => { g.box(0, 0, 0, 0.98, 2.1, 0.36, '#8f8a82'); for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) g.box(-0.33 + c * 0.33 + (r % 2 ? 0.16 : 0), 0.08 + r * 0.5, 0.19, 0.28, 0.4, 0.03, ['#a8a298', '#7e796f', '#9a948a'][(r + c) % 3], false); },
+  parede_metal: (g) => { g.box(0, 0, 0, 0.98, 2.2, 0.26, '#8a9aa2'); for (const x of [-0.3, 0.05, 0.32]) g.box(x, 0.1, 0.14, 0.26, 2.0, 0.03, ['#a2b0b6', '#7a8a92', '#c06a3a'][Math.abs(Math.round(x * 10)) % 3], false); g.box(0, 1.9, 0.15, 0.98, 0.08, 0.04, '#5a666c', false); },
+  portao_madeira: (g, w, d, R, p) => {
+    const open = p && p.extra && p.extra.open;
+    g.box(-0.46, 0, 0, 0.1, 2.1, 0.3, '#6a4420'); g.box(0.46, 0, 0, 0.1, 2.1, 0.3, '#6a4420');
+    if (open) { g.push(); g.translate(-0.42, 0, 0); g.rotateY(-Math.PI / 2 * 0.9); g.box(0.42, 0.05, 0, 0.8, 1.9, 0.08, '#b07a44'); g.pop(); }
+    else { g.box(0, 0.05, 0, 0.82, 1.9, 0.1, '#b07a44'); g.box(0, 0.6, 0.06, 0.82, 0.1, 0.03, '#6a4420', false); g.box(0, 1.4, 0.06, 0.82, 0.1, 0.03, '#6a4420', false); }
+  },
+  estacas: (g, w, d, R) => { g.box(0, 0.25, 0, 0.9, 0.12, 0.12, '#6a4420'); for (let i = 0; i < 4; i++) { g.push(); g.translate(-0.33 + i * 0.22, 0.1, 0); g.rotateX(-0.5 + (i % 2) * 1.0); g.cyl(0, 0, 0, 0.05, 0.9, 5, '#b8884c', 0.001, '#e8d0a0'); g.pop(); } },
+  fogueira: (g) => { for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; g.blob(Math.cos(a) * 0.32, 0.08, Math.sin(a) * 0.32, 0.11, 0.09, 0.11, '#8a8680', 0, true); } g.push(); g.rotateY(0.6); g.box(0, 0.05, 0, 0.55, 0.1, 0.1, '#6a4420'); g.rotateY(1.2); g.box(0, 0.08, 0, 0.55, 0.1, 0.1, '#7a4e2a'); g.pop(); g.blob(0, 0.28, 0, 0.14, 0.24, 0.14, '#ff9a2a', 0, false); g.blob(0, 0.36, 0, 0.07, 0.18, 0.07, '#ffe07a', 0, false); },
+  bancada_trab: (g) => { g.box(0, 0.8, 0, 0.95, 0.12, 0.7, '#b07a44'); for (const [x, z] of [[-0.4, -0.28], [0.4, -0.28], [-0.4, 0.28], [0.4, 0.28]]) g.box(x, 0, z, 0.08, 0.8, 0.08, '#6a4420'); g.box(0.2, 0.92, 0, 0.3, 0.12, 0.2, '#8a9aa2'); g.box(-0.25, 0.92, 0.1, 0.12, 0.25, 0.08, '#c83a2a'); g.box(0, 0.25, 0, 0.8, 0.06, 0.55, '#8a5a2a'); },
+  bau_madeira: (g) => { g.box(0, 0, 0, 0.8, 0.55, 0.55, '#a0703c'); g.box(0, 0.55, 0, 0.82, 0.12, 0.57, '#7a4e2a'); g.box(0, 0.3, 0.28, 0.12, 0.14, 0.03, '#9aa2a8', false); },
+  cama_palha: (g) => { g.box(0, 0, 0, 0.8, 0.18, 0.95, '#d8b86a'); g.box(0, 0.18, -0.3, 0.6, 0.12, 0.25, '#e8e0c8'); g.box(0.05, 0.18, 0.15, 0.7, 0.05, 0.5, '#6a8aa8', false); },
+  coletor: (g) => { g.cyl(0, 0, 0, 0.36, 0.7, 10, '#3a6a9a', 0.4, '#5aa0d8'); g.box(0, 0.7, 0, 0.9, 0.05, 0.9, '#8a8680'); for (const [x, z] of [[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]]) g.box(x, 0, z, 0.06, 0.75, 0.06, '#6a4420', false); },
   // ---------------- casa
   sofa: (g, w, d, R) => {
     const c = ['#b8412e', '#3a6aa8', '#6a8a3a', '#8a5a9a'][Math.floor(R() * 4)];

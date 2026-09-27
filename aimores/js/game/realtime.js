@@ -1,6 +1,6 @@
 // Jogo em tempo real: relógio contínuo, corpo dos personagens com colisão, controle direto
 // (teclado, joystick e clique), navegação por caminho, ataque na hora e interação com o cenário.
-import { S } from '../world/tiles.js';
+import { S, PROPS } from '../world/tiles.js';
 import { ITEMS } from '../data/items.js';
 import { ZOMBIES } from '../data/zombies.js';
 import { hitChance, rollDamage, unaware } from './combat.js';
@@ -78,7 +78,7 @@ export function installRealtime(Game) {
         if (hh === 18) { this.log('🌆 O sol está se pondo. À noite há mais zumbis e eles ficam mais agressivos.', 'alerta'); this.toast('Anoitecendo'); }
         if (hh === 6) this.log('🌅 Amanheceu. Os zumbis ficam mais lentos com o calor.', 'info');
         this.hourlySpawn(hh);
-        Story.rtRegrow?.(this);
+        this.regrowTick?.();
       }
       // histórias, conversas e eventos (podem abrir diálogos: rodam sem travar o relógio)
       if (!this.storyBusy) {
@@ -229,6 +229,11 @@ export function installRealtime(Game) {
       if (!hit || !hit.cell) return false;
       const [cx, cz] = hit.cell;
       const i = this.map.idx(cx, cz);
+      // portão construído na base: abre para a turma
+      const bp = this.map.prop(cx, cz);
+      if (bp && bp.extra && bp.extra.built && PROPS[bp.type].porta && !bp.extra.open && (u.kind === 'hero' || u.faction === 'ally')) {
+        bp.extra.open = true; this.S.world.rebuildChunkAt(cx, cz); this.map.version++; bus.emit('sfx', 'door_open', cx, cz); this.visionDirty = true; return true;
+      }
       const d = this.map.doors.get(i);
       if (!d || d.open) return false;
       if (d.locked || d.barricade > 0) {
@@ -250,6 +255,7 @@ export function installRealtime(Game) {
     // ------------------------------------------------------------ controle do jogador
     rtControl(u, dt) {
       const inp = this.input;
+      if (u.gather) this.gatherTick(u, dt);
       const busy = this.busy > 0 || u.st.stun > 0 || u.gatherT > 0;
       if (u.st.stun > 0) u.st.stun = Math.max(0, u.st.stun - dt / 2);
       let mx = inp.move.x, mz = inp.move.z;

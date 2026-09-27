@@ -6,6 +6,8 @@ import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
 import { carried, capacity, countItem, recompute, addItem, removeItem, stackable } from '../game/units.js';
 import { RECIPES } from '../game/actions.js';
+import { BUILDS } from '../game/base.js';
+import { PROPS } from '../world/tiles.js';
 import { rel, relKey } from '../game/story.js';
 import { bus, clamp } from '../util.js';
 import * as Save from '../game/save.js';
@@ -330,27 +332,53 @@ export class Panels {
   }
 
   // ================================================================ FABRICAR / COZINHAR
-  craft(hero = null, stove = null) {
-    this.crHero = hero || this.g.selected; this.crStove = stove;
+  craft(hero = null) {
+    this.crHero = hero || this.g.selected;
     this.craftRender();
   }
   craftRender() {
     const g = this.g, u = this.crHero;
     const body = h('div');
     body.append(heroTabs(g, u, x => { this.crHero = x; this.craftRender(); }));
-    body.append(h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, this.crStove ? `🔥 Perto de: ${this.crStove.nome}. Receitas de fogão liberadas.` : 'Receitas de fogão precisam de um fogão, fogão industrial ou churrasqueira (clique nele e escolha "Cozinhar aqui").'));
-    for (const r of RECIPES) {
-      const reqs = r.precisa.map(req => { const [ids, n] = req; const ok = g.haveReq(u, req); return h('span', { class: ok ? '' : 'miss' }, `${ids.split('|').map(i => ITEMS[i].nome).join(' ou ')} ×${n}`); });
-      const ok = r.precisa.every(req => g.haveReq(u, req)) && (!r.fogao || this.crStove);
-      const out = r.repara ? 'Recupera 50% da durabilidade da arma equipada' : `→ ${ITEMS[r.da[0]].icon} ${ITEMS[r.da[0]].nome}${r.da[1] > 1 ? ' ×' + r.da[1] : ''}`;
-      const reqLine = h('div', { class: 'req' });
-      reqs.forEach((e, i) => { if (i) reqLine.append(' + '); reqLine.append(e); });
-      if (r.fogao) reqLine.append(' + 🔥 fogo (fósforos)');
-      body.append(h('div', { class: 'recipe' },
-        h('div', {}, h('div', { style: { fontWeight: 900 } }, r.nome), reqLine, h('div', { style: { fontSize: '12px' } }, out)),
-        h('button', { class: 'btn primary', disabled: !ok, onclick: async () => { await g.craft(u, r.id, this.crStove); this.craftRender(); } }, 'Fazer')));
+    const st = g.stationsNear(u);
+    body.append(h('p', { style: { fontSize: '13px', color: '#b3a5c4' } },
+      `Nível de ${u.name}: ${u.lvl}. `, st.fogo ? `🔥 Perto do fogo (${st.fogo.nome}). ` : '🔥 Receitas de fogo: fique ao lado de um fogão, churrasqueira ou fogueira. ',
+      st.bancada ? '🛠️ Na bancada de trabalho.' : '🛠️ Receitas de bancada: construa uma na base (N) e fique ao lado dela.'));
+    const groups = [['✋ Na mão', r => !r.fogao && !r.bancada], ['🔥 No fogo', r => r.fogao], ['🛠️ Na bancada', r => r.bancada]];
+    for (const [title, test] of groups) {
+      body.append(h('h3', { class: 'craft-h' }, title));
+      for (const r of RECIPES.filter(test)) {
+        const why = g.recipeBlock(u, r);
+        const reqs = r.precisa.map(req => { const [ids, n] = req; const ok = g.haveReq(u, req); return h('span', { class: ok ? '' : 'miss' }, `${ids.split('|').map(i => ITEMS[i].icon + ' ' + ITEMS[i].nome).join(' ou ')} ×${n}`); });
+        const out = r.repara ? 'Recupera 50% da durabilidade da arma equipada' : `→ ${ITEMS[r.da[0]].icon} ${ITEMS[r.da[0]].nome}${r.da[1] > 1 ? ' ×' + r.da[1] : ''}`;
+        const reqLine = h('div', { class: 'req' });
+        reqs.forEach((e, i) => { if (i) reqLine.append(' + '); reqLine.append(e); });
+        const locked = (u.lvl || 1) < (r.nivel || 1);
+        body.append(h('div', { class: 'recipe' + (locked ? ' locked' : '') },
+          h('div', {}, h('div', { style: { fontWeight: 900 } }, r.nome, locked ? h('small', { class: 'lvl' }, ` 🔒 nível ${r.nivel}`) : ''), reqLine, h('div', { style: { fontSize: '12px' } }, out)),
+          h('button', { class: 'btn primary', disabled: !!why, title: why || '', onclick: async () => { await g.craft(u, r.id); this.craftRender(); } }, why && why !== 'Faltam itens' ? why : 'Fazer')));
+      }
     }
-    this.show(win('Fabricar e cozinhar', body, { close: () => this.close() }), 'craft');
+    this.show(win('Fabricar', body, { close: () => this.close() }), 'craft');
+  }
+  // ================================================================ CONSTRUIR (base)
+  build() {
+    const g = this.g, u = g.selected;
+    const body = h('div');
+    const area = g.baseArea();
+    body.append(h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, 'Escolha uma peça e clique no chão do terreno da Casa da Turma para construir (clique direito ou Esc cancela). Os materiais saem da mochila de quem está construindo e dos baús da base.'));
+    const stock = h('div', { class: 'stock' });
+    for (const id of ['madeira', 'pedra', 'metal', 'fibra', 'corda', 'pano']) stock.append(h('span', {}, `${ITEMS[id].icon} ${g.buildStock(u, id)}`));
+    body.append(stock);
+    for (const b of BUILDS) {
+      const why = g.buildCheck(u, b);
+      const cost = b.custo.map(([id, n]) => h('span', { class: g.buildStock(u, id) >= n ? '' : 'miss' }, `${ITEMS[id].icon} ${ITEMS[id].nome} ×${n}`));
+      const line = h('div', { class: 'req' }); cost.forEach((e, i) => { if (i) line.append(' + '); line.append(e); });
+      body.append(h('div', { class: 'recipe' + (why && why.startsWith('Nível') ? ' locked' : '') },
+        h('div', {}, h('div', { style: { fontWeight: 900 } }, PROPS[b.id].nome, (u.lvl || 1) < b.nivel ? h('small', { class: 'lvl' }, ` 🔒 nível ${b.nivel}`) : ''), line, h('div', { style: { fontSize: '12px' } }, b.desc)),
+        h('button', { class: 'btn primary', disabled: !!why || !area, onclick: () => { this.close(); this.ui.startBuild(b.id); } }, why || 'Construir')));
+    }
+    this.show(win('Construir na base', body, { close: () => this.close() }), 'build');
   }
   craftRefresh() { this.craftRender(); }
 

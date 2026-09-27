@@ -206,6 +206,7 @@ export class Game {
     let l = m.indoor(x, z) ? day * 0.8 : day;
     l = Math.max(l, m.lit[i]);
     for (const [fi] of m.fire) { const fx = fi % m.W, fz = (fi / m.W) | 0; const d = Math.hypot(fx - x, fz - z); if (d < 5) l = Math.max(l, 1 - d / 5); }
+    for (const p of this.campfires || []) { const d = Math.hypot(p.x - x, p.z - z); if (d < 6) l = Math.max(l, 1 - d / 6); }
     for (const h of this.liveHeroes) {
       if (!this.flashlightOn(h) || h.st.downed) continue;
       const dx = x - h.x, dz = z - h.z, d = Math.hypot(dx, dz);
@@ -275,6 +276,9 @@ export class Game {
   refreshLights() {
     this.lightSources = [...this.map.lights.filter(l => !l.off)];
     for (const [fi] of this.map.fire) this.lightSources.push({ x: fi % this.map.W + 0.5, z: ((fi / this.map.W) | 0) + 0.5, kind: 'fogo', r: 6, i: 1.2, color: '#ff8a2a' });
+    // fogueiras da base
+    this.campfires = this.map.props.filter(p => !p.removed && PROPS[p.type].luz);
+    for (const p of this.campfires) this.lightSources.push({ x: p.x + 0.5, z: p.z + 0.5, kind: 'fogo', r: 7, i: 1.3, color: '#ff9a3a' });
   }
   frameUpdate(dt) {
     // luzes dinâmicas perto da câmera e lanternas
@@ -486,12 +490,13 @@ export class Game {
       return o;
     });
     return {
-      v: 1, state: this.state, units, uidNext: peekUid(), rng: rng.state(),
+      v: 2, state: this.state, units, uidNext: peekUid(), rng: rng.state(),
       map: { doors, wins, props, explored, piles: [...m.piles], fire: [...m.fire], gas: [...m.gas], lightsOff: m.lights.map(l => l.off ? 1 : 0), extraProps: m.props.filter(p => p.added).map(p => ({ type: p.type, x: p.x, z: p.z, w: p.w, d: p.d, rot: p.rot })) },
       selected: this.selected ? this.selected.uid : null,
     };
   }
   load(data) {
+    if ((data.v || 1) < 2) throw new Error('esse salvamento é da versão por turnos, que não é compatível com a versão em tempo real');
     this.state = data.state;
     this.map = generateMap(this.state.seed);
     const m = this.map;

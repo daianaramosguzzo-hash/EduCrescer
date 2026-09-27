@@ -128,6 +128,7 @@ export class Hud {
       B('🔄', 'Recarregar', () => g.reload(u), 'R'),
       B('🎒', 'Inventário', () => ui.open('inv'), 'I'),
       B('🛠️', 'Fabricar', () => ui.open('craft'), 'B'),
+      B('🔨', 'Construir na base', () => ui.open('build'), 'N'),
       B('🔦', u.eq.mao2 && u.eq.mao2.id === 'lanterna' ? `Lanterna ${u.flash ? 'ligada' : 'desligada'} (${Math.round(u.eq.mao2.carga || 0)}%)` : 'Sem lanterna equipada', () => g.toggleFlashlight(u), 'F', u.eq.mao2 && u.flash && u.eq.mao2.id === 'lanterna' ? 'on' : ''),
     );
     for (const sid of HEROES[u.id].skills) {

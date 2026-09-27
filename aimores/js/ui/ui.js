@@ -12,6 +12,7 @@ import { hitChance, inRange } from '../game/combat.js';
 import { bus, clamp, wait } from '../util.js';
 import * as Save from '../game/save.js';
 import * as Story from '../game/story.js';
+import { BUILDS } from '../game/base.js';
 
 const OPTS_KEY = 'aimores-dos-mortos-opcoes';
 
@@ -40,11 +41,17 @@ export class UI {
   open(name, ...args) {
     if (this.dialogOpen) return;
     this.hideCtx();
-    const map = { inv: 'inv', char: 'char', journal: 'journal', map: 'map', save: 'save', menu: 'menu', craft: 'craft', help: 'help' };
+    const map = { inv: 'inv', char: 'char', journal: 'journal', map: 'map', save: 'save', menu: 'menu', craft: 'craft', help: 'help', build: 'build' };
     const fn = map[name];
     if (!fn) return;
     if (this.panels.cur === fn) { this.panels.close(); return; }
     this.panels[fn](...args);
+  }
+  // modo construção: mostra onde a peça vai e constrói com clique
+  startBuild(id) {
+    this.mode = 'build:' + id;
+    this.toast('Clique no terreno da Casa da Turma para construir. Clique direito ou Esc para parar.');
+    this.hud.dirty = true;
   }
   setMode(m) {
     this.mode = this.mode === m ? null : m;
@@ -285,6 +292,12 @@ export class UI {
     if (!cell) return;
     const u = g.selected;
     if (!u) return;
+    if (this.mode && this.mode.startsWith('build:')) {
+      const id = this.mode.slice(6);
+      if (g.placeBuild(u, id, cell.x, cell.z)) { const b = g.buildCheck(u, BUILDS.find(b => b.id === id)); if (b) { this.setMode(null); } }
+      this.refreshHover();
+      return;
+    }
     if (unit && g.hostile(unit) && g.unitVisible(unit) && !this.mode) { g.attack(u, unit); return; }
     if (this.mode === 'attack') {
       this.setMode(null);
@@ -350,6 +363,15 @@ export class UI {
     const hb = g.map.buildingAt(cell.x, cell.z);
     const hid = hb ? hb.id : null;
     if (hid !== this.hoverB) { this.hoverB = hid; clearTimeout(this.hoverT); this.hoverT = setTimeout(() => { g.hoverBuilding = this.hoverB; g.updateCutaway(); }, hid === null ? 350 : 220); }
+    if (this.mode && this.mode.startsWith('build:')) {
+      const ok = g.canPlace(cell.x, cell.z);
+      this.S.showCursor(cell.x, cell.z, ok ? '#4aff6a' : '#ff4a4a', 0);
+      this.S.showPath([]);
+      tip.innerHTML = `<div class="h">🔨 ${PROPS[this.mode.slice(6)].nome}</div>${ok ? 'Clique para construir aqui' : '<span class="bad">Não dá para construir aqui</span>'}<br><small>Clique direito ou Esc para parar</small>`;
+      tip.classList.remove('hidden');
+      tip.style.left = Math.min(cx + 18, innerWidth - 260) + 'px'; tip.style.top = Math.min(cy + 18, innerHeight - 90) + 'px';
+      return;
+    }
     const vu = unit && (unit.kind === 'hero' || g.unitVisible(unit)) ? unit : null;
     if (vu && vu !== u) {
       if (g.hostile(vu)) {

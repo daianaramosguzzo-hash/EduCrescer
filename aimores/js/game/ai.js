@@ -7,7 +7,7 @@ import { findPath } from './path.js';
 import { hitChance, rollDamage, zombieWound } from './combat.js';
 import { effStat } from './units.js';
 import { rng, bus, clamp } from '../util.js';
-import { S } from '../world/tiles.js';
+import { S, PROPS } from '../world/tiles.js';
 
 const ACTIVE = 42;              // zumbis mais longe que isso do grupo ficam "dormindo"
 const d2 = (a, b) => Math.hypot(a.px - b.px, a.pz - b.pz);
@@ -74,7 +74,7 @@ function obstacle(g, u, cell, dt) {
   if (door && (!door.open || door.barricade > 0)) return bashDoor(g, u, door);
   if (m.struct[i] === S.WINDOW) { const w = m.windows.get(i); if (w && !w.broken) return breakWindow(g, u, w); }
   const p = m.prop(cx, cz);
-  if (p && p.built && p.hp > 0 && (u.ai.state === 'hunt' || u.ai.raid)) return bashBuilt(g, u, p);
+  if (p && p.extra && p.extra.built && p.extra.hp > 0 && (u.ai.state === 'hunt' || u.ai.raid)) return bashBuilt(g, u, p);
 }
 
 // ------------------------------------------------------------ percepção
@@ -281,9 +281,11 @@ function breakWindow(g, z, w) {
 function bashBuilt(g, z, p) {
   const Z = ZOMBIES[z.type];
   if (g.visible.has(g.map.idx(z.x, z.z))) g.S.units.play(z, 'attack');
-  p.hp -= rng.int(2, 5) * (Z.porta || 1);
+  p.extra.hp -= rng.int(2, 5) * (Z.porta || 1);
   bus.emit('sfx', 'bang', p.x, p.z);
-  if (p.hp <= 0) g.destroyBuilt?.(p);
+  const def = PROPS[p.type];
+  if (def.fere) g.damage(z, def.fere, null);
+  if (p.extra.hp <= 0) g.destroyBuilt?.(p);
 }
 
 // ------------------------------------------------------------ sobreviventes
