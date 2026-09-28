@@ -67,10 +67,10 @@ export class FX {
     this.flashSprite.position.set(x, y, z); this.flashSprite.scale.setScalar(0.9); this.flashSprite.visible = true;
     this.flashT = 0.06;
   }
-  tracer(x0, y0, z0, x1, y1, z1) {
+  tracer(x0, y0, z0, x1, y1, z1, color = '#ffe0a0', life = 0.08) {
     const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x0, y0, z0), new THREE.Vector3(x1, y1, z1)]);
-    const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#ffe0a0', transparent: true, opacity: 0.9 }));
-    this.scene.add(l); this.tracers.push({ l, t: 0.08 });
+    const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.9 }));
+    this.scene.add(l); this.tracers.push({ l, t: life, life });
   }
   // número flutuante (dano, +itens)
   text(x, y, z, str, cls = '') {
@@ -96,7 +96,7 @@ export class FX {
     }
     this.mesh.instanceMatrix.needsUpdate = true;
     if (this.flashT > 0) { this.flashT -= dt; if (this.flashT <= 0) { this.flash.intensity = 0; this.flashSprite.visible = false; } }
-    for (let i = this.tracers.length - 1; i >= 0; i--) { const t = this.tracers[i]; t.t -= dt; t.l.material.opacity = Math.max(0, t.t / 0.08); if (t.t <= 0) { this.scene.remove(t.l); t.l.geometry.dispose(); this.tracers.splice(i, 1); } }
+    for (let i = this.tracers.length - 1; i >= 0; i--) { const t = this.tracers[i]; t.t -= dt; t.l.material.opacity = Math.max(0, t.t / t.life); if (t.t <= 0) { this.scene.remove(t.l); t.l.geometry.dispose(); this.tracers.splice(i, 1); } }
     for (let i = this.decals.length - 1; i >= 0; i--) { const d = this.decals[i]; d.t -= dt; if (d.t < 5) d.m.material = this.decalMat; if (d.t <= 0) { this.scene.remove(d.m); this.decals.splice(i, 1); } }
     // textos
     const W = window.innerWidth, H = window.innerHeight;

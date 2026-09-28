@@ -99,6 +99,8 @@ export class Quests {
     if (rw.unlockChar) rtxt.push(`👥 ${CHARACTERS[rw.unlockChar].name} entrou para a comunidade`);
     if (rtxt.length) lines[0].text += '\n\nRecompensa: ' + rtxt.join(' · ');
     for (const n of q.next || []) if (!S.done.includes(n) && !S.active[n]) S.active[n] = { p: [] };
+    // missões de resgate novas colocam o sobrevivente no mapa
+    G.survivors.refresh();
     G.ui.dialog(lines, () => { if (rw.xp) G.addXp(rw.xp); this.check(); });
     G.requestSave();
   }

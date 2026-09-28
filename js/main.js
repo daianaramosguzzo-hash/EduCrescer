@@ -477,9 +477,12 @@ function step(dt) {
     if (!G.intro && !G.building.mode) {
       const m = input.move();
       inp = { move: m, run: input.running() };
-      if (input.attackHeld() && !p.busy) p.tryAttack();
+      // pressionar rápido também vale (quadros lentos não perdem o toque)
+      if ((input.attackHeld() || input.anyPressed('Space', 'Mouse0')) && !p.busy) p.tryAttack();
       // segurar E repete só coleta; portas, baús e conversas pedem soltar o botão
-      const iw = input.interactHeld();
+      const tapE = input.anyPressed('KeyE', 'KeyF');
+      const iw = input.interactHeld() || tapE;
+      if (tapE) G.interactLatch = false;
       if (!iw) G.interactLatch = false;
       else if (!p.busy && !G.interactLatch && (!G.lastInteract || G.clock - G.lastInteract > 0.35)) {
         const o = G.interact.current;

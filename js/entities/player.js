@@ -163,6 +163,7 @@ export class Player {
         }
         if (hit) { ex = hit.x; ez = hit.z; const falloff = wd.pellets ? Math.max(0.35, 1 - bestD / wd.range) : 1; hit.damage(dmg * falloff, this, wd.knock || 0.4); }
         if (wd.kind === 'gun') G.fx.tracer(hx, 1.3, hz, ex, 1.2, ez);
+        else G.fx.tracer(hx, 1.35, hz, ex, 1.1, ez, '#c8a070', 0.25);
       }
       this.wearWeapon(1);
     } else {
@@ -262,7 +263,6 @@ export class Player {
         G.ui.refresh();
       },
     });
-    sfx(kind === 'drink' ? 'drink' : 'eat', { x: this.x, z: this.z, vol: 0.001 });
   }
 
   // ---------- atualização ----------

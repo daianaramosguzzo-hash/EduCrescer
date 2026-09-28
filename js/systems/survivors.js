@@ -101,6 +101,7 @@ export class Survivors {
     if (npc) { ch.x = npc.x; ch.z = npc.z; ch.rot = npc.rot; }
     G.state.active = id;
     G.player.setChar(ch);
+    G.knownRecipes = G.crafting.knownSet();
     G.renderer.follow(ch.x, ch.z, 1, true);
     this.refresh();
     sfx('levelUp');
