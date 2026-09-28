@@ -116,6 +116,7 @@ export function installBase(Game) {
     },
     // a cada hora: árvores, arbustos e pedras voltam; o coletor junta água
     regrowTick() {
+      if (this.zone) return;
       const list = this.state.regrow || [];
       for (let i = list.length - 1; i >= 0; i--) {
         const r = list[i];

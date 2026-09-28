@@ -8,6 +8,7 @@ import { carried, capacity, countItem, recompute, addItem, removeItem, stackable
 import { RECIPES } from '../game/actions.js';
 import { BUILDS } from '../game/base.js';
 import { PROPS } from '../world/tiles.js';
+import { ZONES, PERIGO_COR } from '../world/zones.js';
 import { rel, relKey } from '../game/story.js';
 import { bus, clamp } from '../util.js';
 import * as Save from '../game/save.js';
@@ -322,13 +323,47 @@ export class Panels {
   journalRefresh() { this.journalRender(); }
 
   // ================================================================ MAPA
-  map() {
-    const c = h('canvas', { class: 'bigmap', width: this.g.map.W * 7, height: this.g.map.H * 7 });
-    const body = h('div', {}, c, h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, '◆ amarelo: objetivos · bolinhas coloridas: a turma · vermelho: zumbis à vista. Clique no mapa para levar a câmera até lá.'));
-    this.show(win('Mapa de Aimorés', body, { close: () => this.close() }), 'map');
-    this.ui.hud.drawMinimap(c, true);
-    c.onclick = e => { const r = c.getBoundingClientRect(); const v = this.ui.hud.miniView; this.g.S.focus(v.x0 + (e.clientX - r.left) * (c.width / r.width) / v.sc, v.z0 + (e.clientY - r.top) * (c.height / r.height) / v.sc); this.close(); };
-    this.ui.hud.miniView = null;
+  map(tab = null) {
+    const g = this.g;
+    tab = tab || this.mapTab || 'local';
+    this.mapTab = tab;
+    const tabs = h('div', { class: 'tabs' },
+      h('button', { class: tab === 'local' ? 'on' : '', onclick: () => this.map('local') }, g.zone ? `📍 ${ZONES[g.zone.id].nome}` : '📍 Aimorés'),
+      h('button', { class: tab === 'regiao' ? 'on' : '', onclick: () => this.map('regiao') }, '🧭 Região (viajar)'));
+    if (tab === 'local') {
+      const c = h('canvas', { class: 'bigmap', width: g.map.W * 7, height: g.map.H * 7 });
+      const body = h('div', {}, tabs, c, h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, '◆ amarelo: objetivos · bolinhas coloridas: a turma · vermelho: zumbis à vista. Clique no mapa para levar a câmera até lá.'));
+      this.show(win('Mapa', body, { close: () => this.close() }), 'map');
+      this.ui.hud.drawMinimap(c, true);
+      c.onclick = e => { const r = c.getBoundingClientRect(); const v = this.ui.hud.miniView; g.S.focus(v.x0 + (e.clientX - r.left) * (c.width / r.width) / v.sc, v.z0 + (e.clientY - r.top) * (c.height / r.height) / v.sc); this.ui.userPanned = true; this.close(); };
+      this.ui.hud.miniView = null;
+      return;
+    }
+    // mapa da região: Aimorés no meio, as zonas em volta
+    const why = g.travelBlock();
+    const region = h('div', { class: 'region' });
+    region.append(h('div', { class: 'river' }));
+    const pin = (x, y, label, cor, here, onclick) => region.append(h('button', { class: 'pin' + (here ? ' here' : ''), style: { left: x * 100 + '%', top: y * 100 + '%', '--c': cor }, onclick }, h('span', {}, label)));
+    const info = h('div', { class: 'zone-info' });
+    const showZone = id => {
+      info.innerHTML = '';
+      if (id === 'aimores') {
+        info.append(h('h3', {}, '🏙️ Aimorés'), h('p', {}, 'A cidade: a Casa da Turma, as missões e os sobreviventes.'),
+          g.zone ? h('button', { class: 'btn primary', disabled: !!why, onclick: () => { this.close(); g.travel(null); } }, why || `Voltar (${ZONES[g.zone.id].minutos} min)`) : h('p', { class: 'here' }, 'Vocês estão aqui.'));
+        return;
+      }
+      const Z = ZONES[id];
+      const here = g.zone && g.zone.id === id;
+      info.append(h('h3', {}, Z.nome, ' ', h('span', { class: 'perigo', style: { background: PERIGO_COR[Z.perigo] } }, 'zona ' + Z.perigo)), h('p', {}, Z.desc),
+        h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, `Caminhada: ${Z.minutos} minutos (não gasta energia). A zona muda a cada visita.`),
+        here ? h('p', { class: 'here' }, 'Vocês estão aqui.') : g.zone ? h('p', { class: 'here' }, 'Volte para Aimorés antes de ir para outra zona.') :
+          h('button', { class: 'btn primary', disabled: !!why, onclick: () => { this.close(); g.travel(id); } }, why || 'Viajar'));
+    };
+    pin(0.5, 0.5, '🏙️ Aimorés', '#b8a8d8', !g.zone, () => showZone('aimores'));
+    for (const [id, Z] of Object.entries(ZONES)) pin(Z.x, Z.y, Z.nome, PERIGO_COR[Z.perigo], g.zone && g.zone.id === id, () => showZone(id));
+    showZone(g.zone ? g.zone.id : 'mata');
+    const body = h('div', {}, tabs, h('div', { class: 'region-wrap' }, region, info));
+    this.show(win('Mapa', body, { close: () => this.close() }), 'map');
   }
 
   // ================================================================ FABRICAR / COZINHAR

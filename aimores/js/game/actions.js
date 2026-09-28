@@ -749,6 +749,7 @@ export function installActions(Game) {
       if (p && !p.removed) {
         const def = PROPS[p.type];
         for (const o of this.baseOptions(u, p)) opts.push(o);
+        if (p.saida) opts.push({ label: '🏙️ Voltar para Aimorés', ap: 0, fn: () => this.travel(null) });
         if (p.stash || def.stash) opts.push({ label: `Abrir ${p.nome.toLowerCase()}`, ap: 0, fn: async () => { if (await this.approach(u, x, z, 0)) bus.emit('loot', { source: p, hero: u, stash: true }); } });
         else if (p.locked) { if (countItem(u, 'pe_de_cabra')) opts.push({ label: 'Forçar o cofre com pé de cabra (barulho!)', ap: 5, fn: () => this.forceSafe(u, p), danger: true }); }
         else if (def.loot || p.lootTable) opts.push({ label: p.searched ? `Ver ${p.nome.toLowerCase()} (já vasculhado)` : `Vasculhar ${p.nome.toLowerCase()}`, ap: this.searchCost(u, p), fn: () => this.search(u, p) });

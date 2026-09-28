@@ -444,7 +444,7 @@ export class UI {
   // pontos de objetivo (minimapa e mapa)
   objectivePoints() {
     const g = this.g;
-    if (!g.state) return [];
+    if (!g.state || g.zone) return [];
     const M = g.map.marks;
     const pts = [];
     const T = {

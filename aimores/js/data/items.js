@@ -199,6 +199,9 @@ export function itemName(id, n = 1) {
 // ------------------------------------------------------------ tabelas de loot
 // [item, peso de sorteio, [min, max]]
 export const LOOT = {
+  militar: [['mun_pistola', 5, [4, 10]], ['mun_rifle', 3, [3, 8]], ['mun_espingarda', 3, [2, 6]], ['enlatado', 4, [1, 3]], ['agua', 4, [1, 3]], ['kit_medico', 1.5, [1, 1]], ['atadura', 3, [1, 3]], ['antibiotico', 1, [1, 1]], ['colete', 0.5, [1, 1]], ['capacete', 0.8, [1, 1]], ['pistola', 0.6, [1, 1]], ['rifle', 0.3, [1, 1]], ['pilhas', 2, [1, 3]], ['lanterna', 0.7, [1, 1]], ['metal', 2, [2, 4]]],
+  roca: [['feijao', 3, [1, 2]], ['arroz', 3, [1, 2]], ['milho', 3, [1, 3]], ['manga', 2, [1, 3]], ['cachaca', 2, [1, 1]], ['corda', 2, [1, 2]], ['facao', 0.6, [1, 1]], ['machado', 0.35, [1, 1]], ['martelo', 0.6, [1, 1]], ['pregos', 2, [2, 5]], ['fosforos', 2, [1, 1]], ['pano', 2, [1, 2]], ['espingarda', 0.15, [1, 1]], ['mun_espingarda', 1, [2, 4]]],
+  pedreira: [['metal', 5, [2, 4]], ['pregos', 2, [3, 6]], ['fita', 1.5, [1, 1]], ['combustivel', 1, [1, 1]], ['ferramentas', 0.5, [1, 1]], ['pe_de_cabra', 0.5, [1, 1]], ['picareta', 0.6, [1, 1]], ['agua', 2, [1, 2]]],
   geladeira: [['agua', 5, [1, 2]], ['refri', 3, [1, 1]], ['suco', 3, [1, 2]], ['banana', 2, [1, 3]], ['manga', 2, [1, 2]], ['pao', 2, [1, 3]], ['chocolate', 1, [1, 1]], ['insulina', 0.15, [1, 1]]],
   armario_cozinha: [['enlatado', 4, [1, 2]], ['feijoada_lata', 2, [1, 1]], ['milho', 3, [1, 2]], ['miojo', 4, [1, 3]], ['biscoito', 3, [1, 2]], ['arroz', 2, [1, 1]], ['feijao', 2, [1, 1]], ['fosforos', 2, [1, 1]], ['faca', 1.5, [1, 1]], ['frigideira', 1, [1, 1]], ['cafe', 1, [1, 1]], ['garrafa', 1.5, [1, 2]], ['cachaca', 0.6, [1, 1]], ['racao', 0.5, [1, 1]]],
   banheiro: [['atadura', 4, [1, 2]], ['dipirona', 4, [1, 2]], ['remedios', 2, [1, 1]], ['alcool', 2, [1, 1]], ['antibiotico', 0.7, [1, 1]], ['calmante', 1, [1, 1]], ['vitamina', 1.5, [1, 1]], ['kit_medico', 0.4, [1, 1]], ['rodo', 0.6, [1, 1]]],

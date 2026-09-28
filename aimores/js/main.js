@@ -4,6 +4,7 @@ import { Game, DIFF } from './game/game.js';
 import { installActions } from './game/actions.js';
 import { installRealtime } from './game/realtime.js';
 import { installBase } from './game/base.js';
+import { installTravel } from './game/travel.js';
 import { UI } from './ui/ui.js';
 import { Audio } from './audio.js';
 import { openGallery } from './ui/gallery.js';
@@ -15,6 +16,7 @@ import * as Save from './game/save.js';
 installActions(Game);
 installRealtime(Game);
 installBase(Game);
+installTravel(Game);
 
 const S = new Scene3D($('#gl'), $('#world-ui'));
 const g = new Game(S);

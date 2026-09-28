@@ -172,6 +172,7 @@ export class Hud {
   }
   // ------------------------------------------------------------ minimapa
   drawMinimap(canvas = $('#minimap'), full = false) {
+    if (this.mapRef !== this.g.map) { this.mapRef = this.g.map; this.baseCanvas = null; }
     const g = this.g;
     if (!g.map || !canvas) return;
     const m = g.map;

@@ -26,6 +26,7 @@ export class GameMap {
     this.gas = new Map();                   // idx → turnos (gás tóxico)
     this.blood = [];                        // manchas de sangue (efeito visual)
     this.version = 0;                       // muda quando algo que afeta a visão/passagem muda
+    this.canopies = []; this.towers = []; this.wires = [];
   }
   idx(x, z) { return z * this.W + x; }
   inb(x, z) { return x >= 0 && z >= 0 && x < this.W && z < this.H; }

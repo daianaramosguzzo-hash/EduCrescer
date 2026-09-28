@@ -287,7 +287,7 @@ export async function onTime(g, minutes) {
     if (st.weather.chuvaMin >= 30) { st.weather.chuvaMin = 0; st.weather.chuva--; if (st.weather.chuva <= 0) { st.weather.chuva = 0; g.log('🌤️ A chuva parou.', 'info'); bus.emit('weather', 'sol'); } }
   }
   st.nextEvent = st.nextEvent ?? st.time + 60;
-  if (st.time >= st.nextEvent && g.phase !== 'over') {
+  if (st.time >= st.nextEvent && g.phase !== 'over' && !g.zone) {
     st.nextEvent = st.time + rng.int(70, 150);
     const cands = EVENTS.filter(e => (!e.uma || !st.flags['ev_' + e.id]) && (!e.se || e.se(g)));
     let tot = 0; for (const e of cands) tot += e.peso;
@@ -305,6 +305,12 @@ export async function onTime(g, minutes) {
 // entrar numa célula: gatilhos de área e de prédio
 export async function onEnter(g, u, x, z) {
   if (u.kind !== 'hero') return;
+  if (g.zone) {
+    // fora da cidade: só anuncia as construções da zona
+    const bz = g.map.buildingAt(x, z);
+    if (bz && !bz.anunciado) { bz.anunciado = true; g.log(`🏚️ ${bz.name}`, 'lugar'); bus.emit('place', bz.name); }
+    return;
+  }
   const b = g.map.buildingAt(x, z);
   const key = b ? 'b' + b.id : null;
   if (b && !g.state.flags['entrou_' + b.id]) {

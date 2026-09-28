@@ -7,6 +7,7 @@ function store() { try { return window.localStorage; } catch (_) { return null; 
 export function save(g, slot) {
   const ls = store();
   if (!ls) { g.toast('Não foi possível salvar neste navegador.', 'erro'); return false; }
+  if (g.zone) { if (slot !== 'auto') g.toast('Só dá para salvar em Aimorés. Volte para a cidade para salvar.', 'erro'); return false; }
   try {
     const data = g.serialize();
     const meta = { dia: g.day(), hora: g.clock(), vivos: g.liveHeroes.map(h => h.name).join(', '), quando: Date.now() };
