@@ -478,7 +478,7 @@ export class UI {
       ['pablicio', 'Se for o que eu tô pensando, eu vou ficar MUITO nervoso.'],
       ['arthur', 'É exatamente o que você tá pensando.'],
       ['carol', 'Calma. Primeiro a gente se junta. Depois a gente pensa. E todo mundo bebe água.'],
-      ['narr', '💡 <b>Como jogar:</b> escolha qualquer personagem (clique no retrato ou use <b>1–4</b>) e clique no chão para andar até onde quiser. Clique nos móveis para vasculhar e nos zumbis para atacar. O <b>clique direito</b> mostra todas as opções. Enquanto vocês agem, o tempo passa e os zumbis também se mexem. Use <b>⏳ Esperar</b> para deixar o tempo correr.'],
+      ['narr', '💡 <b>Como jogar:</b> ande com <b>WASD</b> (ou clique no chão; no celular, o joystick). <b>Espaço</b> ataca, <b>E</b> interage, <b>Shift</b> corre e <b>C</b> agacha. Corte árvores, quebre pedras e desmonte carros para <b>fabricar</b> (B) e <b>construir a base</b> (N). No mapa (M) dá para <b>viajar</b> para outras zonas. Teclas <b>1–4</b> trocam de personagem.'],
     ], {});
   }
   async gameOver() {

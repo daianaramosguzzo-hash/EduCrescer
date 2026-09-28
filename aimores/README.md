@@ -1,6 +1,6 @@
 # Aimorés dos Mortos
 
-Jogo de sobrevivência zumbi em **2,5D com câmera isométrica**, que se passa em **Aimorés, Minas Gerais**. Mistura exploração com movimento livre, combate tático, gerenciamento de recursos, narrativa e escolhas. O visual é de desenho animado adulto e irreverente, com traço grosso, olhos grandes e humor, e todo o estilo é original.
+Jogo de sobrevivência zumbi em **2,5D com câmera isométrica**, que se passa em **Aimorés, Minas Gerais**. É em **tempo real**, no estilo dos jogos de sobrevivência para celular: você anda livremente, luta na hora, coleta madeira, pedra e sucata, fabrica armas e ferramentas, constrói a base, viaja para zonas perigosas e segue a história e as escolhas da turma. O visual é de desenho animado adulto e irreverente, com traço grosso, olhos grandes e humor, e todo o estilo é original.
 
 Os quatro protagonistas, **Arthur, Carol, Daiana e Pablício**, foram desenhados a partir das ilustrações de referência. Cada um mantém o próprio rosto, cabelo, tom de pele, corpo e roupas, e dá para reconhecer todos durante o jogo.
 
@@ -32,37 +32,42 @@ O instalador é gerado sozinho pelo GitHub Actions (fluxo *Instalador Windows �
 ```bash
 npm install
 npm run start:aimores      # abre o jogo numa janela de desktop
-npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-1.1.0.exe
+npm run dist:win:aimores   # gera dist-aimores/Aimores-dos-Mortos-Setup-2.0.0.exe
 ```
 
 No Linux e no Mac, o último passo precisa do Wine.
 
 ## Controles
 
-| Ação | Mouse / teclado | Toque |
+| Ação | Teclado e mouse | Toque |
 |---|---|---|
-| Andar, atacar, vasculhar, abrir porta, conversar | Clique esquerdo | Toque para ver a prévia e toque de novo para confirmar |
-| Todas as opções da célula | Clique direito | Segurar o dedo |
-| Mover a câmera | Arrastar ou setas | Arrastar |
-| Zoom | Rodinha, `+` e `-` | Pinça |
-| Girar a câmera (90°) | `Q` / `E` | Botões ⟲ ⟳ |
-| Paredes baixas (ver o lado de dentro) | `V` ou 🧱. Passar o mouse sobre um prédio também mostra o interior | 🧱 |
+| Andar | `W` `A` `S` `D` / setas, ou clique no chão | Joystick (canto esquerdo) ou toque no chão |
+| Correr | Segurar `Shift` | 🏃 |
+| Agachar (furtivo) | `C` | 🥷 |
+| Atacar o inimigo mais perto | Segurar `Espaço`, ou clique no zumbi | ⚔️ (segurar) |
+| Interagir (vasculhar, abrir, pegar, conversar, coletar) | `E`, ou clique no objeto | ✋ |
+| Todas as opções do lugar | Clique direito | Segurar o dedo |
+| Recarregar · lanterna | `R` · `F` | Barra de ações |
+| Inventário · fabricar · construir | `I` · `B` · `N` | Botões |
+| Ficha · diário · mapa e viagem | `K` · `J` · `M` | Botões |
 | Trocar de personagem | `1`–`4`, `Tab` | Retratos à esquerda |
-| Esperar (deixar o tempo passar) | `Enter` / `T` | ⏳ Esperar |
-| Atacar / mirar / defender / esconder / recarregar | `A` / `G` / `X` / `H` / `R` | Barra de ações |
-| Correr (liga e desliga) | `Shift` | 🏃 |
-| Lanterna | `F` | 🔦 |
-| Inventário, ficha, diário, mapa, fabricar | `I`, `C`, `J`, `M`, `B` | Botões |
-| Salvar rápido / carregar rápido | `F5` / `F9` | Menu 💾 |
-| Centralizar no personagem | `Espaço` | — |
+| Girar a câmera · zoom | `Z` / `X` · rodinha | ⟲ ⟳ · pinça |
+| Paredes baixas (ver o lado de dentro) | `V` ou 🧱 (passar o mouse sobre um prédio também mostra) | 🧱 |
+| Salvar / carregar rápido | `F5` / `F9` (só em Aimorés) | Menu 💾 |
 
 ## Sistemas
 
-**Movimento livre e tempo.** Não há Pontos de Ação na tela. Escolha qualquer personagem (retratos à esquerda ou teclas 1–4) e clique onde quiser: ele anda até lá, a qualquer distância, e vasculha, ataca ou conversa ao chegar. Enquanto vocês agem, o tempo corre, e de tempos em tempos os zumbis e as outras pessoas se mexem. Atacar e correr gastam mais tempo do que andar. Personagens com mais Velocidade fazem mais coisas antes de os zumbis reagirem.
+**Tempo real.** Você controla um personagem por vez e os outros três seguem e brigam junto. Zumbis vagam, ouvem barulho, caçam, arrombam portas e quebram janelas ao mesmo tempo que você age. Um dia em Aimorés dura 24 minutos. O jogo pausa sozinho com janelas e conversas abertas. Não existe cansaço: andar e correr não gastam energia.
 
-Longe do perigo o jogo fica no **modo exploração**: o grupo segue quem você move, e cada rodada vale 5 minutos. Quando aparece um inimigo, o jogo passa para o **modo combate**: cada personagem age separado, cada rodada vale 1 minuto, e a caminhada para se surgir um zumbi novo, se um inimigo chegar colado ou se o personagem levar dano. O botão **⏳ Esperar** deixa o tempo passar de propósito.
+**Coleta.** Árvores dão madeira (e viram toco, que rebrota), pedras e entulho dão pedra, carros abandonados dão sucata (com pé de cabra, martelo ou ferramentas) e arbustos dão fibra e ervas. Machado e picareta aceleram. Coletar faz barulho e atrai zumbis.
 
-**Combate.** A chance de acerto considera distância, precisão, cobertura (muros, carros, balcões), arma, luz, condição do personagem e se o alvo percebeu você. Ataque furtivo contra um zumbi distraído é crítico. Armas brancas gastam durabilidade, armas de fogo gastam munição e fazem muito barulho. Tem também mirar, defender, esconder, distrair com pedrinhas e arremessar molotov ou rojão.
+**Fabricação.** Receitas na mão (corda, tábuas, machado de pedra, picareta, lança, curativo...), no fogo (fogão, churrasqueira ou fogueira: marmita, chá de ervas, manga assada) e na bancada de trabalho (pregos, clava, facão, colete de sucata, machado, munição, mochila). Receitas novas liberam com o nível do personagem.
+
+**Base.** No terreno da Casa da Turma (`N`): paredes de madeira, pedra e metal, portão, fogueira (cozinha e ilumina), baú, cama, bancada, estacas e coletor de água da chuva. Zumbis atacam as peças; dá para consertar e desmontar. Os materiais saem da mochila e dos baús da base.
+
+**Mapa e zonas.** No mapa (`M`), aba Região, dá para viajar para a Mata do Rio Doce (verde), a Serra do Sossego e a Fazenda Boa Esperança (amarelas), a Pedreira Abandonada e o Posto Militar Abandonado (vermelhas). Cada visita gera a zona de novo. Viajar **não gasta energia**: só passa o tempo da caminhada. O jogo salva antes de sair da cidade, e dentro das zonas não dá para salvar.
+
+**Combate.** A chance de acerto considera distância, precisão, cobertura (muros, carros, balcões), arma, luz, condição do personagem e se o alvo percebeu você. Ataque furtivo contra um zumbi distraído é crítico. Cada arma tem seu ritmo de ataque e alcance (a lança alcança duas casas). Armas brancas gastam durabilidade, armas de fogo gastam munição, recarregam sozinhas quando o pente acaba e fazem muito barulho. Dá também para distrair com pedrinhas e arremessar molotov ou rojão.
 
 **Zumbis.** São sete tipos, cada um com vida, dano, velocidade, visão, audição e IA própria (parado, vagando, investigando barulho, caçando):
 
@@ -93,7 +98,7 @@ Dá para passar sem ser visto: vá agachado, fique no escuro, use cortinas e arm
 
 **Relacionamento.** Cada par tem uma afinidade que muda com as escolhas nos diálogos (a interface mostra quem gosta e quem não gosta de cada resposta), com salvamentos e com quedas. O grupo conversa sozinho: tem piada, briga, momentos engraçados e emocionantes e decisões em grupo. A afinidade influencia o moral e os epílogos.
 
-**Sobrevivência.** Fome, sede, energia, vida, sangramento, ferimentos, infecção (mordida vira zumbi se não tratar), moral e pânico, temperatura (o calorão de Aimorés, a chuva, a noite) e descanso. Só dá para dormir com o grupo inteiro num esconderijo (a Casa da Turma ou a Igreja, depois que ela vira refúgio) e sem zumbi por perto.
+**Sobrevivência.** Fome, sede, vida, sangramento, ferimentos, infecção (mordida vira zumbi se não tratar), moral e pânico, temperatura (o calorão de Aimorés, a chuva, a noite) e descanso. Só dá para dormir com o grupo inteiro num esconderijo (a Casa da Turma, a Igreja depois que ela vira refúgio, ou a base com uma cama construída) e sem zumbi por perto.
 
 **Dia e noite.** A luz muda ao longo do dia. À noite a visão diminui, os zumbis ficam mais ativos, os postes e o fogo iluminam e a lanterna gasta pilha.
 
@@ -101,7 +106,7 @@ Dá para passar sem ser visto: vá agachado, fique no escuro, use cortinas e arm
 
 **Missões.** A missão principal é descobrir a origem do surto (o fertilizante experimental CRESCE+ da AgroNova) e sair da cidade antes do bombardeio, no dia 6 às 06h00. Há três saídas, cada uma com final próprio: a ponte com o Opala do Seu Valdir, a locomotiva da estação e o helicóptero chamado pela rádio. Também há um final ruim e os epílogos mudam conforme quem sobreviveu, quem foi salvo, a cura e as relações. Além disso, há 10 missões secundárias: a insulina do Seu Arlindo, o gato Bolinho da Dona Cotinha, a caderneta do fiado do Seu Zé, o pedágio dos Lobos do Asfalto, o Juninho do rádio, a febre do Seu Valdir, o Zumbi Pamonheiro, a família Oliveira, uma entrega especial e uma noite de defesa na Matriz.
 
-**Salvamento.** Há três espaços manuais e um automático, que salva a cada período do dia, ao dormir e ao concluir missões. Dá também para exportar e importar o jogo como arquivo `.json`.
+**Salvamento.** Há três espaços manuais e um automático, que salva a cada período do dia, ao concluir missões e antes de viajar. Dá também para exportar e importar o jogo como arquivo `.json`.
 
 ## O mapa de Aimorés
 
@@ -134,9 +139,10 @@ aimores/
   js/main.js          título, novo jogo/carregar, laço de quadros
   js/audio.js         efeitos e trilhas sintetizados (WebAudio)
   js/sprites/         pintor procedural, visuais, cache de tiras, sprite sheets
-  js/world/           pisos/estruturas/móveis, plantas dos prédios, gerador da cidade
+  js/world/           pisos/estruturas/móveis, plantas dos prédios, gerador da cidade e das zonas (zones.js)
   js/render/          cena Three.js: câmera isométrica, cidade 3D, névoa de guerra, personagens
-  js/game/            regras: turnos, ações, combate, IA, visão, caminhos, sobrevivência, história, salvamento
+  js/game/            regras: tempo real (realtime.js), IA, ações, combate, visão, caminhos, sobrevivência,
+                      coleta e base (base.js), viagem (travel.js), história, salvamento
   js/data/            heróis, itens, zumbis, NPCs, missões, diálogos, eventos, conversas do grupo
   js/ui/              HUD, janelas, galeria, entrada (mouse/teclado/toque)
   assets/             retratos, arte e sprite sheets

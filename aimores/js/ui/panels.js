@@ -479,41 +479,42 @@ export class Panels {
 
 export const HELP_HTML = `
 <h3>Objetivo</h3>
-<p>Aimorés virou um apocalipse zumbi. Guie <b>Arthur</b>, <b>Carol</b>, <b>Daiana</b> e <b>Pablício</b>: descubram como o surto começou, ajudem (ou não) quem cruzar o caminho e encontrem uma saída antes do bombardeio. Cada recurso conta. Nem toda briga vale a pena.</p>
-<h3>Como o tempo passa</h3>
-<p>Escolha <b>qualquer personagem</b> (retratos à esquerda ou teclas <kbd>1</kbd>–<kbd>4</kbd>) e clique no chão para andar <b>até onde quiser</b>. Não há limite de distância: enquanto vocês andam, atacam, vasculham e comem, o tempo corre, e de tempos em tempos os zumbis e as outras pessoas se mexem. Atacar e correr "gastam" mais tempo do que andar devagar.</p>
-<p><b>Exploração</b> (sem perigo por perto): o grupo segue quem você move. <b>Combate</b> (zumbi à vista): cada um age separado, e a caminhada para se um inimigo chegar colado ou se você levar dano. <b>⏳ Esperar</b> (<kbd>Enter</kbd>) deixa o tempo passar de propósito — bom para atrair zumbis para uma porta ou esperar a noite acabar.</p>
-<h3>Mouse e toque</h3>
+<p>Aimorés virou um apocalipse zumbi. Sobreviva com <b>Arthur</b>, <b>Carol</b>, <b>Daiana</b> e <b>Pablício</b>: junte recursos, fabrique armas e ferramentas, fortaleça a base na <b>Casa da Turma</b>, explore as zonas em volta da cidade e descubra como o surto começou — e saia antes do bombardeio.</p>
+<h3>Tudo em tempo real</h3>
+<p>Você controla um personagem por vez (retratos à esquerda ou <kbd>1</kbd>–<kbd>4</kbd>); os outros seguem e brigam junto. Os zumbis se mexem ao mesmo tempo que você. O jogo pausa sozinho enquanto uma janela ou conversa está aberta. Um dia em Aimorés dura 24 minutos.</p>
+<h3>Controles</h3>
 <table>
-<tr><td><kbd>Clique esquerdo</kbd></td><td>ação principal: andar, atacar, vasculhar, abrir porta, conversar</td></tr>
-<tr><td><kbd>Clique direito</kbd> / segurar o dedo</td><td>menu com todas as opções</td></tr>
-<tr><td><kbd>Rodinha</kbd> / pinça</td><td>zoom</td></tr>
-<tr><td>Arrastar (botão do meio ou dedo)</td><td>mover a câmera</td></tr>
-</table>
-<h3>Teclado</h3>
-<table>
-<tr><td><kbd>1</kbd>–<kbd>4</kbd> / <kbd>Tab</kbd></td><td>escolher personagem</td></tr>
-<tr><td><kbd>Enter</kbd></td><td>esperar (o tempo passa)</td></tr>
-<tr><td>Setas</td><td>mover a câmera · <kbd>Q</kbd> <kbd>E</kbd> girar · <kbd>Espaço</kbd> centralizar</td></tr>
-<tr><td><kbd>Shift</kbd></td><td>alternar correr</td></tr>
-<tr><td><kbd>I</kbd> <kbd>C</kbd> <kbd>J</kbd> <kbd>M</kbd> <kbd>B</kbd></td><td>inventário, ficha, diário, mapa, fabricar</td></tr>
-<tr><td><kbd>A</kbd> <kbd>G</kbd> <kbd>X</kbd> <kbd>H</kbd> <kbd>R</kbd> <kbd>F</kbd></td><td>atacar, mirar, defender, esconder, recarregar, lanterna</td></tr>
+<tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / setas / joystick</td><td>andar</td></tr>
+<tr><td><kbd>Shift</kbd> (segurar)</td><td>correr (mais rápido, faz barulho)</td></tr>
+<tr><td><kbd>C</kbd></td><td>agachar: devagar e quase sem barulho</td></tr>
+<tr><td><kbd>Espaço</kbd> (segurar) / ⚔️</td><td>atacar o inimigo mais perto</td></tr>
+<tr><td><kbd>E</kbd> / ✋</td><td>interagir: vasculhar, abrir, pegar, conversar, coletar</td></tr>
+<tr><td>Clique no chão / num zumbi / num objeto</td><td>andar até lá / perseguir e atacar / ir e usar</td></tr>
+<tr><td>Clique direito / segurar o dedo</td><td>todas as opções do lugar</td></tr>
+<tr><td><kbd>R</kbd> <kbd>F</kbd></td><td>recarregar · lanterna</td></tr>
+<tr><td><kbd>I</kbd> <kbd>B</kbd> <kbd>N</kbd></td><td>inventário · fabricar · construir</td></tr>
+<tr><td><kbd>K</kbd> <kbd>J</kbd> <kbd>M</kbd></td><td>ficha · diário · mapa (e viagem)</td></tr>
+<tr><td><kbd>Z</kbd> <kbd>X</kbd> · rodinha</td><td>girar a câmera · zoom</td></tr>
 <tr><td><kbd>V</kbd></td><td>paredes baixas (ver dentro das casas)</td></tr>
-<tr><td><kbd>F5</kbd> / <kbd>F9</kbd></td><td>salvar / carregar rápido</td></tr>
+<tr><td><kbd>F5</kbd> / <kbd>F9</kbd></td><td>salvar / carregar rápido (só em Aimorés)</td></tr>
 </table>
+<h3>Coletar, fabricar e construir</h3>
+<ul>
+<li><b>Árvores</b> dão madeira, <b>pedras</b> e entulho dão pedra, <b>carros</b> dão sucata (precisa de pé de cabra, martelo ou ferramentas), <b>arbustos</b> dão fibra e ervas. Ferramentas (machado, picareta) aceleram. Coletar faz barulho!</li>
+<li>Árvores e arbustos cortados <b>rebrotam</b> depois de um tempo.</li>
+<li><b>Fabricar</b> (B): na mão, no fogo (fogão, churrasqueira ou fogueira) ou na bancada de trabalho. Receitas novas liberam com o nível do personagem.</li>
+<li><b>Construir</b> (N): no terreno da Casa da Turma — paredes, portão, fogueira, baú, cama, bancada, estacas e coletor de chuva. Zumbis tentam derrubar; conserte e reforce.</li>
+</ul>
+<h3>Viajar</h3>
+<p>No mapa (M), aba <b>Região</b>: zonas <span style="color:#5fb82a">verdes</span> (tranquilas, muita madeira), <span style="color:#f4c534">amarelas</span> e <span style="color:#e8433a">vermelhas</span> (muito perigosas, loot melhor). Viajar <b>não gasta energia</b>, só passa o tempo da caminhada. As zonas mudam a cada visita. Volte pela placa da trilha ou pelo mapa.</p>
 <h3>Sobrevivência</h3>
 <ul>
-<li><b>Fome, sede e energia</b> caem com o tempo (e mais rápido no calorão de Aimorés, ao sol). Baixas demais, deixam o personagem mais lento, com a mira pior e perdendo vida.</li>
-<li><b>Mordidas</b> infectam. A infecção sobe devagar: febre (fica mais lento), delírio, estado grave... e em 100% a pessoa vira zumbi. Antibiótico segura por um tempo; só o <b>Soro R-7</b> cura.</li>
-<li><b>Sangramento</b> tira vida com o tempo: use atadura ou kit médico.</li>
-<li>Com vida zerada o personagem <b>cai</b>: alguém precisa levantá-lo com atadura ou kit antes que os zumbis ajam 3 vezes.</li>
-<li><b>Moral</b> baixo causa pânico. Comida boa, descanso, a fé da Carol e boas escolhas ajudam.</li>
-<li>Durma na <b>Casa da Turma</b> ou na <b>Igreja</b> (clique numa cama) para passar a noite e recuperar energia.</li>
+<li><b>Fome e sede</b> caem com o tempo (mais rápido no calorão de Aimorés). Não existe cansaço: andar e correr não gastam energia.</li>
+<li><b>Mordidas</b> infectam; em 100% a pessoa vira zumbi. Antibiótico segura; só o <b>Soro R-7</b> cura.</li>
+<li><b>Sangramento</b>: atadura, curativo de ervas ou kit médico.</li>
+<li>Quem cai precisa ser levantado (atadura ou kit) em até 40 segundos.</li>
+<li>Durma na Casa da Turma, na Igreja ou numa cama construída na base para pular a noite.</li>
 </ul>
-<h3>Furtividade e barulho</h3>
-<p>Zumbis enxergam pouco à noite, mas ouvem bem. Tiros, portas arrombadas, vidros quebrados e alarmes atraem hordas. Ataque pelas costas quem ainda não te viu: dano multiplicado (a faca é perfeita). Esconda-se perto de arbustos, carros, camas e guarda-roupas, ou no escuro. Jogue pedrinhas (clique direito no chão) para distrair.</p>
-<h3>Combate</h3>
-<p>Passe o mouse sobre um inimigo para ver a chance de acerto. Distância, cobertura (carros, muros, balcões), escuridão, mira e o estado do personagem mudam tudo. Economize munição: armas brancas quebram, mas são silenciosas.</p>
-<h3>Dia e noite</h3>
-<p>De dia a visão é boa e as pessoas circulam. À noite: mais zumbis, mais agressivos, e você só vê o que está iluminado. Use a <b>lanterna</b> (F) — mas ela também atrai olhares e gasta pilha.</p>
+<h3>Furtividade</h3>
+<p>Zumbis enxergam pouco à noite, mas ouvem bem: tiros, portas arrombadas, vidro quebrado, alarmes e machadadas atraem hordas. Agache (<kbd>C</kbd>) e ataque pelas costas: o golpe surpresa causa muito mais dano.</p>
 `;

@@ -124,7 +124,6 @@ export const ITEMS = {
   // ------------------------------------------------------------ sobrevivência
   lanterna: { nome: 'Lanterna', cat: 'sobrevivencia', peso: 0.4, valor: 14, icon: '🔦', equip: 'mao2', carga: 100, desc: 'Essencial à noite. Gasta pilha. Zumbis veem a luz de longe.' },
   pilhas: { nome: 'Pilhas', cat: 'sobrevivencia', peso: 0.05, valor: 5, icon: '🔋', desc: 'Recarrega 50% da lanterna.' },
-  corda: { nome: 'Corda', cat: 'sobrevivencia', peso: 1.0, valor: 7, icon: '🪢', desc: 'Útil em resgates e para amarrar coisas.' },
   ferramentas: { nome: 'Caixa de ferramentas', cat: 'sobrevivencia', peso: 3.0, valor: 20, icon: '🧰', ferramenta: true, desc: 'Consertos, barricadas e fechaduras.' },
   combustivel: { nome: 'Galão de gasolina', cat: 'sobrevivencia', peso: 4.0, valor: 30, icon: '⛽', desc: 'Para carro, gerador ou molotov.' },
   fosforos: { nome: 'Caixa de fósforos', cat: 'sobrevivencia', peso: 0.05, valor: 4, icon: '🔥', desc: 'Acende fogo, fogão e molotov.' },
@@ -229,7 +228,6 @@ export const LOOT = {
   oficina: [['ferramentas', 2, [1, 1]], ['pecas_motor', 1.5, [1, 1]], ['combustivel', 1, [1, 1]], ['cano', 2, [1, 1]], ['pe_de_cabra', 1, [1, 1]], ['fita', 2, [1, 1]], ['bateria_carro', 0.4, [1, 1]], ['martelo', 1, [1, 1]]],
   igreja: [['pao', 2, [1, 3]], ['agua', 2, [1, 2]], ['atadura', 1, [1, 1]], ['calmante', 1, [1, 1]], ['fosforos', 1.5, [1, 1]], ['pano', 1, [1, 2]]],
   laboratorio: [['antibiotico', 2, [1, 2]], ['kit_medico', 1.5, [1, 1]], ['alcool', 2, [1, 2]], ['atadura', 2, [1, 2]], ['pecas', 1, [1, 1]], ['fita', 1, [1, 1]]],
-  militar: [['mun_rifle', 3, [3, 8]], ['mun_pistola', 3, [4, 10]], ['mun_espingarda', 2, [2, 5]], ['colete', 0.6, [1, 1]], ['kit_medico', 1.5, [1, 1]], ['agua', 2, [1, 2]], ['enlatado', 2, [1, 2]], ['rojao', 0.5, [1, 1]]],
   ferro_velho: [['pecas_motor', 1.5, [1, 1]], ['bateria_carro', 0.5, [1, 1]], ['cano', 2, [1, 1]], ['tabuas', 2, [1, 2]], ['fita', 1, [1, 1]], ['combustivel', 0.4, [1, 1]], ['pe_de_cabra', 0.6, [1, 1]]],
   estacao: [['cafe', 1.5, [1, 1]], ['pilhas', 2, [1, 2]], ['mapa', 1.5, [1, 1]], ['lanterna', 1, [1, 1]], ['biscoito', 1.5, [1, 1]], ['radio_pilha', 0.8, [1, 1]]],
   ferrovia: [['combustivel', 3, [1, 1]], ['tabuas', 1, [1, 2]], ['ferramentas', 0.5, [1, 1]], ['corda', 1, [1, 1]], ['pecas_motor', 0.6, [1, 1]]],

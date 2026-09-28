@@ -1,6 +1,5 @@
-// Ações do jogador. Não há Pontos de Ação na tela: cada ação gasta um pouco do "fôlego" do
-// personagem e, quando o fôlego de quem você está usando acaba, o tempo passa sozinho
-// (os zumbis e as outras pessoas agem) e a ação continua.
+// Ações do jogador (vasculhar, portas, itens, conversas, fabricar, dormir, habilidades) e o
+// menu de opções de cada lugar. O movimento e o combate em tempo real ficam em realtime.js.
 // O menu de contexto (optionsAt) lista o que dá para fazer numa célula, com o custo.
 import { ITEMS } from '../data/items.js';
 import { PROPS, S, F } from '../world/tiles.js';
@@ -654,10 +653,10 @@ export function installActions(Game) {
         await this.act(async () => {
           this.spend(u, sk.pa); u.st.cmdUsed = true;
           const bonus = [2, 3, 4][r - 1];
-          target.st.haste = Math.ceil(bonus / 2) + 1;
+          target.st.haste = Math.ceil(bonus / 2);
           view.say(u, rng.pick([`${target.name}, AGORA! Vai, vai, vai!`, 'Organiza essa fila! Um de cada vez!', `Presta atenção, ${target.name}! Isso cai na prova!`]));
-          view.floatText(target.x, target.z, '+fôlego', 'xp');
-          this.log(`📣 ${u.name} deu uma ordem: ${target.name} ganhou fôlego extra.`, 'bom');
+          view.floatText(target.x, target.z, '⚡ Acelerou!', 'xp');
+          this.log(`📣 ${u.name} deu uma ordem: ${target.name} ficou mais rápido por um tempo.`, 'bom');
         });
       } else if (id === 'surto') {
         await this.act(async () => {
@@ -666,7 +665,7 @@ export function installActions(Game) {
           view.say(u, rng.pick(['EU NÃO TÔ DE BOA! AAAAAH!', 'Chega! CHEGA DE ZUMBI!', 'Vocês mexeram com o cara errado!']));
           view.flash(u, '#ff4040');
           u.need.moral = Math.max(0, u.need.moral - 15);
-          this.log(`😤 ${u.name} surtou! Fôlego extra e +50% de dano corpo a corpo nesta rodada.`, 'alerta');
+          this.log(`😤 ${u.name} surtou! Ataca mais rápido e com +50% de dano corpo a corpo por alguns segundos.`, 'alerta');
         });
       } else if (id === 'couro_grosso') {
         await this.act(async () => {
