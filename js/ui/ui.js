@@ -213,9 +213,10 @@ export class UI {
     this.mmT -= dt;
     if (this.mmT <= 0 && this.mapImg) { this.mmT = 0.12; drawMinimap(this.mm, this.mapImg, G, 170); }
     const R = regionAt(p.x, p.z);
-    if (R) this.hud.querySelector('.region').innerHTML = `${DANGER[R.danger].icon} ${esc(R.name)}`;
+    if (R && this._region !== R.id) { this._region = R.id; this.hud.querySelector('.region').innerHTML = `${DANGER[R.danger].icon} ${esc(R.name)}`; }
     const hour = (G.state.time / 60) % 24;
-    this.hud.querySelector('.clock').textContent = `Dia ${G.state.day} · ${fmtTime(G.state.time)} ${hour >= 6 && hour < 18 ? '☀️' : '🌙'}`;
+    const clock = `Dia ${G.state.day} · ${fmtTime(G.state.time)} ${hour >= 6 && hour < 18 ? '☀️' : '🌙'}`;
+    if (clock !== this._clock) { this._clock = clock; this.hud.querySelector('.clock').textContent = clock; }
     // alvo
     const tb = $('#hud-target');
     if (this.target) {
@@ -238,11 +239,16 @@ export class UI {
       const v = new THREE.Vector3(it.x, 1.9, it.z);
       const s = G.renderer.toScreen(v);
       pr.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
-      pr.innerHTML = `<kbd>E</kbd> <b>${esc(lab.verb)}</b> ${esc(lab.name)}`;
-      pr.classList.remove('hidden');
-      ib.querySelector('.ico').textContent = lab.icon; ib.querySelector('.lbl').textContent = lab.verb;
-      ib.classList.add('ready');
-    } else {
+      const key = lab.verb + '|' + lab.name;
+      if (this._prompt !== key) {
+        this._prompt = key;
+        pr.innerHTML = `<kbd>E</kbd> <b>${esc(lab.verb)}</b> ${esc(lab.name)}`;
+        pr.classList.remove('hidden');
+        ib.querySelector('.ico').textContent = lab.icon; ib.querySelector('.lbl').textContent = lab.verb;
+        ib.classList.add('ready');
+      }
+    } else if (this._prompt !== null) {
+      this._prompt = null;
       pr.classList.add('hidden');
       ib.querySelector('.ico').textContent = '✋'; ib.querySelector('.lbl').textContent = '';
       ib.classList.remove('ready');

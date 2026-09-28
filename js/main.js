@@ -478,8 +478,15 @@ function step(dt) {
       const m = input.move();
       inp = { move: m, run: input.running() };
       if (input.attackHeld() && !p.busy) p.tryAttack();
+      // segurar E repete só coleta; portas, baús e conversas pedem soltar o botão
       const iw = input.interactHeld();
-      if (iw && !p.busy && (!G.lastInteract || G.clock - G.lastInteract > 0.35)) { G.lastInteract = G.clock; G.interact.use(G.interact.current); }
+      if (!iw) G.interactLatch = false;
+      else if (!p.busy && !G.interactLatch && (!G.lastInteract || G.clock - G.lastInteract > 0.35)) {
+        const o = G.interact.current;
+        G.lastInteract = G.clock;
+        G.interactLatch = !!o && !(o.kind === 'node' || o.kind === 'pickup');
+        G.interact.use(o);
+      }
       // zoom
       if (input.mouse.wheel) { G.settings.zoom = clamp(G.settings.zoom + input.mouse.wheel * 0.05, 0.75, 1.4); Rn.cam.tzoom = G.settings.zoom; input.mouse.wheel = 0; }
     } else if (G.building.mode) {

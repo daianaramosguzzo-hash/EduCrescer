@@ -79,7 +79,7 @@ function buildGeometry(look, seed = 1) {
   const skin = look.skin, shirt = look.shirt, shirt2 = look.shirt2 || shirt, pants = look.pants, shoes = look.shoes || '#2a2a2a';
   const zombie = !!look.zombie;
   const sleeveLong = look.sleeves !== 'short';
-  const blood = '#5a0f0c', blood2 = '#7a1712';
+  const blood = '#3e0a08', blood2 = '#561210';
 
   // quadril e barriga
   add(sph(0.17), 'hips', [0, 0.02, 0], pants, { scale: [1.05 * W, 0.62, 0.72 * Math.max(1, W * 0.9)] });

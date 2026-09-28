@@ -318,12 +318,40 @@ button.danger { background: rgba(224,72,58,0.2); border-color: rgba(224,72,58,0.
   .menu-row button { width: 44px; height: 40px; font-size: 18px; }
   .menu-row button small { display: none; }
   #hud-actions { transform: scale(0.82); transform-origin: bottom right; right: 8px; bottom: 34px; }
-  .inv-grid, .craft, .mapm, .loot-grid { grid-template-columns: 1fr; height: auto; }
-  .scols { grid-template-columns: 1fr 1fr; }
-  .slots { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); }
-  .slot .si { font-size: 24px; }
+  .pwrap { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }
+  .pwrap.pausa, .pwrap.loot { width: 100vw; }
+  .pbody { padding: 8px; }
+  .phead { padding: 3px 6px; }
+  .tabs button { padding: 6px 8px; font-size: 13px; }
+  .inv-grid { grid-template-columns: 190px 1fr; gap: 10px; }
+  .equip .doll { gap: 4px; }
+  .eslot .si { font-size: 22px; } .eslot .ph { font-size: 9px; }
+  .stats { grid-template-columns: 1fr; font-size: 11px; gap: 1px; margin-top: 6px; }
+  .craft { grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 8px; }
+  .cats { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .cats button { padding: 5px 8px; font-size: 12px; }
+  .stations { margin: 0 0 0 auto; }
+  .rrow { padding: 4px 7px; } .rrow .ri { font-size: 18px; }
+  .mapm { grid-template-columns: 1fr 230px; }
+  .loot-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .scols { grid-template-columns: repeat(3, 1fr); }
+  .scards { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .scard .sportrait { width: 60px; height: 60px; }
+  .blist { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .slots { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 4px; }
+  .slot .si { font-size: 22px; }
+  .ii .big { font-size: 28px; } .ii .iin { font-size: 15px; }
+  #dialog { bottom: 70px; padding: 10px 12px; } #dialog .dp { width: 52px; height: 52px; } #dialog .dx { font-size: 14px; }
   #title .hero { opacity: 0.35; right: -10vw; }
   #title .tbox { margin-left: 5vw; }
   #feed { top: 150px; }
   #toasts { top: 70px; }
+}
+
+/* celular em pé: uma coluna */
+@media (max-width: 600px) and (orientation: portrait) {
+  .inv-grid, .craft, .mapm, .loot-grid { grid-template-columns: 1fr; height: auto; }
+  .scols { grid-template-columns: 1fr 1fr; }
+  #hud-bottom { width: 92vw; bottom: 150px; }
+  #hud-quest { top: 110px; }
 }

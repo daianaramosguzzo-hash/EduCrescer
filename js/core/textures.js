@@ -232,9 +232,9 @@ export function concreteTex() {
 export function foliageTex() {
   if (cache.foliage) return cache.foliage;
   const S = 128, c = canvas(S), ctx = c.getContext('2d'), r = rng(21);
-  ctx.fillStyle = '#c8c8c8'; ctx.fillRect(0, 0, S, S);
-  for (let i = 0; i < 500; i++) {
-    const v = 150 + r() * 105;
+  ctx.fillStyle = '#9a9a9a'; ctx.fillRect(0, 0, S, S);
+  for (let i = 0; i < 700; i++) {
+    const v = 130 + r() * 125;
     ctx.fillStyle = `rgb(${v},${v},${v})`;
     ctx.beginPath(); ctx.ellipse(r() * S, r() * S, 3 + r() * 4, 1.5 + r() * 2, r() * 3, 0, 7); ctx.fill();
   }

@@ -65,24 +65,37 @@ function blobCanopy(clusters, seed = 1) {
   let s = seed;
   const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
   for (const [x, y, z, rad] of clusters) {
-    const g = new THREE.IcosahedronGeometry(rad, 1);
+    // bolha de folhas: esfera com relevo suave (vértices repetidos recebem o mesmo desvio)
+    const g = new THREE.IcosahedronGeometry(rad, rad > 1.1 ? 2 : 1);
     const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) { const k = 0.85 + r() * 0.3; p.setXYZ(i, p.getX(i) * k, p.getY(i) * k * 0.85, p.getZ(i) * k); }
+    const seen = new Map();
+    for (let i = 0; i < p.count; i++) {
+      const key = `${p.getX(i).toFixed(3)},${p.getY(i).toFixed(3)},${p.getZ(i).toFixed(3)}`;
+      let k = seen.get(key);
+      if (k == null) { k = 0.88 + r() * 0.24; seen.set(key, k); }
+      p.setXYZ(i, p.getX(i) * k, p.getY(i) * k * 0.82, p.getZ(i) * k);
+    }
     parts.push([g, '#ffffff', M4(x, y, z)]);
   }
-  return merged(parts);
+  const out = merged(parts);
+  // sombreado mais claro em cima, escuro embaixo (luz "presa" nas folhas)
+  const pos = out.attributes.position, col = out.attributes.color;
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < pos.count; i++) { minY = Math.min(minY, pos.getY(i)); maxY = Math.max(maxY, pos.getY(i)); }
+  for (let i = 0; i < pos.count; i++) { const t = (pos.getY(i) - minY) / (maxY - minY || 1); const k = 0.62 + t * 0.5; col.setXYZ(i, k, k, k * 0.95); }
+  return out;
 }
 export class Trees {
   constructor(parent) {
-    const M = materials();
+    this.parent = parent;
     const bark = applyXray(new THREE.MeshStandardMaterial({ map: T.woodTex(), color: '#6e5238', roughness: 0.95 }));
-    const leaf = applyXray(new THREE.MeshStandardMaterial({ map: T.foliageTex(), vertexColors: true, roughness: 0.85, flatShading: true }));
-    this.species = {};
-    const def = (name, trunkGeo, canopyGeo, cap, fruitGeo = null, fruitColor = null) => {
-      const sp = { trunk: new Pool(trunkGeo, bark, cap), canopy: new Pool(canopyGeo, leaf, cap) };
-      if (fruitGeo) sp.fruit = new Pool(fruitGeo, new THREE.MeshStandardMaterial({ color: fruitColor, roughness: 0.5 }), cap, { shadow: false });
-      parent.add(sp.trunk.mesh, sp.canopy.mesh); if (sp.fruit) parent.add(sp.fruit.mesh);
-      this.species[name] = sp;
+    const leaf = applyXray(new THREE.MeshStandardMaterial({ map: T.foliageTex(), vertexColors: true, roughness: 0.9 }));
+    const soft = applyXray(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: THREE.DoubleSide, map: T.foliageTex() }));
+    // modelos de cada espécie (geometrias); as instâncias ficam em blocos do mapa
+    this.defs = {};
+    this.chunks = new Map();
+    const def = (name, trunkGeo, canopyGeo, fruitGeo = null, fruitColor = null, leafMat = leaf) => {
+      this.defs[name] = { trunkGeo, canopyGeo, fruitGeo, fruitMat: fruitGeo ? new THREE.MeshStandardMaterial({ color: fruitColor, roughness: 0.5 }) : null, bark, leafMat };
     };
     const trunk = (h, r0, r1, branches = []) => {
       const parts = [[new THREE.CylinderGeometry(r1, r0, h, 7), '#ffffff', M4(0, h / 2, 0)]];
@@ -91,17 +104,17 @@ export class Trees {
     };
     // árvore comum de copa larga
     def('arvore', trunk(3.2, 0.32, 0.2, [[2.2, 0.5, 1.4, 0.7], [2.5, 2.8, 1.2, 0.8], [2.0, 4.5, 1.1, 0.7]]),
-      blobCanopy([[0, 4.3, 0, 1.9], [1.3, 3.8, 0.3, 1.4], [-1.2, 3.9, -0.4, 1.5], [0.2, 3.7, 1.3, 1.3], [-0.3, 3.8, -1.3, 1.3], [0.3, 5.3, 0.1, 1.2]], 3), 900);
+      blobCanopy([[0, 4.3, 0, 1.9], [1.3, 3.8, 0.3, 1.4], [-1.2, 3.9, -0.4, 1.5], [0.2, 3.7, 1.3, 1.3], [-0.3, 3.8, -1.3, 1.3], [0.3, 5.3, 0.1, 1.2]], 3));
     // eucalipto: fino e alto
     def('pinheiro', trunk(6.5, 0.24, 0.14, [[4.5, 1, 1.2, 0.6], [5.2, 3.5, 1.0, 0.6]]),
-      blobCanopy([[0, 6.8, 0, 1.3], [0.5, 6.0, 0.3, 1.1], [-0.5, 7.4, -0.2, 1.0], [0.1, 5.4, -0.5, 1.0]], 7), 500);
+      blobCanopy([[0, 6.8, 0, 1.3], [0.5, 6.0, 0.3, 1.1], [-0.5, 7.4, -0.2, 1.0], [0.1, 5.4, -0.5, 1.0]], 7));
     // mangueira: copa enorme e escura, com mangas
     def('mangueira', trunk(2.6, 0.4, 0.28, [[1.8, 0.8, 1.5, 0.8], [2.0, 3.5, 1.5, 0.8]]),
-      blobCanopy([[0, 3.9, 0, 2.3], [1.6, 3.4, 0.5, 1.7], [-1.6, 3.5, -0.4, 1.8], [0.3, 3.4, 1.6, 1.6], [-0.4, 3.5, -1.7, 1.6], [0, 4.9, 0, 1.5]], 11), 120,
+      blobCanopy([[0, 3.9, 0, 2.3], [1.6, 3.4, 0.5, 1.7], [-1.6, 3.5, -0.4, 1.8], [0.3, 3.4, 1.6, 1.6], [-0.4, 3.5, -1.7, 1.6], [0, 4.9, 0, 1.5]], 11),
       merged(Array.from({ length: 9 }, (_, i) => [new THREE.SphereGeometry(0.13, 6, 5), '#ffffff', M4(Math.cos(i * 2.4) * 1.9, 2.6 + (i % 3) * 0.3, Math.sin(i * 2.4) * 1.9, 0, 0, 0, 1, 1.3, 1)])), '#d9a22a');
     // goiabeira: pequena, com goiabas
     def('goiabeira', trunk(1.6, 0.14, 0.1, [[1.0, 1, 0.8, 0.8], [1.2, 3.8, 0.8, 0.8]]),
-      blobCanopy([[0, 2.2, 0, 1.2], [0.7, 1.9, 0.3, 0.9], [-0.7, 2.0, -0.2, 0.9], [0, 2.8, 0, 0.8]], 13), 160,
+      blobCanopy([[0, 2.2, 0, 1.2], [0.7, 1.9, 0.3, 0.9], [-0.7, 2.0, -0.2, 0.9], [0, 2.8, 0, 0.8]], 13),
       merged(Array.from({ length: 8 }, (_, i) => [new THREE.SphereGeometry(0.09, 6, 5), '#ffffff', M4(Math.cos(i * 2.4) * 1.0, 1.7 + (i % 3) * 0.3, Math.sin(i * 2.4) * 1.0)])), '#a8c24a');
     // bananeira: folhas longas
     {
@@ -112,12 +125,9 @@ export class Trees {
         const p = g.attributes.position;
         for (let k = 0; k < p.count; k++) { const y = p.getY(k); p.setZ(k, -Math.pow((y + 0.95) / 1.9, 2) * 0.6); }
         parts.push([g, '#ffffff', M4(Math.sin(a) * 0.8, 2.6, Math.cos(a) * 0.8, -1.0, a, 0)]);
-        parts.push([g.clone(), '#ffffff', M4(Math.sin(a) * 0.8, 2.6, Math.cos(a) * 0.8, -1.0 + Math.PI, a + Math.PI, 0)]);
       }
-      const leafG = merged(parts);
-      const trunkG = merged([[new THREE.CylinderGeometry(0.14, 0.2, 2.6, 7), '#ffffff', M4(0, 1.3, 0)]]);
-      def('bananeira', trunkG, leafG, 200, merged([[new THREE.CylinderGeometry(0.18, 0.1, 0.5, 6), '#ffffff', M4(0.25, 1.9, 0.15, 0, 0, 0.3)]]), '#c9c23a');
-      this.species.bananeira.canopy.mesh.material = applyXray(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: THREE.DoubleSide, map: T.foliageTex() }));
+      def('bananeira', merged([[new THREE.CylinderGeometry(0.14, 0.2, 2.6, 7), '#ffffff', M4(0, 1.3, 0)]]), merged(parts),
+        merged([[new THREE.CylinderGeometry(0.18, 0.1, 0.5, 6), '#ffffff', M4(0.25, 1.9, 0.15, 0, 0, 0.3)]]), '#c9c23a', soft);
     }
     // palmeira (enfeite da praça)
     {
@@ -129,20 +139,32 @@ export class Trees {
         for (let k = 0; k < p.count; k++) { const y = p.getY(k); p.setZ(k, -Math.pow((y + 1.3) / 2.6, 2) * 1.2); }
         parts.push([g, '#ffffff', M4(Math.sin(a) * 1.2, 6.4, Math.cos(a) * 1.2, -1.2, a, 0)]);
       }
-      def('palmeira', trunk(6.4, 0.22, 0.18), merged(parts), 80);
-      this.species.palmeira.canopy.mesh.material = this.species.bananeira.canopy.mesh.material;
+      def('palmeira', trunk(6.4, 0.22, 0.18), merged(parts), null, null, soft);
     }
   }
+  // bloco de instâncias de uma espécie numa parte do mapa (a câmera descarta os blocos fora de vista)
+  chunk(sp, x, z) {
+    const cx = Math.floor(x / 60), cz = Math.floor(z / 60), key = sp + ':' + cx + ':' + cz;
+    let S = this.chunks.get(key);
+    if (!S) {
+      const D = this.defs[sp], cap = 260;
+      S = { trunk: new Pool(D.trunkGeo, D.bark, cap), canopy: new Pool(D.canopyGeo, D.leafMat, cap) };
+      if (D.fruitGeo) S.fruit = new Pool(D.fruitGeo, D.fruitMat, cap, { shadow: false });
+      for (const p of [S.trunk, S.canopy, S.fruit]) if (p) { p.mesh.frustumCulled = true; this.parent.add(p.mesh); }
+      this.chunks.set(key, S);
+    }
+    return S;
+  }
   add(sp, x, y, z, s = 1, ry = 0, color = '#6f8f3a') {
-    const S = this.species[sp];
+    const S = this.chunk(sp, x, z);
     const t = S.trunk.add(x, y, z, { ry, s });
     S.canopy.add(x, y, z, { ry, s, color });
     if (S.fruit) S.fruit.add(x, y, z, { ry, s });
-    return { sp, i: t };
+    return { S, i: t };
   }
   // estados: 'full' | 'stump' | 'nofruit'
   setState(h, st) {
-    const S = this.species[h.sp];
+    const S = h.S;
     if (st === 'stump') {
       S.trunk.set(h.i, { sy: S.trunk.data[h.i].s * 0.12 });
       S.canopy.set(h.i, { visible: false });
@@ -157,11 +179,17 @@ export class Trees {
   }
   // balanço ao levar um golpe
   shake(h, amt) {
-    const S = this.species[h.sp];
+    const S = h.S;
     const t = [amt * 0.6, amt];
     S.trunk.set(h.i, { tilt: t }); S.canopy.set(h.i, { tilt: t }); if (S.fruit) S.fruit.set(h.i, { tilt: t });
   }
-  finish() { for (const S of Object.values(this.species)) for (const p of [S.trunk, S.canopy, S.fruit]) if (p) p.finish(); }
+  finish() {
+    for (const S of this.chunks.values()) for (const p of [S.trunk, S.canopy, S.fruit]) if (p) {
+      p.finish();
+      // esfera envolvente folgada (copas e balanço)
+      if (p.mesh.boundingSphere) p.mesh.boundingSphere.radius += 9;
+    }
+  }
 }
 
 // ------------------------------------------------------------------
@@ -196,7 +224,7 @@ export class Nature {
     const small = merged([0, 1].map(i => [new THREE.PlaneGeometry(0.8, 0.5), '#ffffff', M4(0, 0.25, 0, 0, i * Math.PI / 2, 0)]));
     this.grass = new Pool(small, tuftMat, 9000, { shadow: false });
     // arbustos decorativos
-    const leaf = new THREE.MeshStandardMaterial({ map: T.foliageTex(), vertexColors: true, roughness: 0.85, flatShading: true });
+    const leaf = new THREE.MeshStandardMaterial({ map: T.foliageTex(), vertexColors: true, roughness: 0.9 });
     this.bush = new Pool(blobCanopy([[0, 0.45, 0, 0.7], [0.5, 0.35, 0.2, 0.5], [-0.45, 0.35, -0.1, 0.5]], 17), leaf, 700);
     for (const p of [this.rock, this.rock2, this.ore, this.pebble, this.stick, this.tall, this.grass, this.bush]) parent.add(p.mesh);
   }

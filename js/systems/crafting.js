@@ -56,6 +56,8 @@ export class Crafting {
       const key = r.blueprint === true ? r.out : r.blueprint;
       return ch.learned.includes(key);
     }
+    // o básico feito nas mãos todo mundo já sabe
+    if (r.station === 'mao' && r.level <= 1) return true;
     return r.needs.every(([id]) => ch.seen[id]) || ch.learned.includes(r.out);
   }
   status(r, stations = this.stationsNear()) {

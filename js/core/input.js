@@ -34,11 +34,13 @@ export const input = {
 export function initInput(canvas) {
   window.addEventListener('keydown', e => {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    // um botão clicado fica com foco; Espaço/Enter não devem "clicar" nele de novo
+    if (e.target && e.target.tagName === 'BUTTON' && ['Space', 'Enter', 'NumpadEnter'].includes(e.code)) { e.target.blur(); e.preventDefault(); }
     if (!e.repeat) pressedQ.add(e.code);
     keys.add(e.code);
     if (['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   });
-  window.addEventListener('keyup', e => keys.delete(e.code));
+  window.addEventListener('keyup', e => { keys.delete(e.code); if (e.target && e.target.tagName === 'BUTTON' && e.code === 'Space') e.preventDefault(); });
   window.addEventListener('blur', () => input.releaseAll());
   canvas.addEventListener('mousedown', e => {
     if (e.button === 0) { input.mouse.down = true; pressedQ.add('Mouse0'); }
