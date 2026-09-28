@@ -9,6 +9,7 @@ import { RECIPES } from '../game/actions.js';
 import { BUILDS } from '../game/base.js';
 import { PROPS } from '../world/tiles.js';
 import { ZONES, PERIGO_COR } from '../world/zones.js';
+import { PERIGO_NOME, PERIGO_COR2 } from '../world/regions.js';
 import { rel, relKey } from '../game/story.js';
 import { bus, clamp } from '../util.js';
 import * as Save from '../game/save.js';
@@ -30,12 +31,15 @@ function itemTile(e, onclick, sel = false) {
   if (e.loaded !== undefined && it.w?.pente > 1) t.append(h('span', { class: 'n', style: { left: '4px', right: 'auto', color: '#9ad8ff' } }, e.loaded));
   return t;
 }
-function heroTabs(g, cur, onPick) {
+// abas dos personagens: no inventário, só quem você controla (cada um tem o seu); na ficha, todos
+function heroTabs(g, cur, onPick, all = false) {
   const t = h('div', { class: 'hero-tabs' });
-  for (const u of g.heroes) {
-    if (u.dead) continue;
-    t.append(h('button', { class: u === cur ? 'on' : '', onclick: () => onPick(u) }, h('span', { class: 'pic', style: { backgroundImage: `url(${portraitOf(u)})` } }), u.name));
+  for (const u of all ? g.heroes : [cur]) {
+    if (u.dead && u !== cur) continue;
+    const tag = u.dead ? ' ⚰️' : u.resting ? ' 🏠' : u === g.active ? ' ★' : '';
+    t.append(h('button', { class: u === cur ? 'on' : '', title: u.resting ? 'Descansando na base' : u === g.active ? 'Sobrevivente ativo' : '', onclick: () => onPick(u) }, h('span', { class: 'pic', style: { backgroundImage: `url(${portraitOf(u)})` } }), u.name + tag));
   }
+  if (!all) t.append(h('small', { class: 'own-inv' }, 'Inventário próprio · use os baús da base para passar itens para a turma'));
   return t;
 }
 function weightLine(u) {
@@ -58,7 +62,7 @@ export class Panels {
   // ================================================================ INVENTÁRIO
   inv(hero = null, target = null) {
     const g = this.g;
-    this.invHero = hero || g.selected || g.liveHeroes[0];
+    this.invHero = hero || g.active || g.selected || g.liveHeroes[0];
     this.invTarget = target;
     this.invSel = null; this.invCat = 'tudo';
     this.invRender();
@@ -95,19 +99,19 @@ export class Panels {
         h('div', { class: 'd' }, it.desc || ''),
         h('div', { class: 'd' }, this.itemStats(it, e)));
       const acts = h('div', { class: 'acts' });
-      const near = g.liveHeroes.filter(o => o !== u && Math.max(Math.abs(o.x - u.x), Math.abs(o.z - u.z)) <= 1 && !o.dead);
+      const near = g.fieldHeroes.filter(o => o !== u && Math.max(Math.abs(o.x - u.x), Math.abs(o.z - u.z)) <= 1 && !o.dead);
       if (it.uso || ['pilhas', 'mapa', 'radio_pilha', 'apito'].includes(it.id)) {
         const verb = it.cat === 'comida' ? (it.uso?.sede && !it.uso?.fome ? 'Beber' : 'Comer') : it.cat === 'medicamento' || it.id === 'soro_r7' ? 'Usar em si' : 'Usar';
         acts.append(h('button', { class: 'btn primary', onclick: async () => { await g.useItem(u, this.invSel); this.invSel = null; this.invRender(); } }, `${verb}`));
         if (it.cat === 'medicamento' || it.id === 'soro_r7' || it.cat === 'comida') for (const o of near) acts.append(h('button', { class: 'btn', onclick: async () => { await g.useItem(u, this.invSel, o); this.invSel = null; this.invRender(); } }, `Dar a ${o.name}`));
-        for (const o of g.liveHeroes.filter(o => o !== u && o.st.downed && Math.max(Math.abs(o.x - u.x), Math.abs(o.z - u.z)) <= 1)) acts.append(h('button', { class: 'btn gold', onclick: async () => { await g.revive(u, o); this.invRender(); } }, `Levantar ${o.name}`));
+        for (const o of g.fieldHeroes.filter(o => o !== u && o.st.downed && Math.max(Math.abs(o.x - u.x), Math.abs(o.z - u.z)) <= 1)) acts.append(h('button', { class: 'btn gold', onclick: async () => { await g.revive(u, o); this.invRender(); } }, `Levantar ${o.name}`));
       }
       if (it.cat === 'arma' || it.equip) acts.append(h('button', { class: 'btn primary', onclick: () => { g.equip(u, this.invSel); this.invSel = null; this.invRender(); } }, 'Equipar'));
       if (it.nota) acts.append(h('button', { class: 'btn', onclick: () => this.note(it) }, 'Ler'));
       for (const o of near) acts.append(h('button', { class: 'btn', onclick: async () => { await g.giveItem(u, o, this.invSel); this.invSel = null; this.invRender(); } }, `Entregar para ${o.name}`));
       if (!it.quest) acts.append(h('button', { class: 'btn danger', onclick: () => { g.dropItem(u, this.invSel); this.invSel = null; this.invRender(); } }, 'Largar no chão'));
       det.append(acts);
-    } else det.append(h('div', { class: 'd' }, 'Clique num item para ver detalhes. Comer, beber e usar remédios leva um tempinho. Para dar itens a outra pessoa, fiquem lado a lado.'));
+    } else det.append(h('div', { class: 'd' }, 'Clique num item para ver detalhes. Comer, beber e usar remédios leva um tempinho. Cada sobrevivente tem a própria mochila: para passar coisas para a turma, guarde nos baús da base.'));
     body.append(det);
     this.show(win(`Inventário — ${u.name}`, body, { close: () => this.close() }), 'inv');
   }
@@ -155,7 +159,7 @@ export class Panels {
     u.inv.forEach((e, i) => g2.append(itemTile(e, () => { if (this.lootStash) { g.putLoot(u, src, i); this.lootRender(); } else { this.ui.toast('Só dá para guardar itens no baú ou no chão.'); } })));
     right.append(h('h3', {}, `🎒 ${u.name}`), g2, h('small', { style: { color: '#b3a5c4' } }, this.lootStash ? 'Clique num item seu para guardar aqui.' : ''));
     const body = h('div', { class: 'cols' }, left, right);
-    this.show(win(src.stash ? 'Baú do esconderijo' : 'Vasculhando', body, { close: () => this.close() }), 'loot');
+    this.show(win(src.stash || PROPS[src.type]?.stash ? `${src.nome || 'Baú'} — da turma (todos podem usar)` : 'Vasculhando', body, { close: () => this.close() }), 'loot');
   }
   lootRefresh() { this.lootRender(); }
 
@@ -170,10 +174,10 @@ export class Panels {
   }
   priceMul() {
     const g = this.g;
-    const dai = g.heroes.find(h => h.id === 'daiana' && !h.dead);
-    let m = 1 - (dai ? [0, 0.15, 0.25, 0.35][dai.skill('negociadora')] : 0);
+    const u = this.tr.hero;
+    let m = 1 - (u.id === 'daiana' ? [0, 0.15, 0.25, 0.35][u.skill('negociadora')] : 0);
     if (this.tr.npc.npc === 'ze' && g.state.flags.ze_desconto) m -= 0.25;
-    if (g.liveHeroes.some(h => h.hasPerk('labia'))) m -= 0.05;
+    if (u.hasPerk('labia')) m -= 0.05;
     return Math.max(0.4, m);
   }
   valueOf(id, buying) {
@@ -218,7 +222,7 @@ export class Panels {
       h('div', { style: { display: 'flex', gap: '8px' } },
         h('button', { class: 'btn primary', disabled: !ok, onclick: () => this.doTrade() }, 'Trocar'),
         h('button', { class: 'btn', onclick: () => { T.give.clear(); T.take.clear(); this.tradeRender(); } }, 'Limpar'),
-        h('small', { style: { color: '#b3a5c4', alignSelf: 'center' } }, `Preços ${Math.round((1 - this.priceMul()) * 100)}% mais baratos pela lábia do grupo.`)));
+        h('small', { style: { color: '#b3a5c4', alignSelf: 'center' } }, `Preços ${Math.round((1 - this.priceMul()) * 100)}% mais baratos pela lábia de ${u.name}.`)));
     const body = h('div', { class: 'cols' }, left, right, foot);
     this.show(win(`Negociar com ${T.npc.name}`, body, { close: () => { this.close(); } }), 'trade', () => { if (T.done) T.done(); });
   }
@@ -234,12 +238,13 @@ export class Panels {
   }
 
   // ================================================================ FICHA
-  char(hero = null) { this.chHero = hero || this.g.selected || this.g.liveHeroes[0]; this.charRender(); }
+  char(hero = null) { this.chHero = hero || this.g.active || this.g.selected || this.g.liveHeroes[0]; this.charRender(); }
   charRender() {
     const g = this.g, u = this.chHero;
     const H = HEROES[u.id];
     const body = h('div');
-    body.append(heroTabs(g, u, x => { this.chHero = x; this.charRender(); }));
+    body.append(heroTabs(g, u, x => { this.chHero = x; this.charRender(); }, true));
+    if (u.resting) body.append(h('div', { class: 'note-line' }, `🏠 ${u.name} está descansando na base. A experiência e os itens de cada um são só dele(a).`));
     const next = XP_LEVELS[u.lvl] ?? u.xp;
     const prev = XP_LEVELS[u.lvl - 1] ?? 0;
     const left = h('div', { class: 'box' },
@@ -316,7 +321,7 @@ export class Panels {
     } else {
       const s = g.state.stats;
       body.append(h('div', { class: 'stats' }, h('p', {}, `Dias sobrevividos: ${g.day()}`), h('p', {}, `Rodadas: ${s.turnos}`), h('p', {}, `Zumbis derrotados: ${s.kills}`), h('p', {}, `Pessoas salvas: ${g.state.saved.length}${g.state.saved.length ? ' (' + g.state.saved.join(', ') + ')' : ''}`)));
-      for (const u of g.heroes) body.append(h('p', {}, `${u.name}: nível ${u.lvl}, ${u.kills} zumbis${u.dead ? ' — não sobreviveu' : ''}`));
+      for (const u of g.heroes) body.append(h('p', {}, `${u.name}: nível ${u.lvl}, ${u.kills} zumbis${u.dead ? ' — não sobreviveu' : u.resting ? ' — descansando na base' : ' — em campo'}`));
     }
     this.show(win('Diário', body, { close: () => this.close() }), 'journal');
   }
@@ -332,7 +337,10 @@ export class Panels {
       h('button', { class: tab === 'regiao' ? 'on' : '', onclick: () => this.map('regiao') }, '🧭 Região (viajar)'));
     if (tab === 'local') {
       const c = h('canvas', { class: 'bigmap', width: g.map.W * 7, height: g.map.H * 7 });
-      const body = h('div', {}, tabs, c, h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, '◆ amarelo: objetivos · bolinhas coloridas: a turma · vermelho: zumbis à vista. Clique no mapa para levar a câmera até lá.'));
+      const legend = g.zone ? null : h('div', { class: 'danger-legend' },
+        h('label', {}, h('input', { type: 'checkbox', checked: this.ui.showDanger !== false, onchange: e => { this.ui.showDanger = e.target.checked; this.map('local'); } }), ' Mostrar perigo das regiões'),
+        ...Object.entries(PERIGO_NOME).map(([k, n]) => h('span', { class: 'dl', style: { '--c': PERIGO_COR2[k] } }, n)));
+      const body = h('div', {}, tabs, legend, c, h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, '◆ amarelo: objetivos · bolinhas coloridas: a turma (quem está em campo e quem está na base) · vermelho: zumbis à vista. Clique no mapa para levar a câmera até lá.'));
       this.show(win('Mapa', body, { close: () => this.close() }), 'map');
       this.ui.hud.drawMinimap(c, true);
       c.onclick = e => { const r = c.getBoundingClientRect(); const v = this.ui.hud.miniView; g.S.focus(v.x0 + (e.clientX - r.left) * (c.width / r.width) / v.sc, v.z0 + (e.clientY - r.top) * (c.height / r.height) / v.sc); this.ui.userPanned = true; this.close(); };
@@ -349,14 +357,14 @@ export class Panels {
       info.innerHTML = '';
       if (id === 'aimores') {
         info.append(h('h3', {}, '🏙️ Aimorés'), h('p', {}, 'A cidade: a Casa da Turma, as missões e os sobreviventes.'),
-          g.zone ? h('button', { class: 'btn primary', disabled: !!why, onclick: () => { this.close(); g.travel(null); } }, why || `Voltar (${ZONES[g.zone.id].minutos} min)`) : h('p', { class: 'here' }, 'Vocês estão aqui.'));
+          g.zone ? h('button', { class: 'btn primary', disabled: !!why, onclick: () => { this.close(); g.travel(null); } }, why || `Voltar (${ZONES[g.zone.id].minutos} min)`) : h('p', { class: 'here' }, 'Você está aqui.'));
         return;
       }
       const Z = ZONES[id];
       const here = g.zone && g.zone.id === id;
       info.append(h('h3', {}, Z.nome, ' ', h('span', { class: 'perigo', style: { background: PERIGO_COR[Z.perigo] } }, 'zona ' + Z.perigo)), h('p', {}, Z.desc),
-        h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, `Caminhada: ${Z.minutos} minutos (não gasta energia). A zona muda a cada visita.`),
-        here ? h('p', { class: 'here' }, 'Vocês estão aqui.') : g.zone ? h('p', { class: 'here' }, 'Volte para Aimorés antes de ir para outra zona.') :
+        h('p', { style: { fontSize: '13px', color: '#b3a5c4' } }, `Caminhada: ${Z.minutos} minutos (não gasta energia). Só quem você controla viaja; a turma fica na base. A zona muda a cada visita.`),
+        here ? h('p', { class: 'here' }, 'Você está aqui.') : g.zone ? h('p', { class: 'here' }, 'Volte para Aimorés antes de ir para outra zona.') :
           h('button', { class: 'btn primary', disabled: !!why, onclick: () => { this.close(); g.travel(id); } }, why || 'Viajar'));
     };
     pin(0.5, 0.5, '🏙️ Aimorés', '#b8a8d8', !g.zone, () => showZone('aimores'));
@@ -368,7 +376,7 @@ export class Panels {
 
   // ================================================================ FABRICAR / COZINHAR
   craft(hero = null) {
-    this.crHero = hero || this.g.selected;
+    this.crHero = hero || this.g.active || this.g.selected;
     this.craftRender();
   }
   craftRender() {
@@ -378,14 +386,15 @@ export class Panels {
     const st = g.stationsNear(u);
     body.append(h('p', { style: { fontSize: '13px', color: '#b3a5c4' } },
       `Nível de ${u.name}: ${u.lvl}. `, st.fogo ? `🔥 Perto do fogo (${st.fogo.nome}). ` : '🔥 Receitas de fogo: fique ao lado de um fogão, churrasqueira ou fogueira. ',
-      st.bancada ? '🛠️ Na bancada de trabalho.' : '🛠️ Receitas de bancada: construa uma na base (N) e fique ao lado dela.'));
-    const groups = [['✋ Na mão', r => !r.fogao && !r.bancada], ['🔥 No fogo', r => r.fogao], ['🛠️ Na bancada', r => r.bancada]];
+      st.bancada ? '🛠️ Na bancada de trabalho. ' : '🛠️ Receitas de bancada: construa uma na base (N) e fique ao lado dela. ',
+      st.armas ? '🎯 Na bancada de armas. ' : '', st.medica ? '⛑️ Na área médica.' : ''));
+    const groups = [['✋ Na mão', r => !r.fogao && !r.bancada && !r.estacao], ['🔥 No fogo', r => r.fogao], ['🛠️ Na bancada', r => r.bancada], ['🎯 Na bancada de armas', r => r.estacao === 'armas'], ['⛑️ Na área médica' + (u.id === 'carol' ? ' (a Carol faz em dobro)' : ''), r => r.estacao === 'medica']];
     for (const [title, test] of groups) {
       body.append(h('h3', { class: 'craft-h' }, title));
       for (const r of RECIPES.filter(test)) {
         const why = g.recipeBlock(u, r);
-        const reqs = r.precisa.map(req => { const [ids, n] = req; const ok = g.haveReq(u, req); return h('span', { class: ok ? '' : 'miss' }, `${ids.split('|').map(i => ITEMS[i].icon + ' ' + ITEMS[i].nome).join(' ou ')} ×${n}`); });
-        const out = r.repara ? 'Recupera 50% da durabilidade da arma equipada' : `→ ${ITEMS[r.da[0]].icon} ${ITEMS[r.da[0]].nome}${r.da[1] > 1 ? ' ×' + r.da[1] : ''}`;
+        const reqs = r.precisa.map(req => { const ids = req[0], n = g.reqN(u, req[1]); const ok = g.haveReq(u, req); return h('span', { class: ok ? '' : 'miss' }, `${ids.split('|').map(i => ITEMS[i].icon + ' ' + ITEMS[i].nome).join(' ou ')} ×${n}`); });
+        const out = r.repara ? (r.total ? 'Deixa a arma equipada como nova' : 'Recupera 50% da durabilidade da arma equipada') : `→ ${ITEMS[r.da[0]].icon} ${ITEMS[r.da[0]].nome}${r.da[1] > 1 ? ' ×' + r.da[1] : ''}`;
         const reqLine = h('div', { class: 'req' });
         reqs.forEach((e, i) => { if (i) reqLine.append(' + '); reqLine.append(e); });
         const locked = (u.lvl || 1) < (r.nivel || 1);
@@ -407,7 +416,7 @@ export class Panels {
     body.append(stock);
     for (const b of BUILDS) {
       const why = g.buildCheck(u, b);
-      const cost = b.custo.map(([id, n]) => h('span', { class: g.buildStock(u, id) >= n ? '' : 'miss' }, `${ITEMS[id].icon} ${ITEMS[id].nome} ×${n}`));
+      const cost = g.buildCost(u, b).map(([id, n]) => h('span', { class: g.buildStock(u, id) >= n ? '' : 'miss' }, `${ITEMS[id].icon} ${ITEMS[id].nome} ×${n}`));
       const line = h('div', { class: 'req' }); cost.forEach((e, i) => { if (i) line.append(' + '); line.append(e); });
       body.append(h('div', { class: 'recipe' + (why && why.startsWith('Nível') ? ' locked' : '') },
         h('div', {}, h('div', { style: { fontWeight: 900 } }, PROPS[b.id].nome, (u.lvl || 1) < b.nivel ? h('small', { class: 'lvl' }, ` 🔒 nível ${b.nivel}`) : ''), line, h('div', { style: { fontSize: '12px' } }, b.desc)),
@@ -479,16 +488,32 @@ export class Panels {
 
 export const HELP_HTML = `
 <h3>Objetivo</h3>
-<p>Aimorés virou um apocalipse zumbi. Sobreviva com <b>Arthur</b>, <b>Carol</b>, <b>Daiana</b> e <b>Pablício</b>: junte recursos, fabrique armas e ferramentas, fortaleça a base na <b>Casa da Turma</b>, explore as zonas em volta da cidade e descubra como o surto começou — e saia antes do bombardeio.</p>
+<p>Aimorés virou um apocalipse zumbi. Sobreviva com <b>Arthur</b>, <b>Carol</b>, <b>Daiana</b> e <b>Pablício</b>: junte recursos, fabrique armas e ferramentas, fortaleça a base na <b>Casa da Turma</b>, explore a cidade e as zonas em volta, descubra como o surto começou — e saia antes do bombardeio.</p>
+<h3>Um sobrevivente por vez</h3>
+<p>Você escolhe <b>quem sai para a rua</b>; os outros ficam <b>descansando na base</b> (recuperam energia e vida, e ficam em segurança). Todos vivem no <b>mesmo mundo e no mesmo save</b>, mas cada um tem <b>a própria mochila, o próprio equipamento, o próprio nível e a própria experiência</b> — nada passa de um para o outro sozinho.</p>
+<ul>
+<li>Para trocar, <b>volte para a base</b> (terreno da Casa da Turma) e aperte <kbd>T</kbd> (ou 👥, ou clique em quem está descansando). Quem assume sai de onde estava descansando.</li>
+<li>Para passar itens para a turma, use os <b>baús e o armário da base</b>: são de todos.</li>
+<li>O ciclo: base → escolher sobrevivente → explorar → coletar e lutar → voltar → fabricar, construir e guardar → escolher outro → explorar de novo.</li>
+</ul>
+<h3>Especialidades</h3>
+<ul>
+<li><b>Arthur — Duro na Queda:</b> mais vida, recebe menos dano e as mordidas infectam menos.</li>
+<li><b>Carol — Enfermeira da Turma:</b> remédios curam mais, levanta sozinha mais rápido e faz remédios em dobro na área médica.</li>
+<li><b>Daiana — Olho de Professora:</b> acha mais itens, vê a planta dos prédios, aprende mais rápido e gasta menos material ao fabricar.</li>
+<li><b>Pablício — Burro de Carga:</b> carrega mais, constrói com menos material, as peças dele aguentam mais e conserta em dobro.</li>
+</ul>
 <h3>Tudo em tempo real</h3>
-<p>Você controla um personagem por vez (retratos à esquerda ou <kbd>1</kbd>–<kbd>4</kbd>); os outros seguem e brigam junto. Os zumbis se mexem ao mesmo tempo que você. O jogo pausa sozinho enquanto uma janela ou conversa está aberta. Um dia em Aimorés dura 24 minutos.</p>
+<p>Os zumbis se mexem ao mesmo tempo que você. O jogo pausa sozinho enquanto uma janela, conversa ou a escolha de sobrevivente está aberta. Um dia em Aimorés dura 24 minutos.</p>
 <h3>Controles</h3>
 <table>
 <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / setas / joystick</td><td>andar</td></tr>
 <tr><td><kbd>Shift</kbd> (segurar)</td><td>correr (mais rápido, faz barulho)</td></tr>
 <tr><td><kbd>C</kbd></td><td>agachar: devagar e quase sem barulho</td></tr>
 <tr><td><kbd>Espaço</kbd> (segurar) / ⚔️</td><td>atacar o inimigo mais perto</td></tr>
-<tr><td><kbd>E</kbd> / ✋</td><td>interagir: vasculhar, abrir, pegar, conversar, coletar</td></tr>
+<tr><td><kbd>Q</kbd> / 💨</td><td>esquivar: um pulo rápido (para trás ou na direção em que você anda) sem levar golpe</td></tr>
+<tr><td><kbd>E</kbd> / ✋</td><td>interagir: vasculhar, abrir, pegar, conversar, coletar (caído: levantar com atadura)</td></tr>
+<tr><td><kbd>T</kbd> / 👥 / <kbd>1</kbd>–<kbd>4</kbd></td><td>trocar de sobrevivente (só na base)</td></tr>
 <tr><td>Clique no chão / num zumbi / num objeto</td><td>andar até lá / perseguir e atacar / ir e usar</td></tr>
 <tr><td>Clique direito / segurar o dedo</td><td>todas as opções do lugar</td></tr>
 <tr><td><kbd>R</kbd> <kbd>F</kbd></td><td>recarregar · lanterna</td></tr>
@@ -502,19 +527,22 @@ export const HELP_HTML = `
 <ul>
 <li><b>Árvores</b> dão madeira, <b>pedras</b> e entulho dão pedra, <b>carros</b> dão sucata (precisa de pé de cabra, martelo ou ferramentas), <b>arbustos</b> dão fibra e ervas. Ferramentas (machado, picareta) aceleram. Coletar faz barulho!</li>
 <li>Árvores e arbustos cortados <b>rebrotam</b> depois de um tempo.</li>
-<li><b>Fabricar</b> (B): na mão, no fogo (fogão, churrasqueira ou fogueira) ou na bancada de trabalho. Receitas novas liberam com o nível do personagem.</li>
-<li><b>Construir</b> (N): no terreno da Casa da Turma — paredes, portão, fogueira, baú, cama, bancada, estacas e coletor de chuva. Zumbis tentam derrubar; conserte e reforce.</li>
+<li><b>Fabricar</b> (B): na mão, no fogo, na bancada de trabalho, na <b>bancada de armas</b> (armas e munição) ou na <b>área médica</b> (ataduras, soro e kits). Receitas novas liberam com o nível de quem fabrica.</li>
+<li><b>Construir</b> (N): no terreno da Casa da Turma — paredes, portão, fogueira, baú, armário de estoque, cama, bancadas, área médica, <b>horta</b>, estacas e coletor de chuva. Zumbis tentam derrubar; conserte e reforce.</li>
+<li><b>Horta</b>: plante sementes (com 1 água, ou deixe a chuva regar) e colha hortaliças algumas horas depois.</li>
+<li><b>Área médica</b>: deite na maca para tratar ferimentos e recuperar vida.</li>
 </ul>
-<h3>Viajar</h3>
-<p>No mapa (M), aba <b>Região</b>: zonas <span style="color:#5fb82a">verdes</span> (tranquilas, muita madeira), <span style="color:#f4c534">amarelas</span> e <span style="color:#e8433a">vermelhas</span> (muito perigosas, loot melhor). Viajar <b>não gasta energia</b>, só passa o tempo da caminhada. As zonas mudam a cada visita. Volte pela placa da trilha ou pelo mapa.</p>
+<h3>Mapa e perigo</h3>
+<p>A cidade tem regiões com níveis de perigo: <span style="color:#4ab8f0">base (segura)</span>, <span style="color:#5fb82a">tranquilo</span>, <span style="color:#f4c534">perigoso</span> e <span style="color:#e8433a">muito perigoso</span> (Centro, Supermercado, Posto e AgroNova). O mapa (M) mostra as regiões; ao entrar numa, aparece o aviso.</p>
+<p>No mapa, aba <b>Região</b>: zonas fora da cidade, também verdes, amarelas e vermelhas. Só quem você controla viaja; a turma fica na base. Viajar <b>não gasta energia</b>, só passa o tempo da caminhada. As zonas mudam a cada visita.</p>
 <h3>Sobrevivência</h3>
 <ul>
-<li><b>Fome e sede</b> caem com o tempo (mais rápido no calorão de Aimorés). Não existe cansaço: andar e correr não gastam energia.</li>
+<li><b>Vida, fome, sede e energia</b>. Fome e sede caem com o tempo (mais rápido no calorão de Aimorés). A <b>energia</b> cai devagar com as horas — andar e correr <b>não gastam</b>. Com pouca energia, mira e velocidade caem: durma ou troque de sobrevivente e deixe quem estava em campo descansar.</li>
 <li><b>Mordidas</b> infectam; em 100% a pessoa vira zumbi. Antibiótico segura; só o <b>Soro R-7</b> cura.</li>
 <li><b>Sangramento</b>: atadura, curativo de ervas ou kit médico.</li>
-<li>Quem cai precisa ser levantado (atadura ou kit) em até 40 segundos.</li>
+<li>Se cair, use uma <b>atadura ou kit médico</b> (<kbd>E</kbd>) em até 40 segundos. Apanhar caído encurta o tempo. Se o sobrevivente morrer, as coisas dele ficam no chão e você escolhe outro na base. O jogo só acaba se a turma inteira morrer.</li>
 <li>Durma na Casa da Turma, na Igreja ou numa cama construída na base para pular a noite.</li>
 </ul>
-<h3>Furtividade</h3>
-<p>Zumbis enxergam pouco à noite, mas ouvem bem: tiros, portas arrombadas, vidro quebrado, alarmes e machadadas atraem hordas. Agache (<kbd>C</kbd>) e ataque pelas costas: o golpe surpresa causa muito mais dano.</p>
+<h3>Combate e furtividade</h3>
+<p>Zumbis têm tipos e comportamentos diferentes (corredores, resistentes, furtivos, inchados...). Eles dão um bote antes de morder: <b>esquive</b> (<kbd>Q</kbd>) na hora certa. Golpes corpo a corpo fazem o zumbi cambalear. Zumbis enxergam pouco à noite, mas ouvem bem: tiros, portas arrombadas, vidro quebrado, alarmes e machadadas atraem hordas. Agache (<kbd>C</kbd>) e ataque pelas costas: o golpe surpresa causa muito mais dano.</p>
 `;

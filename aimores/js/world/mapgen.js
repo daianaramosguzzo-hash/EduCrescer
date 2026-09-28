@@ -307,7 +307,20 @@ function galpao() {
 const LEG_GALPAO = { T: 'tanque_lab', Y: 'bancada_lab', C: 'computador', H: 'gaiola', F: 'freezer', J: 'escrivaninha', O: 'arquivo', X: 'caixas', K: 'balcao', S: 'sofa', U: 'planta' };
 
 // ------------------------------------------------------------ geração
-export function generateMap(seed = 1) {
+// ver 2 (jogos novos da versão 2.1): Unidade de Saúde no alto do bairro. Saves antigos usam a ver 1,
+// para que os móveis salvos continuem batendo com a cidade gerada.
+const UBS = [
+  '#############',
+  '#γB.B.B#βJ.A#',
+  '#γ.....#β...#',
+  '#N....K#β.1R#',
+  '###+#####+###',
+  '#αS.S......P#',
+  '#αS.S..CC..P#',
+  '#X.........P#',
+  '#====!!=====#',
+];
+export function generateMap(seed = 1, genOpts = {}) {
   const R = mulberry32(seed);
   const rint = (a, b) => a + Math.floor(R() * (b - a + 1));
   const pick = arr => arr[Math.floor(R() * arr.length)];
@@ -649,6 +662,18 @@ export function generateMap(seed = 1) {
     for (let dz = -3; dz <= 3 && !nearWater; dz++) for (let dx = -3; dx <= 3; dx++) { const xx = x + dx, zz = z + dz; if (map.inb(xx, zz) && (map.struct[map.idx(xx, zz)] === S.WATER || map.floor[map.idx(xx, zz)] === F.agua)) { nearWater = true; break; } }
     if (!nearWater) continue;
     if (add(R() < 0.6 ? 'rocha' : 'arbusto', x, z)) placed++;
+  }
+
+  // ---------------- Unidade de Saúde (só nos mapas novos)
+  if ((genOpts.ver || 1) >= 2) {
+    const ux = 54, uz = 0;
+    for (let z = uz; z <= uz + UBS.length; z++) for (let x = ux - 1; x <= ux + UBS[0].length; x++) {
+      if (!map.inb(x, z)) continue;
+      const pi = map.propAt[map.idx(x, z)];
+      if (pi >= 0) map.removeProp(map.props[pi]);
+    }
+    B(UBS, ux, uz, { name: 'Unidade de Saúde', type: 'saude', legend: { B: 'cama', N: 'criado', K: 'armarinho', J: 'escrivaninha', A: 'armario', R: 'arquivo', S: 'cadeira', C: 'balcao', P: 'prateleira', X: 'caixas' }, roof: 'laje', wall: '#f4f8fa', trim: '#2a8ad8', marks: { 1: 'ubs' }, lootMap: { armario: 'farmacia', prateleira: 'farmacia', armarinho: 'banheiro', caixas: 'farmacia', criado: 'banheiro', arquivo: 'escritorio', balcao: 'farmacia' } });
+    label('Unidade de Saúde', ux + 6.5, uz + 4, 'lugar');
   }
 
   // ---------------- loot inicial

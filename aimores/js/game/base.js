@@ -1,5 +1,6 @@
 // Coleta de recursos (cortar árvore, quebrar pedra, desmontar carro, colher fibra), rebrota,
-// construção da base no terreno da Casa da Turma e o funcionamento das peças construídas.
+// construção da base no terreno da Casa da Turma e o funcionamento das peças construídas
+// (portões, baús e armário da turma, fogueira, camas, bancadas, área médica e horta).
 import { PROPS } from '../world/tiles.js';
 import { ITEMS } from '../data/items.js';
 import { addItem, countItem, removeItem } from './units.js';
@@ -17,6 +18,10 @@ export const BUILDS = [
   { id: 'coletor', custo: [['madeira', 4], ['pano', 2]], nivel: 3, desc: 'Junta água da chuva (e do sereno) com o tempo.' },
   { id: 'parede_pedra', custo: [['pedra', 6], ['madeira', 1]], nivel: 3, desc: 'Bem mais resistente que madeira.' },
   { id: 'parede_metal', custo: [['metal', 6]], nivel: 5, bancada: true, desc: 'A parede mais forte. Precisa de uma bancada na base.' },
+  { id: 'horta', custo: [['madeira', 2], ['fibra', 2]], nivel: 2, desc: 'Canteiro para plantar sementes. Rega com água e colhe hortaliças.' },
+  { id: 'area_medica', custo: [['madeira', 4], ['pano', 3], ['metal', 1]], nivel: 3, desc: 'Maca e armário de remédios: trata ferimentos e fabrica ataduras, soro e kits.' },
+  { id: 'bancada_armas', custo: [['madeira', 5], ['metal', 4], ['corda', 1]], nivel: 4, bancada: true, desc: 'Armas melhores e munição. Precisa de uma bancada de trabalho na base.' },
+  { id: 'armario_base', custo: [['madeira', 8], ['metal', 2]], nivel: 3, desc: 'Estoque grande da base, de todos: qualquer sobrevivente guarda e pega.' },
 ];
 
 // ferramentas: multiplicador de tempo por golpe (menor = mais rápido)
@@ -135,10 +140,72 @@ export function installBase(Game) {
         const add = this.state.weather.chuva ? 2 : (this.hour() >= 4 && this.hour() < 7 ? 1 : 0.34);
         p.extra.agua = Math.min(6, (p.extra.agua || 0) + add);
       }
+      this.hortaTick();
+    },
+    // horta: o que foi plantado cresce com as horas (chuva ajuda)
+    hortaTick() {
+      for (const p of this.map.props) {
+        if (p.removed || !PROPS[p.type].horta || !p.extra || !p.extra.cultivo) continue;
+        const c = p.extra.cultivo;
+        if (this.state.weather.chuva) c.pronto -= 30;
+        const total = c.pronto - c.plantado, feito = this.state.time - c.plantado;
+        const fase = feito >= total ? 2 : feito >= total / 2 ? 1 : 0;
+        if (fase !== c.fase) { c.fase = fase; this.S.world.rebuildChunkAt(p.x, p.z); if (fase === 2 && this.active && this.inBase(this.active.x, this.active.z)) this.log('🥬 A horta está pronta para colher!', 'bom'); }
+      }
+    },
+    async plantar(u, p) {
+      if (!(await this.approach(u, p.x, p.z))) return;
+      if (countItem(u, 'sementes') < 1) { this.toast('Precisa de sementes (acha em fazendas e cozinhas).', 'erro'); return; }
+      const agua = this.buildStock(u, 'agua') >= 1;
+      if (!agua && !this.state.weather.chuva) { this.toast('Precisa de 1 água para regar (ou espere chover).', 'erro'); return; }
+      removeItem(u, 'sementes', 1);
+      if (!this.state.weather.chuva) this.payBuild(u, 'agua', 1);
+      const horas = u.id === 'pablicio' || u.id === 'carol' ? 7 : 8;
+      p.extra.cultivo = { plantado: this.state.time, pronto: this.state.time + horas * 60, fase: 0 };
+      this.S.units.play(u, 'pickup');
+      this.S.world.rebuildChunkAt(p.x, p.z);
+      this.gainXp(u, 4);
+      this.log(`🌱 ${u.name} plantou no canteiro. Fica pronto em umas ${horas} horas.`, 'bom');
+      bus.emit('hud');
+    },
+    async colher(u, p) {
+      if (!(await this.approach(u, p.x, p.z))) return;
+      const c = p.extra.cultivo;
+      if (!c || (c.fase || 0) < 2) return;
+      const n = rng.int(2, 3) + (u.id === 'daiana' ? 1 : 0);
+      addItem(u, 'hortalicas', n);
+      if (rng.next() < 0.6) addItem(u, 'sementes', 1);
+      p.extra.cultivo = null;
+      this.S.units.play(u, 'pickup');
+      this.S.units.floatText(u.x, u.z, `+${n} 🥬`, 'xp');
+      this.S.world.rebuildChunkAt(p.x, p.z);
+      this.gainXp(u, 8);
+      this.log(`🥬 ${u.name} colheu ${n} hortaliça(s) da horta.`, 'bom');
+      bus.emit('hud');
+    },
+    // maca da área médica: trata os ferimentos e recupera um pouco de vida (uma vez a cada 6 horas)
+    async maca(u, p) {
+      if (!(await this.approach(u, p.x, p.z))) return;
+      if (this.state.mode === 'combat') { this.toast('Não dá para se tratar com zumbi por perto.', 'erro'); return; }
+      const last = u.st.macaAt ?? -1e9;
+      if (this.state.time - last < 360) { this.toast(`A maca ajuda de novo daqui a ${Math.ceil((360 - (this.state.time - last)) / 60)} h.`, 'erro'); return; }
+      u.st.macaAt = this.state.time;
+      await this.S.units.play(u, 'medicine');
+      const heal = Math.round((u.id === 'carol' ? 35 : 22));
+      u.hp = Math.min(u.maxHp, u.hp + heal);
+      u.st.bleed = 0;
+      for (const w of u.wounds) w.tratado = true;
+      if (u.st.infected) u.need.infeccao = Math.max(0, u.need.infeccao - 5);
+      for (let i = 0; i < 20; i++) this.passMinute();
+      this.S.units.floatText(u.x, u.z, `+${heal}`, 'heal');
+      this.log(`⛑️ ${u.name} se tratou na área médica (+${heal} de vida, ferimentos tratados).`, 'bom');
+      bus.emit('hud');
     },
 
     // ------------------------------------------------------------ construção
     buildLevel() { return this.selected ? this.selected.lvl || 1 : 1; },
+    // custo de uma peça para quem constrói (Pablício economiza material)
+    buildCost(u, b) { return b.custo.map(([id, n]) => [id, u && u.id === 'pablicio' ? Math.max(1, Math.ceil(n * 0.75)) : n]); },
     // recursos: inventário de quem constrói + baús da base
     buildStock(u, id) {
       let n = countItem(u, id);
@@ -160,7 +227,7 @@ export function installBase(Game) {
     buildCheck(u, b) {
       if (this.buildLevel() < b.nivel) return `Nível ${b.nivel}`;
       if (b.bancada && !this.hasBench()) return 'Precisa de bancada na base';
-      for (const [id, n] of b.custo) if (this.buildStock(u, id) < n) return 'Faltam materiais';
+      for (const [id, n] of this.buildCost(u, b)) if (this.buildStock(u, id) < n) return 'Faltam materiais';
       return null;
     },
     canPlace(x, z) {
@@ -178,9 +245,10 @@ export function installBase(Game) {
       const why = this.buildCheck(u, b);
       if (why) { this.toast(why, 'erro'); return false; }
       if (!this.canPlace(x, z)) { this.toast('Não dá para construir aí (só no terreno da Casa da Turma, em espaço livre).', 'erro'); return false; }
-      for (const [rid, n] of b.custo) this.payBuild(u, rid, n);
+      for (const [rid, n] of this.buildCost(u, b)) this.payBuild(u, rid, n);
       const def = PROPS[id];
-      this.map.addProp(id, x, z, 1, 1, 0, { added: true, extra: { built: true, hp: def.built, max: def.built, open: false } });
+      const hp = Math.round(def.built * (u.id === 'pablicio' ? 1.5 : 1));
+      this.map.addProp(id, x, z, 1, 1, 0, { added: true, extra: { built: true, hp, max: hp, open: false } });
       this.map.version++;
       this.S.world.rebuildChunkAt(x, z);
       if (def.luz) this.refreshLights();
@@ -199,7 +267,7 @@ export function installBase(Game) {
       if (PROPS[p.type].luz) this.refreshLights();
       this.visionDirty = true;
       bus.emit('sfx', 'bang', p.x, p.z);
-      if (this.liveHeroes.some(h => Math.hypot(h.x - p.x, h.z - p.z) < 16)) this.log(`💥 ${PROPS[p.type].nome} da base foi destruída!`, 'perigo');
+      if (this.mapHeroes.some(h => Math.hypot(h.x - p.x, h.z - p.z) < 16)) this.log(`💥 ${PROPS[p.type].nome} da base foi destruída!`, 'perigo');
     },
     async dismantle(u, p) {
       if (!(await this.approach(u, p.x, p.z))) return;
@@ -243,10 +311,21 @@ export function installBase(Game) {
       if (p.extra && p.extra.built) {
         if (def.porta) out.push({ label: p.extra.open ? 'Fechar o portão' : 'Abrir o portão', ap: 0, fn: () => this.toggleGate(u, p) });
         if (def.estacao === 'bancada') out.push({ label: 'Usar a bancada de trabalho', ap: 0, fn: async () => { if (await this.approach(u, p.x, p.z)) bus.emit('craft', u, p); } });
+        if (def.estacao === 'armas') out.push({ label: 'Usar a bancada de armas', ap: 0, fn: async () => { if (await this.approach(u, p.x, p.z)) bus.emit('craft', u, p); } });
+        if (def.estacao === 'medica') {
+          out.push({ label: 'Deitar na maca (trata ferimentos e recupera vida)', ap: 0, fn: () => this.maca(u, p) });
+          out.push({ label: 'Fazer remédios na área médica', ap: 0, fn: async () => { if (await this.approach(u, p.x, p.z)) bus.emit('craft', u, p); } });
+        }
+        if (def.horta) {
+          const c = p.extra.cultivo;
+          if (!c) out.push({ label: `Plantar (1 semente + 1 água) — sementes: ${countItem(u, 'sementes')}`, ap: 0, disabled: countItem(u, 'sementes') < 1, fn: () => this.plantar(u, p) });
+          else if ((c.fase || 0) >= 2) out.push({ label: '🥬 Colher a horta', ap: 0, fn: () => this.colher(u, p) });
+          else out.push({ label: `A horta está crescendo (pronta em ~${Math.max(1, Math.ceil((c.pronto - this.state.time) / 60))} h)`, ap: 0, disabled: true, fn: () => {} });
+        }
         if (def.coletor) out.push({ label: `Pegar água do coletor (${Math.floor(p.extra.agua || 0)})`, ap: 0, disabled: (p.extra.agua || 0) < 1, fn: () => this.takeWater(u, p) });
         if (def.camaBase) out.push({ label: 'Dormir até de manhã', ap: 0, fn: () => this.sleep() });
         out.push({ label: `Desmontar ${def.nome.toLowerCase()} (${Math.round(p.extra.hp)}/${p.extra.max} de resistência)`, ap: 0, fn: () => this.dismantle(u, p) });
-        if (p.extra.hp < p.extra.max) out.push({ label: 'Consertar (1 madeira)', ap: 0, disabled: this.buildStock(u, 'madeira') < 1, fn: async () => { if (!(await this.approach(u, p.x, p.z))) return; this.payBuild(u, 'madeira', 1); p.extra.hp = Math.min(p.extra.max, p.extra.hp + p.extra.max * 0.4); this.S.units.play(u, 'interact'); bus.emit('sfx', 'hammer', p.x, p.z); } });
+        if (p.extra.hp < p.extra.max) out.push({ label: `Consertar (1 madeira)${u.id === 'pablicio' ? ' — Pablício conserta em dobro' : ''}`, ap: 0, disabled: this.buildStock(u, 'madeira') < 1, fn: async () => { if (!(await this.approach(u, p.x, p.z))) return; this.payBuild(u, 'madeira', 1); p.extra.hp = Math.min(p.extra.max, p.extra.hp + p.extra.max * (u.id === 'pablicio' ? 0.8 : 0.4)); this.S.units.play(u, 'interact'); bus.emit('sfx', 'hammer', p.x, p.z); this.gainXp(u, 2, true); } });
       }
       return out;
     },

@@ -1,5 +1,5 @@
 // Eventos aleatórios durante a exploração. peso = chance relativa; se = condição; uma = só uma vez.
-import { flag, hero, banter, questStart, scene } from '../game/story.js';
+import { flag, banter, questStart, scene } from '../game/story.js';
 import { rng, bus } from '../util.js';
 import { ITEMS } from './items.js';
 
@@ -105,13 +105,13 @@ export const EVENTS = [
     } },
   { id: 'carro_chave', peso: 2, se: g => !g.isNight(),
     async run(g) {
-      const cars = g.map.props.filter(p => p.type === 'carro' && !p.searched && g.liveHeroes.some(h => Math.hypot(h.x - p.x, h.z - p.z) < 18));
+      const cars = g.map.props.filter(p => p.type === 'carro' && !p.searched && g.fieldHeroes.some(h => Math.hypot(h.x - p.x, h.z - p.z) < 18));
       if (!cars.length) return;
       const c = rng.pick(cars);
       c.loot = c.loot || [];
       c.loot.push({ id: rng.pick(['kit_medico', 'combustivel', 'mochila_camping', 'revolver']), n: 1 }, { id: 'agua', n: 2 });
       c.alarme = rng.next() < 0.4;
-      g.log(`🚗 ${hero(g, 'arthur') ? 'O Arthur' : 'Alguém'} reparou num carro abandonado com as portas abertas e malas no banco de trás. Pode ter coisa boa.`, 'info');
+      g.log(`🚗 ${g.active ? g.active.name : 'Alguém'} reparou num carro abandonado com as portas abertas e malas no banco de trás. Pode ter coisa boa.`, 'info');
       g.S.units.floatText(c.x, c.z, '✨', 'xp');
     } },
   { id: 'emboscada', peso: 3, se: g => g.state.mode === 'explore',
@@ -125,7 +125,7 @@ export const EVENTS = [
     } },
   { id: 'ferido', peso: 2,
     async run(g) {
-      const h = rng.pick(g.liveHeroes.filter(x => !x.st.downed)); if (!h) return;
+      const h = g.active; if (!h || h.dead || h.st.downed) return;
       if (rng.next() < 0.5) { g.damage(h, rng.int(3, 6), null); h.st.bleed = 1; g.log(`🩸 ${h.name} se cortou num caco de vidro escondido no mato.`, 'alerta'); }
       else { h.st.stun = 1; g.log(`🦶 ${h.name} torceu o pé num buraco da calçada. Clássico de Aimorés.`, 'alerta'); g.S.units.say(h, 'Ai! Essa calçada é pior que zumbi!'); }
     } },
@@ -168,7 +168,7 @@ export const EVENTS = [
     } },
   { id: 'calorao', peso: 2, se: g => g.hour() >= 11 && g.hour() <= 15,
     async run(g) {
-      for (const h of g.liveHeroes) h.need.sede = Math.max(0, h.need.sede - 8);
+      for (const h of g.fieldHeroes) h.need.sede = Math.max(0, h.need.sede - 8);
       g.log('🥵 O calorão de Aimorés bateu forte: 39 °C na sombra. Todo mundo com mais sede.', 'alerta');
       banter(g, 'calor', { force: true });
     } },

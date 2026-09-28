@@ -7,6 +7,7 @@ import { hitChance, rollDamage, unaware } from './combat.js';
 import { los } from './vision.js';
 import { effStat, carried, capacity, countItem, removeItem } from './units.js';
 import { tickSurvival } from './survival.js';
+import { regionAt } from '../world/regions.js';
 import { updateAI } from './ai.js';
 import { rng, bus, clamp } from '../util.js';
 import * as Story from './story.js';
@@ -46,6 +47,10 @@ export function installRealtime(Game) {
       }
       // controle do personagem escolhido
       const u = this.selected;
+      if (u) {
+        if (u.dodgeCd > 0) u.dodgeCd -= dt;
+        if (u.st.iframes > 0) u.st.iframes -= dt;
+      }
       if (u && u.alive && !u.st.downed) this.rtControl(u, dt);
       // os outros (companheiros, zumbis, sobreviventes)
       updateAI(this, dt);
@@ -147,6 +152,7 @@ export function installRealtime(Game) {
         if (carried(u) > capacity(u)) s *= 0.7;
         if (u.need.infeccao >= 25) s *= 0.9;
         if (u.need.sede < 15) s *= 0.9;
+        if (u.need.energia < 25) s *= u.need.energia < 10 ? 0.85 : 0.93;
         if (u.st.haste) s *= 1.25;
       }
       return s;
@@ -216,9 +222,20 @@ export function installRealtime(Game) {
     rtCell(u, cx, cz) {
       u.x = cx; u.z = cz;
       if (u.kind === 'hero' || u.faction === 'ally') this.visionDirty = true;
-      if (u.kind !== 'hero') return;
+      if (u.kind !== 'hero' || u.resting) return;
       if (!u.st.sneak) u.st.hidden = false;
-      if (u === this.selected) this.updateCutaway();
+      if (u === this.selected) {
+        this.updateCutaway();
+        // mudou de região da cidade: avisa o nível de perigo
+        const rg = this.zone ? null : regionAt(cx, cz);
+        const id = rg ? rg.id : null;
+        if (id !== this.curRegion) {
+          this.curRegion = id;
+          const now = performance.now();
+          if (rg && id !== this.lastRegionMsg && now - (this.lastRegionT || 0) > 2500) { this.lastRegionMsg = id; this.lastRegionT = now; bus.emit('region', rg); }
+          bus.emit('hud');
+        }
+      }
       const w = this.map.windows.get(this.map.idx(cx, cz));
       if (w && rng.next() < 0.15) { u.st.bleed = 1; this.log(`${u.name} se cortou no vidro da janela.`, 'alerta'); }
       Story.onEnter(this, u, cx, cz);
@@ -255,6 +272,16 @@ export function installRealtime(Game) {
     // ------------------------------------------------------------ controle do jogador
     rtControl(u, dt) {
       const inp = this.input;
+      // esquiva em andamento: desliza rápido na direção escolhida
+      if (u.dodge) {
+        const d = u.dodge;
+        const st = Math.min(d.t, dt);
+        d.t -= dt;
+        this.moveBody(u, d.vx * 6.2 * st, d.vz * 6.2 * st);
+        u.rtAnim = 'run';
+        if (d.t <= 0) u.dodge = null;
+        return;
+      }
       if (u.gather) this.gatherTick(u, dt);
       const busy = this.busy > 0 || u.st.stun > 0 || u.gatherT > 0;
       if (u.st.stun > 0) u.st.stun = Math.max(0, u.st.stun - dt / 2);
@@ -295,6 +322,36 @@ export function installRealtime(Game) {
       }
       if (u.ranT > 0) { u.ranT -= dt; if (u.ranT <= 0) u.st.ran = false; }
       u.rtAnim = moving ? (run ? 'run' : u.st.sneak ? 'sneak' : 'walk') : (u.st.sneak ? 'crouch' : null);
+    },
+
+    // esquiva (Q / 💨): um pulo rápido para o lado, sem tomar golpe durante o pulo
+    dodge(u) {
+      if (!u || u.dead || u.st.downed || u.resting || this.phase !== 'player' || this.busy) return;
+      if ((u.dodgeCd || 0) > 0 || u.st.stun > 0 || u.dodge) return;
+      if (u.need.energia < 4) { this.toastOnce('Cansado demais para esquivar. Descanse ou durma.'); return; }
+      const mv = this.input.move;
+      let ang;
+      if (Math.hypot(mv.x, mv.z) > 0.15) {
+        const yaw = this.S.yaw, c = Math.cos(yaw), s = Math.sin(yaw);
+        const l = Math.hypot(mv.x, mv.z), nx = mv.x / l, nz = mv.z / l;
+        ang = Math.atan2(nx * c + nz * s, -nx * s + nz * c);
+      } else {
+        // parado: pula para trás, para longe do inimigo mais perto
+        const e = this.nearestEnemy(u, 6);
+        ang = e ? Math.atan2(u.px - e.px, u.pz - e.pz) : (u.face || 0) + Math.PI;
+      }
+      this.cancelNav(u, false);
+      if (u.gatherT > 0) this.cancelGather(u);
+      u.target = null;
+      u.dodge = { t: 0.26, vx: Math.sin(ang), vz: Math.cos(ang) };
+      u.dodgeCd = u.hasPerk('maratonista') ? 0.8 : 1.05;
+      u.st.iframes = 0.34;
+      u.need.energia = Math.max(0, u.need.energia - 1.2);
+      u.st.hidden = false;
+      const face = u.face;
+      this.S.units.burst(u.x, u.z, '#d8c8a8', 1);
+      this.noise(u.x, u.z, 1.5, u);
+      u.face = face;
     },
 
     // ------------------------------------------------------------ navegação por caminho
@@ -356,6 +413,7 @@ export function installRealtime(Game) {
       let cd = 0.2 + (w.pa || 2) * 0.22;
       if (u.st && u.st.surto) cd *= 0.7;
       if (u.st && u.st.haste) cd *= 0.8;
+      if (u.need && u.need.energia < 10) cd *= 1.15;
       return cd;
     },
     reachOf(w) { return w.tipo === 'corpo' ? 1.25 + ((w.alcance || 1) > 1 ? 1 : 0) : (w.alcance || 6) + 0.5; },
@@ -439,6 +497,13 @@ export function installRealtime(Game) {
           if (t.alive && w.atordoar && (rng.next() < w.atordoar || (w.classe === 'sling' && u.skill('estilingada') >= 2 && !u.st.stoneStun))) { t.st.stun = 1.5; u.st.stoneStun = true; view.floatText(t.x, t.z, 'Atordoado!', 'miss'); }
           if (t.alive && w.sangrar && rng.next() < w.sangrar && t.kind !== 'hero') t.st.bleedz = 4;
           if (t.alive && w.empurrar) this.knockback(t, u, 0.9);
+          // golpe corpo a corpo faz o zumbi cambalear (às vezes interrompe o bote dele)
+          else if (t.alive && melee && t.kind === 'zombie' && !t.ai.boss && t.type !== 'resistente' && rng.next() < 0.5) {
+            t.st.stun = Math.max(t.st.stun || 0, 0.12);
+            const a = Math.atan2(t.px - u.px, t.pz - u.pz);
+            this.moveBody(t, Math.sin(a) * 0.22, Math.cos(a) * 0.22);
+          }
+          if (melee) this.S.shake = Math.max(this.S.shake || 0, r.crit ? 0.14 : 0.05);
           if (t.alive && w.assusta && t.kind === 'npc') { t.st.stun = 2; view.say(t, 'Ai! O chinelo não!'); }
           if (w.espalhar) for (const o of this.units) if (o !== t && o.alive && o !== u && this.hostile(o) && dist2(o, t) <= 1.5 && rng.next() < 0.5) this.damage(o, Math.round(r.dmg * 0.5), u);
           if (!t.alive) this.log(`✅ <b>${u.name}</b> derrubou ${t.name}.`, 'bom');
@@ -487,6 +552,7 @@ export function installRealtime(Game) {
 
     // ------------------------------------------------------------ interagir (tecla E / botão ✋)
     rtInteract(u) {
+      if (u && u.st.downed && !u.dead) { this.selfRevive(u); return; }
       if (!u || !this.can(u, 0)) return;
       const cells = [];
       const fx = Math.round(Math.sin(u.face || 0)), fz = Math.round(Math.cos(u.face || 0));
@@ -496,8 +562,8 @@ export function installRealtime(Game) {
       for (const [x, z] of cells) {
         const unit = this.unitAt(x, z);
         const target = unit && unit !== u && !this.hostile(unit) && unit.kind !== 'hero' ? unit : null;
-        if (unit && unit !== u && unit.kind === 'hero' && !unit.st.downed) continue;
-        const opts = this.optionsAt(u, x, z, target || (unit && unit.kind === 'hero' && unit.st.downed ? unit : null));
+        if (unit && unit !== u && unit.kind === 'hero') continue;
+        const opts = this.optionsAt(u, x, z, target);
         const o = opts.find(o => !o.disabled && !o.danger && !skip.test(o.label));
         if (o) { o.fn(); return; }
       }

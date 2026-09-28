@@ -184,6 +184,12 @@ export const ITEMS = {
   cha_ervas: { nome: 'Chá de ervas', cat: 'medicamento', peso: 0.3, valor: 6, icon: '🍵', uso: { hp: 12, sede: 15, moral: 5 }, desc: 'Feito na fogueira. Cura um pouco e acalma.' },
   curativo_ervas: { nome: 'Curativo de ervas', cat: 'medicamento', peso: 0.1, valor: 6, icon: '🩹', uso: { hp: 10, estanca: true }, desc: 'Fibra e ervas amassadas. Estanca sangramento.' },
   manga_assada: { nome: 'Manga assada', cat: 'comida', peso: 0.3, valor: 4, icon: '🍑', uso: { fome: 20, moral: 4 }, desc: 'Parece estranho. É uma delícia.' },
+  // horta, área médica e bancada de armas da base
+  sementes: { nome: 'Sementes', cat: 'material', peso: 0.05, valor: 3, icon: '🌱', desc: 'Feijão, milho, couve e abóbora. Plante num canteiro da horta da base.' },
+  hortalicas: { nome: 'Hortaliças da horta', cat: 'comida', peso: 0.4, valor: 6, icon: '🥬', uso: { fome: 24, sede: 6, moral: 4 }, desc: 'Couve, milho verde e abóbora colhidos na base. Comida de verdade!' },
+  lanca_metal: { nome: 'Lança com ponta de metal', cat: 'arma', peso: 1.3, valor: 16, icon: '🔱', desc: 'Feita na bancada de armas. Alcança longe e fura fundo.',
+    w: { tipo: 'corpo', classe: 'pipe', dano: [10, 15], prec: 82, pa: 3, ruido: 1, alcance: 2, dur: 60 } },
+  soro_caseiro: { nome: 'Soro caseiro', cat: 'medicamento', peso: 0.5, valor: 5, icon: '🧃', uso: { sede: 30, hp: 6, energia: 8 }, desc: 'Água, açúcar e sal, do jeito que a vó ensinou. Hidrata e dá um ânimo.' },
   colete_sucata: { nome: 'Colete de sucata', cat: 'equipamento', peso: 3.5, valor: 30, icon: '🛡️', equip: 'corpo', armadura: 0.3, mordida: 0.35, desc: 'Placas de lata de carro amarradas com corda. Barulhento, mas salva vidas.' },
 };
 
@@ -199,10 +205,10 @@ export function itemName(id, n = 1) {
 // [item, peso de sorteio, [min, max]]
 export const LOOT = {
   militar: [['mun_pistola', 5, [4, 10]], ['mun_rifle', 3, [3, 8]], ['mun_espingarda', 3, [2, 6]], ['enlatado', 4, [1, 3]], ['agua', 4, [1, 3]], ['kit_medico', 1.5, [1, 1]], ['atadura', 3, [1, 3]], ['antibiotico', 1, [1, 1]], ['colete', 0.5, [1, 1]], ['capacete', 0.8, [1, 1]], ['pistola', 0.6, [1, 1]], ['rifle', 0.3, [1, 1]], ['pilhas', 2, [1, 3]], ['lanterna', 0.7, [1, 1]], ['metal', 2, [2, 4]]],
-  roca: [['feijao', 3, [1, 2]], ['arroz', 3, [1, 2]], ['milho', 3, [1, 3]], ['manga', 2, [1, 3]], ['cachaca', 2, [1, 1]], ['corda', 2, [1, 2]], ['facao', 0.6, [1, 1]], ['machado', 0.35, [1, 1]], ['martelo', 0.6, [1, 1]], ['pregos', 2, [2, 5]], ['fosforos', 2, [1, 1]], ['pano', 2, [1, 2]], ['espingarda', 0.15, [1, 1]], ['mun_espingarda', 1, [2, 4]]],
+  roca: [['sementes', 3, [1, 3]], ['feijao', 3, [1, 2]], ['arroz', 3, [1, 2]], ['milho', 3, [1, 3]], ['manga', 2, [1, 3]], ['cachaca', 2, [1, 1]], ['corda', 2, [1, 2]], ['facao', 0.6, [1, 1]], ['machado', 0.35, [1, 1]], ['martelo', 0.6, [1, 1]], ['pregos', 2, [2, 5]], ['fosforos', 2, [1, 1]], ['pano', 2, [1, 2]], ['espingarda', 0.15, [1, 1]], ['mun_espingarda', 1, [2, 4]]],
   pedreira: [['metal', 5, [2, 4]], ['pregos', 2, [3, 6]], ['fita', 1.5, [1, 1]], ['combustivel', 1, [1, 1]], ['ferramentas', 0.5, [1, 1]], ['pe_de_cabra', 0.5, [1, 1]], ['picareta', 0.6, [1, 1]], ['agua', 2, [1, 2]]],
   geladeira: [['agua', 5, [1, 2]], ['refri', 3, [1, 1]], ['suco', 3, [1, 2]], ['banana', 2, [1, 3]], ['manga', 2, [1, 2]], ['pao', 2, [1, 3]], ['chocolate', 1, [1, 1]], ['insulina', 0.15, [1, 1]]],
-  armario_cozinha: [['enlatado', 4, [1, 2]], ['feijoada_lata', 2, [1, 1]], ['milho', 3, [1, 2]], ['miojo', 4, [1, 3]], ['biscoito', 3, [1, 2]], ['arroz', 2, [1, 1]], ['feijao', 2, [1, 1]], ['fosforos', 2, [1, 1]], ['faca', 1.5, [1, 1]], ['frigideira', 1, [1, 1]], ['cafe', 1, [1, 1]], ['garrafa', 1.5, [1, 2]], ['cachaca', 0.6, [1, 1]], ['racao', 0.5, [1, 1]]],
+  armario_cozinha: [['sementes', 0.6, [1, 2]], ['enlatado', 4, [1, 2]], ['feijoada_lata', 2, [1, 1]], ['milho', 3, [1, 2]], ['miojo', 4, [1, 3]], ['biscoito', 3, [1, 2]], ['arroz', 2, [1, 1]], ['feijao', 2, [1, 1]], ['fosforos', 2, [1, 1]], ['faca', 1.5, [1, 1]], ['frigideira', 1, [1, 1]], ['cafe', 1, [1, 1]], ['garrafa', 1.5, [1, 2]], ['cachaca', 0.6, [1, 1]], ['racao', 0.5, [1, 1]]],
   banheiro: [['atadura', 4, [1, 2]], ['dipirona', 4, [1, 2]], ['remedios', 2, [1, 1]], ['alcool', 2, [1, 1]], ['antibiotico', 0.7, [1, 1]], ['calmante', 1, [1, 1]], ['vitamina', 1.5, [1, 1]], ['kit_medico', 0.4, [1, 1]], ['rodo', 0.6, [1, 1]]],
   quarto: [['mochila', 1.2, [1, 1]], ['lanterna', 1.2, [1, 1]], ['pilhas', 2, [1, 2]], ['pano', 2, [1, 2]], ['revistas', 1.5, [1, 1]], ['chocolate', 1, [1, 1]], ['foto', 0.4, [1, 1]], ['revolver', 0.18, [1, 1]], ['mun_pistola', 0.5, [3, 8]], ['radio_pilha', 0.5, [1, 1]], ['dipirona', 1, [1, 1]], ['jaqueta_couro', 0.3, [1, 1]], ['apito', 0.4, [1, 1]], ['taco', 0.4, [1, 1]]],
   sala: [['revistas', 2, [1, 1]], ['pilhas', 1.5, [1, 2]], ['chocolate', 1, [1, 1]], ['biscoito', 1, [1, 1]], ['radio_pilha', 0.6, [1, 1]], ['mapa', 0.5, [1, 1]], ['fita', 0.8, [1, 1]], ['foto', 0.3, [1, 1]]],

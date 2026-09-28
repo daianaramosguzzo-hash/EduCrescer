@@ -8,6 +8,7 @@ import { installTravel } from './game/travel.js';
 import { UI } from './ui/ui.js';
 import { Audio } from './audio.js';
 import { openGallery } from './ui/gallery.js';
+import { openPicker, closePicker, pickerOpen } from './ui/picker.js';
 import { $, h } from './ui/common.js';
 import { HEROES, HERO_ORDER, SKILLS, STAT_NAMES } from './data/heroes.js';
 import { bus } from './util.js';
@@ -28,6 +29,7 @@ window.__aimores = { g, S, ui, audio, bus }; // útil para depurar no console
 // ------------------------------------------------------------ tela de título
 function showTitle() {
   g.phase = 'none';
+  closePicker();
   ui.panels.close();
   $('#hud').classList.add('hidden');
   $('#dialog').classList.add('hidden');
@@ -70,11 +72,21 @@ function chooseDifficulty() {
     dificil: 'Mais zumbis, mais dano e hordas frequentes. Cada bala conta.',
   };
   for (const [k, d] of Object.entries(DIFF)) {
-    body.append(h('button', { class: 'diff ' + k, onclick: () => { ui.panels.close(); startGame(() => g.newGame({ diff: k })); } },
+    body.append(h('button', { class: 'diff ' + k, onclick: () => { ui.panels.close(); chooseSurvivor(k); } },
       h('b', {}, d.nome), h('span', {}, desc[k])));
   }
   body.append(h('p', { class: 'note' }, 'Dica: o jogo salva sozinho a cada período do dia. Você também pode salvar a qualquer momento no menu 💾.'));
   ui.panels.show(h('div', { class: 'win small' }, h('div', { class: 'win-head' }, h('h2', {}, 'Dificuldade'), h('button', { class: 'x', onclick: () => ui.panels.close() }, '✕')), h('div', { class: 'win-body' }, body)), 'diff');
+}
+
+// escolha de quem começa (os outros ficam na base)
+function chooseSurvivor(diff) {
+  $('#title').classList.add('hidden');
+  openPicker({
+    g, mode: 'start',
+    onPick: id => startGame(() => g.newGame({ diff, ativo: id })),
+    onCancel: () => { $('#title').classList.remove('hidden'); chooseDifficulty(); },
+  });
 }
 
 // ------------------------------------------------------------ iniciar / carregar
@@ -147,8 +159,8 @@ function frame(now) {
   if (g.state && g.phase !== 'none') {
     try {
       ui.updateKeysCamera(dt);
-      // o mundo só anda quando não há janela ou conversa aberta
-      if (!ui.panels.cur && !ui.dialogOpen) g.tick(dt);
+      // o mundo só anda quando não há janela, conversa ou escolha de sobrevivente aberta
+      if (!ui.panels.cur && !ui.dialogOpen && !pickerOpen()) g.tick(dt);
       g.frameUpdate(dt);
       S.units.update(dt, (x, z) => S.lightAt(x, z), u => g.unitVisible(u));
       // câmera acompanha quem você controla
@@ -166,5 +178,5 @@ function frame(now) {
 renderCast();
 showTitle();
 const q = new URLSearchParams(location.search);
-if (q.has('novo')) startGame(() => g.newGame({ diff: q.get('novo') || 'normal', seed: q.has('semente') ? +q.get('semente') : undefined }));
+if (q.has('novo')) startGame(() => g.newGame({ diff: q.get('novo') || 'normal', seed: q.has('semente') ? +q.get('semente') : undefined, ativo: q.get('heroi') || undefined }));
 requestAnimationFrame(frame);

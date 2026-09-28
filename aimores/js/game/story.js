@@ -13,14 +13,45 @@ import { rng, bus, clamp, wait } from '../util.js';
 
 // ------------------------------------------------------------ utilidades
 export function flag(g, k, v) { if (v === undefined) return g.state.flags[k]; g.state.flags[k] = v; bus.emit('hud'); return v; }
-export function hero(g, id) { return g.units.find(u => u.kind === 'hero' && u.id === id && !u.dead) || null; }
-export function anyHeroHas(g, id, n = 1) { return g.liveHeroes.reduce((s, h) => s + countItem(h, id), 0) >= n; }
+export function hero(g, id) { return g.heroes.find(u => u.id === id && !u.dead) || null; }
+// cada sobrevivente tem o próprio inventário: conta o que o ativo carrega e, se ele estiver na
+// base, também o que está nos baús da base (que são de todos)
+function baseChests(g) {
+  const a = g.active;
+  if (!a || g.zone || !g.inBase || !g.inBase(a.x, a.z)) return [];
+  return g.map.props.filter(p => !p.removed && (p.stash || PROPS[p.type].stash) && g.inBase(p.x, p.z));
+}
+export function anyHeroHas(g, id, n = 1) {
+  const a = g.active;
+  let c = a && !a.dead ? countItem(a, id) : 0;
+  for (const p of baseChests(g)) for (const e of p.loot || []) if (e.id === id) c += e.n;
+  return c >= n;
+}
 export function takeFromParty(g, id, n = 1) {
-  for (const h of g.liveHeroes) { const c = countItem(h, id); if (c > 0) { const k = Math.min(c, n); if (h.eq.mao && h.eq.mao.id === id && !h.inv.find(e => e.id === id)) h.eq.mao = null; else removeItem(h, id, k); n -= k; } if (n <= 0) break; }
+  const h = g.active;
+  if (h && !h.dead) { const c = countItem(h, id); if (c > 0) { const k = Math.min(c, n); if (h.eq.mao && h.eq.mao.id === id && !h.inv.find(e => e.id === id)) h.eq.mao = null; else removeItem(h, id, k); n -= k; } }
+  for (const p of baseChests(g)) {
+    if (n <= 0) break;
+    for (const e of p.loot || []) { if (e.id !== id || n <= 0) continue; const k = Math.min(n, e.n); e.n -= k; n -= k; }
+    p.loot = (p.loot || []).filter(e => e.n > 0);
+  }
   bus.emit('hud');
   return n <= 0;
 }
-export function giveParty(g, heroU, id, n = 1) { addItem(heroU || g.selected, id, n); g.log(`🎁 Recebido: ${ITEMS[id].icon} ${ITEMS[id].nome}${n > 1 ? ' ×' + n : ''}.`, 'bom'); bus.emit('hud'); }
+// existe em algum lugar da turma (qualquer sobrevivente ou baú da base) — usado nos finais
+export function teamHas(g, id) {
+  if (g.heroes.some(h => !h.dead && countItem(h, id) > 0)) return true;
+  const chests = (g.town ? g.town.map : g.map).props.filter(p => !p.removed && (p.stash || PROPS[p.type].stash));
+  return chests.some(p => (p.loot || []).some(e => e.id === id));
+}
+export function giveParty(g, heroU, id, n = 1) { addItem(heroU || g.active || g.selected, id, n); g.log(`🎁 Recebido: ${ITEMS[id].icon} ${ITEMS[id].nome}${n > 1 ? ' ×' + n : ''}.`, 'bom'); bus.emit('hud'); }
+// está por perto do ativo? (senão fala pelo rádio comunicador)
+export function nearActive(g, h) {
+  const a = g.active;
+  if (!a || !h || h === a) return true;
+  if (g.zone && h.resting) return false;
+  return Math.hypot(h.x - a.x, h.z - a.z) <= 12;
+}
 export function relKey(a, b) { const i = HERO_ORDER.indexOf(a), j = HERO_ORDER.indexOf(b); return i < j ? a + '|' + b : b + '|' + a; }
 export function rel(g, a, b) { return g.state.rel[relKey(a, b)] ?? 50; }
 export function relChange(g, a, b, d) {
@@ -50,7 +81,7 @@ export function speakerOf(g, who, ctx) {
   if (who === 'narr' || !who) return { nome: '', narr: true };
   if (who === 'npc') { const n = ctx.npc; return { nome: n.name, look: n.look, npc: true }; }
   if (who === 'hero') { const h = ctx.hero; return { nome: h.name, retrato: HEROES[h.id].retrato, cor: HEROES[h.id].cor, hero: h.id }; }
-  if (HEROES[who]) { const h = hero(g, who); if (!h) return null; return { nome: h.name, retrato: HEROES[who].retrato, cor: HEROES[who].cor, hero: who }; }
+  if (HEROES[who]) { const h = hero(g, who); if (!h) return null; return { nome: h.name + (nearActive(g, h) ? '' : ' 📻 (pelo rádio)'), retrato: HEROES[who].retrato, cor: HEROES[who].cor, hero: who }; }
   if (NPCS[who]) return { nome: NPCS[who].nome, look: NPCS[who].look, npc: true };
   return { nome: who };
 }
@@ -156,7 +187,7 @@ export function questAdvance(g, id, fromStep = null) {
   if (!s || s.done || s.failed) return false;
   if (fromStep && q.passos[s.step]?.id !== fromStep) return false;
   const passo = q.passos[s.step];
-  if (passo && passo.xp) for (const h of g.liveHeroes) g.gainXp(h, passo.xp, true);
+  if (passo && passo.xp && g.active) g.gainXp(g.active, passo.xp, true);
   s.step++;
   if (s.step >= q.passos.length) return questDone(g, id);
   g.log(`📜 <b>${q.nome}</b>: ${q.passos[s.step].desc}`, 'missao');
@@ -169,9 +200,10 @@ export function questDone(g, id) {
   if (!s || s.done) return false;
   const q = QUESTS[id];
   s.done = true;
-  g.log(`✅ Missão concluída: <b>${q.nome}</b>${q.xp ? ` (+${q.xp} XP para o grupo)` : ''}`, 'bom');
+  const a = g.active && !g.active.dead ? g.active : null;
+  g.log(`✅ Missão concluída: <b>${q.nome}</b>${q.xp && a ? ` (+${q.xp} XP para ${a.name})` : ''}`, 'bom');
   g.toast(`Missão concluída: ${q.nome}`, 'bom');
-  if (q.xp) for (const h of g.liveHeroes) g.gainXp(h, q.xp);
+  if (q.xp && a) g.gainXp(a, q.xp);
   if (q.fim) q.fim(g);
   bus.emit('quest', { id, tipo: 'fim' });
   bus.emit('hud');
@@ -199,7 +231,7 @@ export async function banter(g, tag, extra = {}) {
   const now = g.state.turn;
   if (g.state.lastBanter && now - g.state.lastBanter < 6 && !extra.force) return;
   const options = BANTER.filter(b => b.quando === tag && !(b.uma && used[b.id]) && (!used[b.id] || now - used[b.id] > 60) &&
-    b.quem.every(id => { const h = hero(g, id); return h && !h.st.downed; }) &&
+    b.quem.every(id => { const h = hero(g, id); return h && !h.st.downed && nearActive(g, h); }) &&
     (!b.rel || Object.entries(b.rel).every(([pair, min]) => { const [a, c] = pair.split('|'); return min >= 0 ? rel(g, a, c) >= min : rel(g, a, c) <= -min; })) &&
     (!b.se || b.se(g, extra)));
   if (!options.length) return;
@@ -266,7 +298,7 @@ export function onTurn(g) {
   const h = g.hour();
   if (h >= 12 && h < 15 && t % 13 === 0) banter(g, 'calor');
   if (g.state.mode === 'combat' && t % 7 === 0) banter(g, 'combate');
-  const fome = g.liveHeroes.some(x => x.need.fome < 25 || x.need.sede < 25);
+  const fome = g.fieldHeroes.some(x => x.need.fome < 25 || x.need.sede < 25);
   if (fome && t % 11 === 0) banter(g, 'fome');
   // relação ruim gera discussões
   if (t % 17 === 0) {
@@ -318,8 +350,8 @@ export async function onEnter(g, u, x, z) {
     g.log(`🏠 ${b.name}`, 'lugar');
     bus.emit('place', b.name);
     // Plano de Aula: revela a planta
-    const dai = hero(g, 'daiana');
-    if (dai && dai.skill('plano_de_aula') >= 2) { for (let zz = b.z0; zz <= b.z1; zz++) for (let xx = b.x0; xx <= b.x1; xx++) if (g.map.building[g.map.idx(xx, zz)] === b.id) g.map.explored[g.map.idx(xx, zz)] = 1; }
+    const dai = u.id === 'daiana' ? u : null;
+    if (dai) { for (let zz = b.z0; zz <= b.z1; zz++) for (let xx = b.x0; xx <= b.x1; xx++) if (g.map.building[g.map.idx(xx, zz)] === b.id) g.map.explored[g.map.idx(xx, zz)] = 1; }
     const tipo = b.type;
     banter(g, 'entrar:' + tipo, { force: true });
   }
@@ -356,7 +388,7 @@ export function onBossDead(g, u) {
   flag(g, 'matriz_morta', true);
   g.log('🌿 A Matriz caiu. O coração do surto parou de bater.', 'bom');
   g.toast('A Matriz foi derrotada!', 'bom');
-  for (const h of g.liveHeroes) g.gainXp(h, 150);
+  if (g.active) g.gainXp(g.active, 150);
   banter(g, 'chefe', { force: true });
   questAdvance(g, 'agronova', 'matriz');
 }
@@ -480,6 +512,6 @@ export function endingSummary(g, kind) {
   const saved = (g.state.saved || []).length + (flag(g, 'escola_escoltada') ? 3 : 0) + (flag(g, 'escola_fortificada') ? 2 : 0);
   const vivos = g.liveHeroes.map(h => h.name);
   const mortos = g.heroes.filter(h => h.dead).map(h => h.name);
-  const cura = anyHeroHas(g, 'hd_dados') || flag(g, 'formula_transmitida');
+  const cura = teamHas(g, 'hd_dados') || flag(g, 'formula_transmitida');
   return { kind, saved, vivos, mortos, cura, dias: g.day(), kills: g.state.stats.kills, rel: g.state.rel };
 }

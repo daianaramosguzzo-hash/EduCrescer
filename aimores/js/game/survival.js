@@ -1,5 +1,6 @@
-// Sobrevivência (a cada minuto de jogo): fome, sede, moral, infecção, sangramento, calor e
-// bateria da lanterna. Não existe cansaço: andar e correr não gastam energia.
+// Sobrevivência (a cada minuto de jogo): fome, sede, energia, moral, infecção, sangramento, calor e
+// bateria da lanterna. A energia cai devagar com o passar das horas (andar e correr não gastam);
+// dormir e descansar na base recuperam. Quem está descansando na base se recupera aos poucos.
 import { rng, clamp } from '../util.js';
 import { ITEMS } from '../data/items.js';
 import { LOOKS } from '../sprites/looks.js';
@@ -25,10 +26,16 @@ export function tickSurvival(g, minutes) {
   for (const u of g.liveHeroes) {
     if (u.st.downed) continue;
     const n = u.need;
+    if (u.resting) { restTick(u, minutes, k); continue; }
     const hot = temperature(g) >= 33 && !g.map.indoor(u.x, u.z);
     n.fome = clamp(n.fome - 0.03 * minutes * k, 0, 100);
     n.sede = clamp(n.sede - 0.042 * minutes * k * (hot ? 1.5 : 1), 0, 100);
-    n.energia = 100;
+    n.energia = clamp(n.energia - 0.035 * minutes * k, 0, 100);
+    if (n.energia <= 0 && rng.next() < 0.03) u.hp -= 1;
+    for (const [lim, msg] of [[25, 'está ficando cansado(a). Descanse ou durma na base.'], [10, 'está exausto(a)! Mira e velocidade caem.']]) {
+      if (n.energia < lim && !u.st['cansou' + lim]) { u.st['cansou' + lim] = true; g.log(`😴 <b>${u.name}</b> ${msg}`, 'alerta'); }
+      if (n.energia >= lim + 10) u.st['cansou' + lim] = false;
+    }
     // sangramento
     if (u.st.bleed) {
       const d = u.st.bleed;
@@ -40,7 +47,7 @@ export function tickSurvival(g, minutes) {
     if (u.st.infected && n.infeccao < 100) {
       if (u.st.segura > 0) u.st.segura = Math.max(0, u.st.segura - minutes);
       else {
-        let rate = 0.11 * (u.hasPerk('imune') ? 0.7 : 1) * (1 - (u.stats.resistencia - 5) * 0.05);
+        let rate = 0.11 * (u.hasPerk('imune') ? 0.7 : 1) * (1 - (u.stats.resistencia - 5) * 0.05) * (u.id === 'arthur' ? 0.75 : 1);
         const before = n.infeccao;
         n.infeccao = clamp(n.infeccao + rate * minutes, 0, 100);
         for (const [lim, msg] of [[25, 'está com febre (fica mais lento).'], [50, 'está delirando. A infecção avança!'], [75, 'está em estado grave! Precisa do Soro R-7 ou de antibióticos, urgente.']]) {
@@ -58,6 +65,7 @@ export function tickSurvival(g, minutes) {
     let dm = 0;
     if (n.fome < 25) dm -= 0.05;
     if (n.sede < 25) dm -= 0.05;
+    if (n.energia < 10) dm -= 0.03;
     if (g.isNight() && !g.map.indoor(u.x, u.z)) dm -= 0.02;
     if (u.wounds.some(w => !w.tratado) && !(u.st.dor > 0)) dm -= 0.02;
     if (dm === 0) dm = n.moral < 55 ? 0.03 : 0;
@@ -74,6 +82,19 @@ export function tickSurvival(g, minutes) {
     }
     if (u.hp <= 0 && !u.dead) { u.hp = 0; g.damage(u, 1, null, { noBlood: true }); }
   }
+}
+
+// descansando na base: recupera energia e vida, a fome e a sede caem bem devagar (a turma se vira
+// com o básico da casa) e a infecção fica segura enquanto está parado(a)
+function restTick(u, minutes, k) {
+  const n = u.need;
+  n.energia = clamp(n.energia + 0.12 * minutes, 0, 100);
+  if (n.fome > 35) n.fome = Math.max(35, n.fome - 0.01 * minutes * k);
+  if (n.sede > 35) n.sede = Math.max(35, n.sede - 0.014 * minutes * k);
+  if (n.moral < 60) n.moral = Math.min(60, n.moral + 0.02 * minutes);
+  u.st.bleed = 0; u.st.panic = 0; u.st.stun = 0;
+  if (u.hp < u.maxHp) u.hp = Math.min(u.maxHp, u.hp + 0.03 * minutes);
+  for (const key of ['dor', 'drunk']) if (u.st[key]) u.st[key] = Math.max(0, u.st[key] - minutes);
 }
 
 function turnIntoZombie(g, u) {

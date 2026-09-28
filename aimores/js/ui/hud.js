@@ -1,11 +1,13 @@
 // HUD: grupo, relógio, barra de ações, minimapa, missões, registro e avisos.
 import { $, h, portraitOf, bar, pct } from './common.js';
-import { HEROES, SKILLS } from '../data/heroes.js';
+import { HEROES, SKILLS, XP_LEVELS } from '../data/heroes.js';
 import { ITEMS } from '../data/items.js';
 import { QUESTS } from '../data/quests.js';
 import { FLOORS, S } from '../world/tiles.js';
 import { countItem, carried, capacity } from '../game/units.js';
 import { temperature, heatStatus } from '../game/survival.js';
+import { REGIOES, regionAt, PERIGO_NOME, PERIGO_COR2 } from '../world/regions.js';
+import { ZONES, PERIGO_COR } from '../world/zones.js';
 import { bus, fmtTime } from '../util.js';
 
 export class Hud {
@@ -33,24 +35,30 @@ export class Hud {
     this.renderTracker();
   }
 
-  // ------------------------------------------------------------ grupo
+  // ------------------------------------------------------------ turma (o ativo em cima; os outros na base)
   renderParty() {
     const g = this.g;
     const wrap = $('#party');
     wrap.innerHTML = '';
-    for (const u of g.heroes) {
+    const act = g.active;
+    const list = g.heroes.slice().sort((a, b) => (b === act) - (a === act));
+    const canSwap = !g.switchBlock();
+    for (const u of list) {
       const n = u.need;
       const warn = v => v < 25 ? 'warn' : '';
-      const badges = [u.st.bleed ? '🩸' : '', u.st.infected ? '🦠' : '', u.st.hidden ? '🥷' : '', u.st.defend ? '🛡️' : '', u.st.panic ? '😱' : '', u.st.stun ? '💫' : '', u.st.downed ? '💀' : '', u.dead ? '⚰️' : ''].join('');
-      const card = h('div', { class: 'hero-card' + (u.selected ? ' sel' : '') + (u.st.downed ? ' down' : '') + (u.dead ? ' dead' : ''), title: `${u.name} — clique para selecionar (${g.heroes.indexOf(u) + 1})`,
-        onclick: () => { if (!u.dead) { g.select(u); } } },
+      const isAct = u === act && !u.dead;
+      const badges = [u.st.bleed ? '🩸' : '', u.st.infected ? '🦠' : '', u.st.hidden ? '🥷' : '', u.st.panic ? '😱' : '', u.st.stun ? '💫' : '', u.st.downed ? '💀' : '', u.dead ? '⚰️' : ''].join('');
+      const where = u.dead ? 'Morreu' : isAct ? '★ Em campo' : '🏠 Na base';
+      const title = u.dead ? `${u.name} não sobreviveu` : isAct ? `${u.name} — você está controlando` : `${u.name} descansando na base (nível ${u.lvl}) — ${canSwap ? 'clique para trocar' : 'dá para trocar quando você estiver na base'}`;
+      const card = h('div', { class: 'hero-card' + (isAct ? ' sel active' : ' resting') + (u.st.downed ? ' down' : '') + (u.dead ? ' dead' : '') + (!isAct && !u.dead && canSwap ? ' can-swap' : ''), title,
+        onclick: () => { if (u.dead) return; if (isAct) this.ui.open('char'); else this.ui.swapMenu(u.id); } },
         h('div', { class: 'pic', style: { backgroundImage: `url(${portraitOf(u)})`, borderColor: HEROES[u.id].cor } }),
         h('div', { class: 'info' },
           h('div', { class: 'nm' }, u.name, h('small', {}, `Nv ${u.lvl}${u.pts || u.spts || u.perkPts ? ' ⭐' : ''}`)),
           bar('hp', u.hp, u.maxHp),
           u.dead ? h('div', { class: 'mini-needs' }, 'Morreu') : h('div', { class: 'mini-needs' },
-            h('span', { class: warn(n.fome), title: 'Fome' }, '🍗' + Math.round(n.fome)),
-            h('span', { class: warn(n.sede), title: 'Sede' }, '💧' + Math.round(n.sede)),
+            h('span', { class: 'where' }, where),
+            isAct ? null : h('span', { class: warn(n.fome), title: 'Fome' }, '🍗' + Math.round(n.fome)),
             n.infeccao > 0 ? h('span', { class: 'warn', title: 'Infecção' }, '🦠' + Math.round(n.infeccao)) : null)),
         h('div', { class: 'badges' }, badges));
       wrap.append(card);
@@ -66,7 +74,12 @@ export class Hud {
     const prazo = g.state.flags.sabe_prazo ? g.state.flags.prazo - g.state.time : null;
     const fmtPrazo = m => { const d = Math.floor(m / 1440), hh = Math.floor((m % 1440) / 60); return `${d > 0 ? d + 'd ' : ''}${hh}h`; };
     t.innerHTML = '';
+    const rg = g.zone ? null : sel ? regionAt(sel.x, sel.z) : null;
+    const Z = g.zone ? ZONES[g.zone.id] : null;
+    const place = Z ? h('span', { class: 'region-chip', title: Z.desc, style: { '--c': PERIGO_COR[Z.perigo] } }, `🧭 ${Z.nome}`)
+      : rg ? h('span', { class: 'region-chip', title: `${rg.desc} — ${PERIGO_NOME[rg.perigo]}`, style: { '--c': PERIGO_COR2[rg.perigo] } }, `${rg.perigo === 'base' ? '🏠' : '📍'} ${rg.nome}`) : '';
     t.append(
+      place,
       h('span', {}, `Dia ${g.day()}`),
       h('span', { class: 'clock' }, g.clock()),
       h('span', { title: hs.nome }, `${night ? '🌙' : g.state.weather.chuva ? '🌧️' : hs.icon} ${hs.t}°C`),
@@ -85,18 +98,22 @@ export class Hud {
     bar_.innerHTML = '';
     if (!u) return;
     const n = u.need;
-    const needEl = (ic, label, v, color, invert = false) => h('div', { class: 'need', title: `${label}: ${Math.round(v)}` }, ic, bar('', invert ? v : v, 100, color));
+    const needEl = (ic, label, v, color, invert = false) => h('div', { class: 'need' + (!invert && v < 25 ? ' low' : ''), title: `${label}: ${Math.round(v)}` }, ic, bar('', v, 100, color));
+    const next = XP_LEVELS[u.lvl] ?? u.xp, prev = XP_LEVELS[u.lvl - 1] ?? 0;
     const me = h('div', { class: 'me' },
-      h('div', { class: 'pic', style: { backgroundImage: `url(${portraitOf(u)})`, borderColor: HEROES[u.id].cor }, onclick: () => ui.open('char') }),
+      h('div', { class: 'pic', title: 'Ficha do personagem (K)', style: { backgroundImage: `url(${portraitOf(u)})`, borderColor: HEROES[u.id].cor }, onclick: () => ui.open('char') },
+        h('span', { class: 'lvl', title: `Nível ${u.lvl}` }, u.lvl)),
       h('div', {},
-        h('div', { class: 'nm' }, u.name),
-        h('div', { class: 'role' }, `${HEROES[u.id].papel} · ❤ ${Math.round(u.hp)}/${u.maxHp}`),
+        h('div', { class: 'nm' }, u.name, h('small', {}, ` Nível ${u.lvl}${u.pts || u.spts || u.perkPts ? ' ⭐' : ''}`)),
+        h('div', { class: 'role' }, `❤ Vida ${Math.round(u.hp)}/${u.maxHp}`),
         bar('hp', u.hp, u.maxHp),
+        h('div', { class: 'xpline', title: `Experiência: ${u.xp}/${next}` }, bar('xp', u.xp - prev, Math.max(1, next - prev), 'linear-gradient(#9ad8ff,#2a8ad8)')),
         h('div', { class: 'needs' },
           needEl('🍗', 'Fome (cheio = satisfeito)', n.fome, 'linear-gradient(#ffd08a,#e08a2a)'),
           needEl('💧', 'Sede', n.sede, 'linear-gradient(#8ad8ff,#2a8ad8)'),
+          needEl('⚡', 'Energia (dormir e descansar recuperam)', n.energia, 'linear-gradient(#fff08a,#e0b82a)'),
           needEl('🙂', 'Moral', n.moral, 'linear-gradient(#f0a8d8,#b84a98)'),
-          needEl('🦠', 'Infecção', n.infeccao, 'linear-gradient(#b8f07a,#4a8a1a)'))));
+          needEl('🦠', 'Infecção', n.infeccao, 'linear-gradient(#b8f07a,#4a8a1a)', true))));
     // arma
     const w = u.eq.mao;
     const it = w ? ITEMS[w.id] : null;
@@ -120,15 +137,18 @@ export class Hud {
       for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, () => { ui.attackBtn = false; });
       return el;
     };
+    const swapWhy = g.switchBlock();
     const acts = h('div', { class: 'acts' },
       hold(B('⚔️', 'Atacar (segure Espaço) — ou clique num zumbi', () => {}, 'Espaço', 'big-atk')),
-      B('✋', 'Interagir: vasculhar, abrir, pegar, conversar, coletar', () => g.rtInteract(u), 'E'),
+      u.st.downed ? B('🩹', 'Levantar-se com atadura ou kit médico', () => g.selfRevive(u), 'E', 'revive') : B('✋', 'Interagir: vasculhar, abrir, pegar, conversar, coletar', () => g.rtInteract(u), 'E'),
+      B('💨', 'Esquivar (rolar para o lado)', () => g.dodge(u), 'Q', (u.dodgeCd || 0) > 0 ? 'cool' : ''),
       B('🥷', u.st.sneak ? 'Agachado (anda devagar e sem barulho)' : 'Agachar', () => g.toggleSneak(u), 'C', u.st.sneak ? 'on' : ''),
       B('🏃', `Correr (segure Shift) ${ui.runToggle ? '— LIGADO' : ''}`, () => { ui.runToggle = !ui.runToggle; this.dirty = true; }, 'Shift', ui.runToggle ? 'on' : ''),
       B('🔄', 'Recarregar', () => g.reload(u), 'R'),
       B('🎒', 'Inventário', () => ui.open('inv'), 'I'),
       B('🛠️', 'Fabricar', () => ui.open('craft'), 'B'),
       B('🔨', 'Construir na base', () => ui.open('build'), 'N'),
+      B('👥', swapWhy ? `Trocar sobrevivente — ${swapWhy}` : 'Trocar sobrevivente (você está na base)', () => ui.swapMenu(), 'T', swapWhy ? 'off' : 'swap'),
       B('🔦', u.eq.mao2 && u.eq.mao2.id === 'lanterna' ? `Lanterna ${u.flash ? 'ligada' : 'desligada'} (${Math.round(u.eq.mao2.carga || 0)}%)` : 'Sem lanterna equipada', () => g.toggleFlashlight(u), 'F', u.eq.mao2 && u.flash && u.eq.mao2.id === 'lanterna' ? 'on' : ''),
     );
     for (const sid of HEROES[u.id].skills) {
@@ -136,7 +156,7 @@ export class Hud {
       const r = u.skill(sid);
       const cd = u.cd[sid] || 0;
       const title = `${sk.nome} (nível ${r}) — ${sk.desc(r || 1)}`;
-      if (sk.ativa) acts.append(B(sk.icon, title, () => sid === 'voz_de_comando' ? ui.setMode('skill:' + sid) : g.useSkill(u, sid), '', 'skill', !r || cd > 0, cd > 0 ? h('span', { class: 'cd' }, cd) : null));
+      if (sk.ativa) acts.append(B(sk.icon, title, () => g.useSkill(u, sid), '', 'skill', !r || cd > 0, cd > 0 ? h('span', { class: 'cd' }, cd) : null));
       else acts.append(h('button', { class: 'skill', title: title + ' (passiva)', disabled: true, style: { opacity: 0.75 } }, sk.icon));
     }
     bar_.append(me, weapon, acts);
@@ -204,6 +224,19 @@ export class Hud {
       const [px, py] = P(u.x, u.z);
       ctx.fillStyle = col; ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(px, py, u.kind === 'hero' ? (full ? 4 : 3.5) : (full ? 2.5 : 2.5), 0, 7); ctx.fill(); ctx.stroke();
+    }
+    // regiões da cidade coloridas pelo perigo (mapa grande)
+    if (full && !g.zone && this.ui.showDanger !== false) {
+      for (const rg of REGIOES) {
+        const [a, b, c2, d] = rg.r;
+        const [px0, py0] = P(a - 0.5, b - 0.5), [px1, py1] = P(c2 + 0.5, d + 0.5);
+        ctx.fillStyle = PERIGO_COR2[rg.perigo] + '2a'; ctx.fillRect(px0, py0, px1 - px0, py1 - py0);
+        ctx.strokeStyle = PERIGO_COR2[rg.perigo] + 'aa'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.strokeRect(px0 + 1, py0 + 1, px1 - px0 - 2, py1 - py0 - 2); ctx.setLineDash([]);
+        ctx.font = 'bold 10px Nunito, sans-serif'; ctx.textAlign = 'left';
+        const ly = rg.rotulo === 'baixo' ? py1 - 5 : py0 + 12;
+        ctx.fillStyle = '#000'; ctx.fillText(rg.nome, px0 + 5, ly + 1);
+        ctx.fillStyle = PERIGO_COR2[rg.perigo]; ctx.fillText(rg.nome, px0 + 4, ly);
+      }
     }
     if (full) {
       ctx.font = 'bold 11px Nunito, sans-serif'; ctx.textAlign = 'center';

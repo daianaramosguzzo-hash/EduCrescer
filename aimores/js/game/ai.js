@@ -1,5 +1,5 @@
 // Inteligência em tempo real: zumbis (vagar, ouvir barulho, caçar, arrombar portas, especiais),
-// sobreviventes (neutros, aliados, hostis) e os companheiros da turma que seguem quem você controla.
+// sobreviventes (neutros, aliados, hostis) e a turma que fica descansando na base.
 import { ZOMBIES } from '../data/zombies.js';
 import { ITEMS } from '../data/items.js';
 import { los } from './vision.js';
@@ -13,13 +13,13 @@ const ACTIVE = 42;              // zumbis mais longe que isso do grupo ficam "do
 const d2 = (a, b) => Math.hypot(a.px - b.px, a.pz - b.pz);
 
 export function updateAI(g, dt) {
-  const heroes = g.liveHeroes;
+  const heroes = g.mapHeroes;
   if (!heroes.length) return;
   for (const u of g.units) {
     if (!u.alive || u === g.selected) continue;
     if (u.px === undefined || u.px === null) g.rtPlace(u);
     if (u.st.stun > 0) { u.st.stun = Math.max(0, u.st.stun - dt / 2); u.rtAnim = null; continue; }
-    if (u.kind === 'hero') { if (!u.st.downed) companion(g, u, dt); else u.rtAnim = null; continue; }
+    if (u.kind === 'hero') { if (u.resting) resting(g, u, dt); else u.rtAnim = null; continue; }
     let near = 999;
     for (const h of heroes) { const d = Math.abs(h.x - u.x) + Math.abs(h.z - u.z); if (d < near) near = d; }
     if (u.kind === 'zombie') {
@@ -82,11 +82,11 @@ function perceive(g, z) {
   const Z = ZOMBIES[z.type];
   const night = g.isNight();
   let best = null, bestScore = 1e9;
-  const prot = g.liveHeroes.find(h => h.st.protetor && d2(h, z) <= 4.5);
+  const prot = g.fieldHeroes.find(h => h.st.protetor && d2(h, z) <= 4.5);
   if (prot && los(g.map, z.x, z.z, prot.x, prot.z)) return prot;
   for (const t of g.units) {
-    if (!t.alive || t.kind === 'zombie' || t.gone || t.px === undefined) continue;
-    if (t.kind === 'npc' && t.faction !== 'ally' && !g.liveHeroes.some(h => Math.hypot(h.x - t.x, h.z - t.z) < 14)) continue;
+    if (!t.alive || t.kind === 'zombie' || t.gone || t.px === undefined || t.resting) continue;
+    if (t.kind === 'npc' && t.faction !== 'ally' && !g.fieldHeroes.some(h => Math.hypot(h.x - t.x, h.z - t.z) < 14)) continue;
     const d = d2(t, z);
     let sight = Z.visao;
     if (night) sight = Math.max(3, sight * 0.55);
@@ -175,6 +175,7 @@ function zombie(g, z, dt, near) {
       g.later(0.4, () => {
         if (!target.alive) return;
         g.S.units.burst(target.x, target.z, '#7cc24a', 2);
+        if (target.st.iframes > 0) { g.S.units.floatText(target.x, target.z, 'Esquivou!', 'miss'); return; }
         if (rng.next() * 100 < 70) { g.damage(target, rng.int(8, 13), z); target.st.stun = Math.max(target.st.stun || 0, 1.5); g.log(`🌿 Raízes brotaram do chão e prenderam <b>${target.name}</b>!`, 'perigo'); }
         else g.S.units.floatText(target.x, target.z, 'Desviou!', 'miss');
       });
@@ -229,7 +230,7 @@ function zombieAttack(g, z, t) {
   g.noise(z.x, z.z, 3, z);
   g.later(0.35, () => {
     if (!z.alive || !t.alive || z.st.stun > 0) return;
-    if (d2(z, t) > 1.7) { view.floatText(t.x, t.z, 'Esquivou!', 'miss'); return; }
+    if (d2(z, t) > 1.7 || t.st.iframes > 0 || t.resting) { view.floatText(t.x, t.z, 'Esquivou!', 'miss'); return; }
     const w = z.weaponStats();
     if (rng.next() * 100 < hitChance(g, z, t, w)) {
       const r = rollDamage(g, z, t, w, { ambush: z.ai.ambush });
@@ -249,7 +250,7 @@ function zombieAttack(g, z, t) {
 function bashDoor(g, z, door) {
   const Z = ZOMBIES[z.type];
   z.face = Math.atan2(door.x + 0.5 - z.px, door.z + 0.5 - z.pz);
-  const near = g.liveHeroes.some(h => Math.hypot(h.x - door.x, h.z - door.z) < 12);
+  const near = g.mapHeroes.some(h => Math.hypot(h.x - door.x, h.z - door.z) < 12);
   if (g.visible.has(g.map.idx(z.x, z.z))) g.S.units.play(z, 'attack');
   const dmg = rng.int(2, 5) * (Z.porta || 1);
   if (near) bus.emit('sfx', 'bang', door.x, door.z);
@@ -275,7 +276,7 @@ function breakWindow(g, z, w) {
   const b = g.map.building[g.map.idx(w.x, w.z)];
   if (b >= 0) g.S.world.buildBuilding(g.map.buildings[b]);
   g.noise(w.x, w.z, 8, z);
-  if (g.liveHeroes.some(h => Math.hypot(h.x - w.x, h.z - w.z) < 12)) g.log('🪟 Vidro estilhaçado! Um zumbi quebrou uma janela.', 'alerta');
+  if (g.mapHeroes.some(h => Math.hypot(h.x - w.x, h.z - w.z) < 12)) g.log('🪟 Vidro estilhaçado! Um zumbi quebrou uma janela.', 'alerta');
 }
 // peças construídas na base (paredes, portões) aguentam pancada até quebrar
 function bashBuilt(g, z, p) {
@@ -312,7 +313,7 @@ function npc(g, u, dt, near) {
 function closestHostile(g, u, maxD) {
   let best = null, bd = maxD;
   for (const o of g.units) {
-    if (!o.alive || o.px === undefined) continue;
+    if (!o.alive || o.px === undefined || o.resting) continue;
     const enemy = u.faction === 'hostile' ? (o.kind === 'hero' || o.faction === 'ally') : (o.kind === 'zombie' || o.faction === 'hostile');
     if (!enemy) continue;
     const d = d2(o, u);
@@ -320,11 +321,25 @@ function closestHostile(g, u, maxD) {
   }
   return best;
 }
-// companheiros da turma e aliados: seguem quem você controla e brigam com o que chegar perto
-function companion(g, u, dt) {
-  if (u.st.stay) { const z = closestHostile(g, u, 5); if (z) return engage(g, u, z, dt); u.rtAnim = null; return; }
-  fighterFollow(g, u, dt, g.selected);
+// quem não está sendo controlado fica na base: vai até o seu canto na Casa da Turma e descansa
+function resting(g, u, dt) {
+  if (g.zone) { u.rtAnim = null; return; }
+  const sp = g.restSpot(u);
+  const far = sp && Math.max(Math.abs(u.x - sp[0]), Math.abs(u.z - sp[1])) > 1;
+  if (far) {
+    u.repathT = (u.repathT ?? 0) - dt;
+    if (!u.nav || u.repathT <= 0) { u.repathT = 2.5; if (!aiGoto(g, u, sp[0], sp[1], true, 1500)) { u.nav = null; } }
+    if (u.nav && follow(g, u, dt, 0.8)) return;
+    // sem caminho: não fica preso andando contra a parede
+    u.stuckT = (u.stuckT || 0) + dt;
+    if (u.stuckT > 6) { u.stuckT = 0; g.sendHome(u); }
+  }
+  u.nav = null; u.rtAnim = null;
+  // de vez em quando vira para o outro lado (está vivo, só descansando)
+  u.idleT = (u.idleT ?? 3 + rng.next() * 6) - dt;
+  if (u.idleT <= 0) { u.idleT = 5 + rng.next() * 8; u.face = rng.next() * Math.PI * 2; }
 }
+// aliados (sobreviventes que se juntaram) seguem quem você controla e brigam com o que chegar perto
 function fighterFollow(g, u, dt, leader) {
   const z = closestHostile(g, u, 6.5);
   if (z && g.unitVisible(z) && (!leader || d2(z, leader) < 9)) return engage(g, u, z, dt);
@@ -369,7 +384,7 @@ function hostile(g, u, dt) {
   const w = u.weaponStats();
   let t = null, bd = 13;
   for (const o of g.units) {
-    if (!o.alive || !(o.kind === 'hero' || o.faction === 'ally') || o.px === undefined) continue;
+    if (!o.alive || !(o.kind === 'hero' || o.faction === 'ally') || o.px === undefined || o.resting) continue;
     const d = d2(o, u);
     if (d < bd && los(g.map, u.x, u.z, o.x, o.z)) { bd = d; t = o; }
   }
@@ -379,7 +394,7 @@ function hostile(g, u, dt) {
     return;
   }
   if (!t) {
-    const hero = g.liveHeroes.slice().sort((a, b) => d2(a, u) - d2(b, u))[0];
+    const hero = g.fieldHeroes.slice().sort((a, b) => d2(a, u) - d2(b, u))[0];
     if (hero && d2(hero, u) < 20) { u.repathT = (u.repathT ?? 0) - dt; if (!u.nav || u.repathT <= 0) { u.repathT = 1; aiGoto(g, u, hero.x, hero.z, true, 1200); } follow(g, u, dt, 1.2); }
     else u.rtAnim = null;
     return;
@@ -397,6 +412,7 @@ function humanAttack(g, u, t) {
   const ch = hitChance(g, u, t, w);
   g.later(0.15, () => {
     if (!t.alive || !u.alive) return;
+    if (t.st.iframes > 0) { view.floatText(t.x, t.z, 'Esquivou!', 'miss'); return; }
     if (rng.next() * 100 < ch) {
       const r = rollDamage(g, u, t, w);
       g.damage(t, r.dmg, u, r);

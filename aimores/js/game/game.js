@@ -1,5 +1,5 @@
-// Núcleo do jogo: estado, turnos com Pontos de Ação, modo exploração/combate, visão do grupo,
-// iluminação, ruído, tempo, experiência, ferimentos e salvamento.
+// Núcleo do jogo: estado, modo exploração/combate, o sobrevivente ativo (só um por vez; os
+// outros descansam na base), visão, iluminação, ruído, tempo, experiência, ferimentos e salvamento.
 import { generateMap, rollLoot } from '../world/mapgen.js';
 import { S, F, PROPS } from '../world/tiles.js';
 import { HEROES, HERO_ORDER, XP_LEVELS } from '../data/heroes.js';
@@ -28,8 +28,19 @@ export class Game {
     this.input = { run: false, target: null };
     this.speed = 1;
   }
-  get heroes() { return this.units.filter(u => u.kind === 'hero'); }
-  get liveHeroes() { return this.units.filter(u => u.kind === 'hero' && !u.dead); }
+  // a turma inteira (quando o ativo está numa zona, os da base continuam guardados na cidade)
+  get heroes() {
+    const hs = this.units.filter(u => u.kind === 'hero');
+    if (this.town) for (const u of this.town.units) if (u.kind === 'hero' && !hs.includes(u)) hs.push(u);
+    return hs.sort((a, b) => HERO_ORDER.indexOf(a.id) - HERO_ORDER.indexOf(b.id));
+  }
+  get liveHeroes() { return this.heroes.filter(u => !u.dead); }
+  // heróis vivos no mapa atual (o ativo e, na cidade, quem descansa na base)
+  get mapHeroes() { return this.units.filter(u => u.kind === 'hero' && !u.dead); }
+  // o sobrevivente que você controla (os outros ficam descansando na base)
+  get active() { return this.state ? this.units.find(u => u.kind === 'hero' && u.id === this.state.ativo) || null : null; }
+  // quem está em campo (o ativo, se estiver vivo)
+  get fieldHeroes() { return this.units.filter(u => u.kind === 'hero' && !u.dead && !u.resting); }
   get diff() { return DIFF[this.state.diffKey] || DIFF.normal; }
   unitAt(x, z) { return this.units.find(u => u.x === x && u.z === z && !u.dead && !u.gone) || null; }
   corpseAt(x, z) { return this.units.find(u => u.x === x && u.z === z && u.dead && !u.gone) || null; }
@@ -40,19 +51,20 @@ export class Game {
   clock() { return fmtTime(this.state.time); }
 
   // ------------------------------------------------------------ início
-  newGame({ seed = Date.now() % 100000, diff = 'normal' } = {}) {
+  newGame({ seed = Date.now() % 100000, diff = 'normal', ativo = HERO_ORDER[2] } = {}) {
     rng.seed(seed * 7 + 3);
     resetUid(1);
     this.state = {
       version: 1, seed, diffKey: diff, time: 7 * 60 + 10, turn: 1, mode: 'explore',
       flags: {}, quests: {}, rel: {}, rep: {}, log: [], weather: { chuva: 0 }, cds: {},
       stats: { kills: 0, turnos: 0, salvos: 0 }, saved: [], clues: [], notes: [], rngState: 0, uidNext: 1,
+      ativo: HEROES[ativo] ? ativo : HERO_ORDER[2], mapVer: 2,
     };
     for (let i = 0; i < HERO_ORDER.length; i++) for (let j = i + 1; j < HERO_ORDER.length; j++) this.state.rel[HERO_ORDER[i] + '|' + HERO_ORDER[j]] = 55;
-    this.map = generateMap(seed);
+    this.map = generateMap(seed, { ver: this.state.mapVer });
     this.units = [];
     const starts = this.map.marks.inicio;
-    HERO_ORDER.forEach((id, i) => this.units.push(makeHero(id, starts[i][0], starts[i][1])));
+    HERO_ORDER.forEach((id, i) => { const u = makeHero(id, starts[i][0], starts[i][1]); u.resting = id !== this.state.ativo; this.units.push(u); });
     this.spawnNpcs();
     this.spawnInitialZombies();
     this.afterLoad();
@@ -65,7 +77,8 @@ export class Game {
     for (const u of this.units) if (u.kind !== 'hero' && u.faction !== 'zombie') this.S.units.setHp(u, false);
     computeStaticLight(this.map);
     this.refreshLights();
-    const h = this.liveHeroes[0];
+    this.fixActive();
+    const h = this.active && !this.active.dead ? this.active : this.liveHeroes[0];
     this.select(h);
     this.S.focus(h.x + 0.5, h.z + 0.5, true);
     this.updateVision();
@@ -145,7 +158,7 @@ export class Game {
     inB('Escola', 6); inB('Supermercado', 6); inB('Supermercado', 1, 'resistente');
     inB('Casa Infestada', 5); inB('Casa Infestada', 1, 'furtivo');
     inB('Farmácia', 2); inB('Restaurante', 2); inB('Loja Moda', 2); inB('Eletrônica', 2);
-    inB('Oficina', 2); inB('Estação', 2); inB('Rádio', 2); inB('Bar do Tião', 3); inB('Casa da Dra', 2); inB('Casa do Chefe', 2);
+    inB('Oficina', 2); inB('Estação', 2); inB('Unidade de Saúde', 3); inB('Rádio', 2); inB('Bar do Tião', 3); inB('Casa da Dra', 2); inB('Casa do Chefe', 2);
     inB('Galpão AgroNova', 4); inB('Galpão AgroNova', 1, 'furtivo'); inB('Depósito da Ferrovia', 2); inB('Mercadinho', 1);
     for (const [x, z] of this.map.marks.rua || []) near(x, z, rng.int(1, 3));
     near(114, 12, 3); near(114, 12, 1, 'corredor', 6);
@@ -162,6 +175,78 @@ export class Game {
     v.name = 'Seu Lindomar (vizinho)'; v.ai.prologo = true;
   }
 
+  // ------------------------------------------------------------ sobrevivente ativo e base
+  // garante um ativo válido (saves antigos tinham a turma toda em campo: os outros vão para a base)
+  fixActive() {
+    const hs = this.heroes;
+    let a = this.active;
+    if (!a || a.dead) {
+      a = hs.find(h => !h.dead && !h.resting) || hs.find(h => !h.dead) || null;
+      if (a) this.state.ativo = a.id;
+    }
+    for (const h of hs) {
+      const was = h.resting;
+      h.resting = !!a && h !== a && !h.dead;
+      if (h.resting && was === undefined && !this.zone) this.sendHome(h);
+      if (h.resting) { h.st.downed = 0; h.st.sneak = false; h.st.hidden = false; h.nav = null; h.target = null; h.gather = null; h.gatherT = 0; if (h.hp <= 0) h.hp = 1; }
+      if (!h.dead) { const full = h.hp >= h.maxHp; recompute(h); if (full) h.hp = h.maxHp; }
+    }
+  }
+  // lugar de descanso de cada um na Casa da Turma
+  restSpot(h) {
+    const pts = this.map.marks.inicio || [];
+    const i = Math.max(0, HERO_ORDER.indexOf(h.id));
+    return pts[i] || pts[0] || null;
+  }
+  sendHome(h) {
+    const sp = this.restSpot(h);
+    if (!sp) return;
+    const [x, z] = this.unitAt(sp[0], sp[1]) && this.unitAt(sp[0], sp[1]) !== h ? this.freeNear(sp[0], sp[1]) : sp;
+    h.x = x; h.z = z; h.px = x + 0.5; h.pz = z + 0.5; h.nav = null;
+  }
+  // só dá para trocar de sobrevivente na base (ou quando o ativo morreu)
+  switchBlock() {
+    const a = this.active;
+    if (this.phase !== 'player' && this.phase !== 'over-pick') return 'Agora não dá.';
+    if (!a || a.dead) return null;
+    if (this.zone) return 'Só dá para trocar de sobrevivente na base, em Aimorés.';
+    if (!this.inBase(a.x, a.z)) return 'Só dá para trocar de sobrevivente na base (terreno da Casa da Turma).';
+    if (a.st.downed) return `${a.name} está caído(a).`;
+    if (this.state.mode === 'combat') return 'Não dá para trocar com zumbi por perto.';
+    return null;
+  }
+  switchSurvivor(id) {
+    const nu = this.units.find(u => u.kind === 'hero' && u.id === id);
+    if (!nu || nu.dead) return false;
+    const cur = this.active;
+    if (nu === cur && !cur.resting) return true;
+    const why = this.switchBlock();
+    if (why) { this.toast(why, 'erro'); return false; }
+    if (this.phase === 'over-pick') this.phase = 'player';
+    if (cur && !cur.dead) {
+      if (this.cancelNav) this.cancelNav(cur, false);
+      cur.target = null; cur.rtAnim = null; cur.gather = null; cur.gatherT = 0;
+      cur.st.sneak = false; cur.st.hidden = false; cur.st.aim = false;
+      cur.resting = true;
+      this.S.units.loop(cur, 'idle');
+    }
+    nu.resting = false;
+    nu.nav = null; nu.target = null;
+    if (nu.px === undefined || nu.px === null) { nu.px = nu.x + 0.5; nu.pz = nu.z + 0.5; }
+    this.state.ativo = nu.id;
+    this.select(nu);
+    this.S.focus(nu.px, nu.pz);
+    this.S.units.play(nu, 'celebrate');
+    this.log(`🔄 Agora você controla <b>${nu.name}</b> (nível ${nu.lvl}).${cur && !cur.dead && cur !== nu ? ` ${cur.name} fica descansando na base.` : ''}`, 'bom');
+    this.toast(`${nu.name} assumiu!`, 'bom');
+    this.visionDirty = true;
+    this.updateVision();
+    this.updateMode();
+    bus.emit('switch', nu);
+    bus.emit('hud');
+    return true;
+  }
+
   // ------------------------------------------------------------ registro e mensagens
   log(msg, cls = '') {
     const line = { t: this.clock(), msg, cls };
@@ -174,7 +259,7 @@ export class Game {
 
   // ------------------------------------------------------------ seleção
   select(u) {
-    if (!u || u.kind !== 'hero' || u.dead || (u.st.downed && this.liveHeroes.some(h => !h.st.downed))) return;
+    if (!u || u.kind !== 'hero' || u.dead || u.resting) return;
     const old = this.selected;
     if (old && old !== u && this.cancelNav) { this.cancelNav(old, false); old.target = null; old.rtAnim = null; }
     if (u !== old) { u.nav = null; u.target = null; }
@@ -187,7 +272,7 @@ export class Game {
     bus.emit('hud');
   }
   selectNext(dir = 1) {
-    const hs = this.liveHeroes.filter(h => !h.st.downed);
+    const hs = this.fieldHeroes.filter(h => !h.st.downed);
     if (!hs.length) return;
     const i = hs.indexOf(this.selected);
     this.select(hs[(i + dir + hs.length) % hs.length]);
@@ -207,7 +292,7 @@ export class Game {
     l = Math.max(l, m.lit[i]);
     for (const [fi] of m.fire) { const fx = fi % m.W, fz = (fi / m.W) | 0; const d = Math.hypot(fx - x, fz - z); if (d < 5) l = Math.max(l, 1 - d / 5); }
     for (const p of this.campfires || []) { const d = Math.hypot(p.x - x, p.z - z); if (d < 6) l = Math.max(l, 1 - d / 6); }
-    for (const h of this.liveHeroes) {
+    for (const h of this.fieldHeroes) {
       if (!this.flashlightOn(h) || h.st.downed) continue;
       const dx = x - h.x, dz = z - h.z, d = Math.hypot(dx, dz);
       if (d < 0.5) { l = Math.max(l, 0.6); continue; }
@@ -253,7 +338,7 @@ export class Game {
     if (!this.visible.has(i)) return false;
     if (u.kind === 'zombie' && u.st.hidden && !u.dead) {
       // espreitador: só aparece de perto ou na luz forte
-      const near = this.liveHeroes.some(h => Math.max(Math.abs(h.x - u.x), Math.abs(h.z - u.z)) <= 2);
+      const near = this.fieldHeroes.some(h => Math.max(Math.abs(h.x - u.x), Math.abs(h.z - u.z)) <= 2);
       if (!near && this.lightLevel(u.x, u.z) < 0.6) return false;
     }
     return true;
@@ -264,7 +349,7 @@ export class Game {
   updateCutaway() {
     if (!this.S.world) return;
     const inside = new Set();
-    for (const h of this.liveHeroes) { const b = this.map.buildingAt(h.x, h.z); if (b) inside.add(b.id); }
+    for (const h of this.mapHeroes) { const b = this.map.buildingAt(h.x, h.z); if (b) inside.add(b.id); }
     const sel = this.selected ? this.map.buildingAt(this.selected.x, this.selected.z) : null;
     for (const e of this.S.world.buildings) {
       if (!e) continue;
@@ -282,7 +367,7 @@ export class Game {
   }
   frameUpdate(dt) {
     // luzes dinâmicas perto da câmera e lanternas
-    const flashes = this.liveHeroes.filter(h => this.flashlightOn(h) && !h.st.downed).map(h => ({ x: h.x, z: h.z, dirX: Math.sin(h.face), dirZ: Math.cos(h.face) }));
+    const flashes = this.fieldHeroes.filter(h => this.flashlightOn(h) && !h.st.downed).map(h => ({ x: h.x, z: h.z, dirX: Math.sin(h.face), dirZ: Math.cos(h.face) }));
     this.S.setLights(this.lightSources || [], flashes, this.S.target.x, this.S.target.z);
   }
 
@@ -312,7 +397,7 @@ export class Game {
     for (const u of this.units) {
       if (!u.alive || !this.hostile(u)) continue;
       let dmin = 99;
-      for (const h of this.liveHeroes) dmin = Math.min(dmin, Math.hypot(h.x - u.x, h.z - u.z));
+      for (const h of this.fieldHeroes) dmin = Math.min(dmin, Math.hypot(h.x - u.x, h.z - u.z));
       if (u.faction === 'hostile' && dmin < 14 && this.unitVisible(u)) threat = true;
       if (u.kind === 'zombie' && ((u.ai.state === 'hunt' && dmin < 16) || (this.unitVisible(u) && dmin < 10))) threat = true;
       if (threat) break;
@@ -320,7 +405,7 @@ export class Game {
     const mode = threat ? 'combat' : 'explore';
     if (mode !== this.state.mode) {
       this.state.mode = mode;
-      if (mode === 'combat') { this.log('⚔️ Perigo por perto! Modo de combate: cada um age separado e os zumbis reagem.', 'alerta'); bus.emit('music', 'combat'); }
+      if (mode === 'combat') { this.log('⚔️ Perigo por perto! Modo de combate.', 'alerta'); bus.emit('music', 'combat'); }
       else { this.log('🌿 A área parece calma. Modo de exploração.', 'info'); bus.emit('music', 'explore'); }
       bus.emit('mode', mode);
     }
@@ -346,7 +431,7 @@ export class Game {
         let x = edge === 0 ? rng.int(1, 5) : edge === 1 ? rng.int(this.map.W - 6, this.map.W - 2) : rng.int(1, this.map.W - 2);
         let z = edge === 2 ? rng.int(1, 5) : edge === 3 ? rng.int(84, 90) : rng.int(1, 86);
         if (this.map.blocked(x, z) || this.unitAt(x, z) || this.map.floor[this.map.idx(x, z)] === F.agua) continue;
-        if (this.liveHeroes.some(h => Math.hypot(h.x - x, h.z - z) < 14)) continue;
+        if (this.mapHeroes.some(h => Math.hypot(h.x - x, h.z - z) < 14)) continue;
         const type = rng.weighted([['comum', 10], ['corredor', night ? 3 : 1], ['resistente', 1], ['furtivo', night ? 2 : 0.5], ['inchado', 0.7]]);
         const z0 = this.spawnZombie(type, x, z);
         // à noite vêm em direção à cidade
@@ -358,7 +443,9 @@ export class Game {
 
   // ------------------------------------------------------------ dano, morte e experiência
   damage(target, amount, src, opts = {}) {
-    if (target.dead) return;
+    if (target.dead || target.resting) return;
+    // Arthur (Duro na Queda) aguenta mais pancada
+    if (target.kind === 'hero' && target.id === 'arthur' && src) amount = Math.max(1, Math.round(amount * 0.85));
     target.hp -= amount;
     const view = this.S.units;
     view.flash(target, opts.crit ? '#ffe040' : '#ffffff');
@@ -372,11 +459,15 @@ export class Game {
         if (!target.st.downed) {
           target.hp = 0; target.st.downed = 40; target.ap = 0; target.nav = null; target.target = null;
           view.play(target, 'die').then(() => {});
-          this.log(`💀 <b>${target.name}</b> caiu! Leve atadura ou kit médico até ${target.name} em até 40 segundos.`, 'perigo');
+          this.log(`💀 <b>${target.name}</b> caiu! Use uma atadura ou kit médico em até 40 segundos para se levantar.`, 'perigo');
           this.toast(`${target.name} caiu!`, 'perigo');
           Story.onHeroDown(this, target);
-          if (this.selected === target) this.selectNext();
-        } else this.heroDies(target);
+        } else {
+          // caído e apanhando: sangra mais rápido
+          target.hp = 0;
+          target.st.downed = Math.max(0, target.st.downed - 8);
+          if (target.st.downed <= 0) this.heroDies(target);
+        }
       } else this.kill(target, src, opts);
     } else if (target.kind !== 'hero' || !target.st.downed) {
       view.play(target, 'hurt');
@@ -394,7 +485,6 @@ export class Game {
       if (src && src.kind === 'hero') {
         src.kills++;
         this.gainXp(src, Z.xp);
-        for (const h of this.liveHeroes) if (h !== src) this.gainXp(h, Math.round(Z.xp * 0.25), true);
       }
       if (Z.explode) this.gasCloud(u.x, u.z);
       if (u.ai.boss) Story.onBossDead(this, u);
@@ -422,7 +512,12 @@ export class Game {
     h.inv = []; for (const k of Object.keys(h.eq)) h.eq[k] = null;
     Story.onHeroDead(this, h);
     if (!this.liveHeroes.length) this.gameOver();
-    else if (this.selected === h) this.selectNext();
+    else if (this.state.ativo === h.id) {
+      // quem morreu era o ativo: escolha outro sobrevivente na base (as coisas ficam onde caiu)
+      this.phase = 'over-pick';
+      this.log('🏠 A turma na base recebeu a notícia pelo rádio. Escolha quem vai continuar.', 'alerta');
+      setTimeout(() => bus.emit('pick-survivor', { reason: 'morte', dead: h }), 1800);
+    }
   }
   gameOver() {
     this.phase = 'over';
@@ -448,8 +543,8 @@ export class Game {
   gainXp(h, n, quiet = false) {
     if (!h || h.kind !== 'hero' || h.dead) return;
     const intBonus = 1 + (h.stats.inteligencia - 5) * 0.03;
-    const dai = this.heroes.find(x => x.id === 'daiana' && !x.dead);
-    const bonus = dai && dai.skill('plano_de_aula') >= 3 ? 1.1 : 1;
+    // a experiência é só de quem fez: Daiana aprende mais rápido (Olho de Professora e Plano de Aula)
+    const bonus = h.id === 'daiana' ? 1.15 + (h.skill('plano_de_aula') >= 3 ? 0.1 : 0) : 1;
     n = Math.round(n * intBonus * bonus);
     h.xp += n;
     if (!quiet) this.S.units.floatText(h.x, h.z, `+${n} XP`, 'xp');
@@ -498,7 +593,9 @@ export class Game {
   load(data) {
     if ((data.v || 1) < 2) throw new Error('esse salvamento é da versão por turnos, que não é compatível com a versão em tempo real');
     this.state = data.state;
-    this.map = generateMap(this.state.seed);
+    // saves da 2.0 não tinham "ativo": quem estava selecionado passa a ser o sobrevivente em campo
+    if (!this.state.ativo) { const o = data.units.find(x => x.uid === data.selected && !x.dead) || data.units.find(x => x.kind === 'hero' && !x.dead); if (o) this.state.ativo = o.id; }
+    this.map = generateMap(this.state.seed, { ver: this.state.mapVer || 1 });
     const m = this.map;
     for (const [i, open, locked, hp, bar, key, knock, broken, bhp] of data.map.doors) { const d = m.doors.get(i); if (d) { d.open = !!open; d.locked = !!locked; d.hp = hp; d.barricade = bar; d.key = key; if (knock) d.knock = knock; if (broken) d.broken = true; if (bhp !== null && bhp !== undefined) d.bhp = bhp; } }
     for (const [i, broken, bar, bhp] of data.map.wins) { const w = m.windows.get(i); if (w) { w.broken = !!broken; w.barricade = bar; if (bhp !== null && bhp !== undefined) w.bhp = bhp; } }

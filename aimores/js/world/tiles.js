@@ -157,5 +157,9 @@ export const PROPS = {
   bau_madeira: { nome: 'Baú de madeira', size: [1, 1], blocks: true, cover: 1, built: 40, stash: true },
   cama_palha: { nome: 'Cama de palha', size: [1, 1], blocks: false, cover: 0, built: 20, rest: true, camaBase: true },
   coletor: { nome: 'Coletor de água da chuva', size: [1, 1], blocks: true, cover: 1, built: 30, coletor: true },
+  bancada_armas: { nome: 'Bancada de armas', size: [1, 1], blocks: true, cover: 1, built: 60, estacao: 'armas' },
+  area_medica: { nome: 'Área médica (maca e remédios)', size: [1, 1], blocks: true, cover: 1, built: 40, estacao: 'medica' },
+  horta: { nome: 'Canteiro da horta', size: [1, 1], blocks: false, cover: 0, built: 25, horta: true },
+  armario_base: { nome: 'Armário de estoque', size: [1, 1], blocks: true, opaque: false, cover: 1, built: 60, stash: true, grande: true },
 };
 for (const [k, v] of Object.entries(PROPS)) v.id = k;

@@ -7,9 +7,9 @@ import { countItem } from '../game/units.js';
 import { rng, bus } from '../util.js';
 
 const met = (id) => (g) => { const k = 'conheceu_' + id; const v = !!g.state.flags[k]; g.state.flags[k] = true; return v; };
-const foodCount = g => g.liveHeroes.reduce((s, h) => s + h.inv.filter(e => ITEMS[e.id].cat === 'comida').reduce((a, e) => a + e.n, 0), 0);
+const foodCount = g => g.fieldHeroes.reduce((s, h) => s + h.inv.filter(e => ITEMS[e.id].cat === 'comida').reduce((a, e) => a + e.n, 0), 0);
 function takeFood(g, n) {
-  for (const h of g.liveHeroes) for (let i = h.inv.length - 1; i >= 0 && n > 0; i--) {
+  for (const h of g.fieldHeroes) for (let i = h.inv.length - 1; i >= 0 && n > 0; i--) {
     const e = h.inv[i];
     if (ITEMS[e.id].cat !== 'comida') continue;
     const k = Math.min(e.n, n); e.n -= k; n -= k;
@@ -220,7 +220,7 @@ export const DIALOGS = {
       refugio: { who: 'npc', t: 'Tragam quem precisar. Temos água do poço, pão e um sino que eu toco ao meio-dia pra afastar os mortos. Ou atrair. Ainda não descobri. E vocês podem dormir aqui também, se quiserem.',
         do: g => { const ig = g.map.buildings.find(b => b.type === 'igreja'); flag(g, 'refugio_' + ig.id, true); }, next: 'menu' },
       cura: { who: 'npc', t: 'A Irmã Lourdes era enfermeira antes de ser freira. Irmã! ...Pronto, ela cuidou de todos. Voltem amanhã se precisarem.',
-        do: g => { flag(g, 'cura_padre_' + g.day(), true); for (const h of g.liveHeroes) { h.hp = Math.min(h.maxHp, h.hp + 25); h.st.bleed = 0; for (const w of h.wounds) w.tratado = true; } g.log('⛪ A Irmã Lourdes tratou os ferimentos do grupo (+25 de vida).', 'bom'); }, next: 'menu' },
+        do: g => { flag(g, 'cura_padre_' + g.day(), true); for (const h of g.fieldHeroes) { h.hp = Math.min(h.maxHp, h.hp + 25); h.st.bleed = 0; for (const w of h.wounds) w.tratado = true; } g.log('⛪ A Irmã Lourdes tratou os ferimentos (+25 de vida).', 'bom'); }, next: 'menu' },
       rezar: { who: 'carol', t: 'Senhor, cuida da gente. Cuida de quem ficou pra trás. E dá paciência pro Pablício, que ele tá precisando. Amém.', next: 'rezar2' },
       rezar2: { who: 'pablicio', t: 'Amém. Ei! Como assim "paciência pro Pablício"?', do: g => { flag(g, 'reza_' + g.day(), true); for (const h of g.liveHeroes) h.need.moral = Math.min(100, h.need.moral + 20); g.log('🙏 O moral do grupo subiu (+20).', 'bom'); }, next: 'menu' },
       defesa: { who: 'npc', t: 'Com tanta gente aqui dentro, o barulho atrai os mortos. Esta noite, se vierem em bando, vamos precisar de vocês nas portas.',
@@ -428,7 +428,7 @@ export const DIALOGS = {
           { t: 'Olha o tamanho do meu braço, parceiro.', if: g => hero(g, 'pablicio'), check: { stat: 'forca', dc: 45, ok: 'foge', fail: 'ataca' } },
           { t: 'Não temos nada pra você.', op: { pablicio: 1, carol: -2 }, to: 'ataca' },
         ] },
-      grato: { who: 'npc', t: 'Obrigado... Desculpa pela faca. Eu não sou assim. Eu era cobrador de ônibus. Vou pra igreja, dizem que lá tem pão.', do: (g, c) => { toChurch(g, c.npc); for (const h of g.liveHeroes) g.gainXp(h, 15, true); }, next: null },
+      grato: { who: 'npc', t: 'Obrigado... Desculpa pela faca. Eu não sou assim. Eu era cobrador de ônibus. Vou pra igreja, dizem que lá tem pão.', do: (g, c) => { toChurch(g, c.npc); if (g.active) g.gainXp(g.active, 15, true); }, next: null },
       foge: { who: 'npc', t: 'T-tá bom! Tá bom! Eu vou embora!', do: (g, c) => { c.npc.gone = true; g.S.units.remove(c.npc); }, next: null },
       ataca: { who: 'npc', t: 'Então eu mesmo pego!', do: (g, c) => g.provoke(c.npc, c.hero), next: null },
     },

@@ -408,7 +408,7 @@ export class WorldView {
       }
     }
     // letreiro da fachada
-    const signText = { mercado: 'SUPERMERCADO BOM PREÇO', farmacia: 'FARMÁCIA', escola: 'E.E. RIO DOCE', igreja: null, oficina: 'OFICINA DO VALDIR', posto: null, eletronicos: 'ELETRÔNICOS', roupas: 'MODA RIO DOCE', restaurante: 'SABOR DE MINAS', mercadinho: 'MERCADINHO DO ZÉ', ferramentas: 'FERRAMENTAS', bar: 'BAR DO TIÃO', radio: 'RÁDIO AIMORÉS FM', agronova: 'AGRONOVA', estacao: 'ESTAÇÃO AIMORÉS' }[b.type];
+    const signText = { mercado: 'SUPERMERCADO BOM PREÇO', farmacia: 'FARMÁCIA', escola: 'E.E. RIO DOCE', igreja: null, oficina: 'OFICINA DO VALDIR', posto: null, eletronicos: 'ELETRÔNICOS', roupas: 'MODA RIO DOCE', restaurante: 'SABOR DE MINAS', mercadinho: 'MERCADINHO DO ZÉ', ferramentas: 'FERRAMENTAS', bar: 'BAR DO TIÃO', radio: 'RÁDIO AIMORÉS FM', agronova: 'AGRONOVA', estacao: 'ESTAÇÃO AIMORÉS', saude: 'UNIDADE DE SAÚDE' }[b.type];
     if (signText) {
       const door = b.doors.map(i => this.map.doors.get(i)).find(d => d.entrance);
       if (door) {

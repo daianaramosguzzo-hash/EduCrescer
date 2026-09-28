@@ -10,6 +10,7 @@ export const PROP_H = {
   guarda_roupa: 2.0, estante: 2.0, geladeira: 1.85, armario_escola: 1.9, prateleira: 1.9, gondola: 1.7,
   carro: 1.4, carro_pol: 1.6, opala: 1.35, onibus: 2.8, caminhao: 2.8, locomotiva: 3.2, vagao: 3.0, sucata: 1.2,
   arvore: 3.4, ipe: 3.4, ipe_rosa: 3.3, palmeira: 4.2, poste: 5.2, antena: 16, coreto: 3.4, monumento: 3.2,
+  bancada_armas: 1.1, area_medica: 1.3, horta: 0.45, armario_base: 1.9,
   banca: 2.2, orelhao: 2.1, parede_madeira: 2.2, parede_pedra: 2.2, parede_metal: 2.3, portao_madeira: 2.1, rocha: 1.1, estacas: 1.1, quiosque: 2.6, tanque_lab: 2.2, cacamba: 1.2, caixa_dagua: 2.2, sino: 1.2,
 };
 export function propHeight(type) { return PROP_H[type] ?? 0.9; }
@@ -80,6 +81,41 @@ const B = {
   bancada_trab: (g) => { g.box(0, 0.8, 0, 0.95, 0.12, 0.7, '#b07a44'); for (const [x, z] of [[-0.4, -0.28], [0.4, -0.28], [-0.4, 0.28], [0.4, 0.28]]) g.box(x, 0, z, 0.08, 0.8, 0.08, '#6a4420'); g.box(0.2, 0.92, 0, 0.3, 0.12, 0.2, '#8a9aa2'); g.box(-0.25, 0.92, 0.1, 0.12, 0.25, 0.08, '#c83a2a'); g.box(0, 0.25, 0, 0.8, 0.06, 0.55, '#8a5a2a'); },
   bau_madeira: (g) => { g.box(0, 0, 0, 0.8, 0.55, 0.55, '#a0703c'); g.box(0, 0.55, 0, 0.82, 0.12, 0.57, '#7a4e2a'); g.box(0, 0.3, 0.28, 0.12, 0.14, 0.03, '#9aa2a8', false); },
   cama_palha: (g) => { g.box(0, 0, 0, 0.8, 0.18, 0.95, '#d8b86a'); g.box(0, 0.18, -0.3, 0.6, 0.12, 0.25, '#e8e0c8'); g.box(0.05, 0.18, 0.15, 0.7, 0.05, 0.5, '#6a8aa8', false); },
+  bancada_armas: (g) => {
+    g.box(0, 0.78, 0, 0.95, 0.12, 0.7, '#7a5a3a');
+    for (const [x, z] of [[-0.4, -0.28], [0.4, -0.28], [-0.4, 0.28], [0.4, 0.28]]) g.box(x, 0, z, 0.08, 0.78, 0.08, '#4a3a2a');
+    g.box(0, 0.25, 0, 0.8, 0.06, 0.55, '#5a4020');
+    // morsa, espingarda em cima e caixa de munição
+    g.box(0.36, 0.9, -0.2, 0.14, 0.18, 0.16, '#5a6a72'); g.box(0.36, 1.06, -0.2, 0.2, 0.05, 0.06, '#8a9aa2');
+    g.box(-0.05, 0.92, 0.05, 0.75, 0.06, 0.08, '#3a3a40'); g.box(-0.3, 0.92, 0.05, 0.22, 0.08, 0.1, '#8a5a2a');
+    g.box(-0.3, 0.9, -0.22, 0.2, 0.14, 0.14, '#5a7a3a'); g.box(0.1, 0.9, -0.24, 0.14, 0.1, 0.1, '#c8a23a');
+  },
+  area_medica: (g) => {
+    // maca com lençol e armário branco com a cruz vermelha
+    g.box(-0.12, 0.45, 0, 0.62, 0.1, 0.92, '#c8ccd0');
+    for (const [x, z] of [[-0.38, -0.4], [0.14, -0.4], [-0.38, 0.4], [0.14, 0.4]]) g.box(x, 0, z, 0.05, 0.45, 0.05, '#8a9aa2');
+    g.box(-0.12, 0.55, 0.05, 0.58, 0.05, 0.8, '#e8f0f4', false); g.box(-0.12, 0.58, -0.34, 0.4, 0.08, 0.18, '#ffffff', false);
+    g.box(0.36, 0, -0.1, 0.24, 1.25, 0.5, '#f0f0ec');
+    g.box(0.49, 0.8, -0.1, 0.02, 0.26, 0.08, '#e8433a', false); g.box(0.49, 0.89, -0.1, 0.02, 0.08, 0.26, '#e8433a', false);
+  },
+  horta: (g, w, d, R, p) => {
+    g.box(0, 0, 0, 0.94, 0.18, 0.94, '#7a4e2a');
+    g.box(0, 0.18, 0, 0.84, 0.04, 0.84, '#5a3a22', false);
+    const c = p && p.extra && p.extra.cultivo;
+    if (!c) return;
+    const k = c.fase || 0; // 0 broto, 1 crescendo, 2 pronto
+    const hgt = [0.14, 0.32, 0.5][k], col = k >= 2 ? '#5fb82a' : '#8ad04a';
+    for (const [x, z] of [[-0.24, -0.24], [0.24, -0.24], [-0.24, 0.24], [0.24, 0.24], [0, 0]]) {
+      g.blob(x, 0.22 + hgt / 2, z, 0.12 + k * 0.03, hgt / 2, 0.12 + k * 0.03, col, 0, false);
+      if (k >= 2) g.blob(x + 0.06, 0.26, z + 0.05, 0.08, 0.07, 0.08, '#f08a2c', 0, false);
+    }
+  },
+  armario_base: (g) => {
+    g.box(0, 0, 0, 0.92, 1.8, 0.5, '#9a6a3c');
+    g.box(0, 1.8, 0, 0.96, 0.08, 0.54, '#6a4420');
+    g.box(-0.02, 0.1, 0.26, 0.02, 1.6, 0.02, '#4a3018', false);
+    g.box(-0.12, 0.9, 0.27, 0.05, 0.14, 0.03, '#c8c0a8', false); g.box(0.08, 0.9, 0.27, 0.05, 0.14, 0.03, '#c8c0a8', false);
+  },
   coletor: (g) => { g.cyl(0, 0, 0, 0.36, 0.7, 10, '#3a6a9a', 0.4, '#5aa0d8'); g.box(0, 0.7, 0, 0.9, 0.05, 0.9, '#8a8680'); for (const [x, z] of [[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]]) g.box(x, 0, z, 0.06, 0.75, 0.06, '#6a4420', false); },
   // ---------------- casa
   sofa: (g, w, d, R) => {

@@ -74,6 +74,7 @@ export function makeHero(id, x, z) {
   for (const [itemId, n] of H.inv) addItem(u, itemId, n);
   if (u.eq.mao && ITEMS[u.eq.mao.id].w?.pente) u.eq.mao.loaded = 0;
   recompute(u);
+  u.hp = u.maxHp;
   u.ap = u.maxAp;
   return u;
 }
@@ -136,6 +137,7 @@ export function capacity(u) {
   let c = 12 + u.stats.forca * 2;
   if (u.eq.costas) c += ITEMS[u.eq.costas.id].capacidade || 0;
   if (u.hasPerk && u.hasPerk('mula')) c += 6;
+  if (u.id === 'pablicio' && u.kind === 'hero') c += 10;     // Burro de Carga
   if (u.lvl) c += (u.lvl - 1);
   return c;
 }
@@ -159,7 +161,7 @@ export function effStat(u, s) {
 }
 export function recompute(u) {
   if (u.kind !== 'hero') return;
-  u.maxHp = u.baseHp + (u.lvl - 1) * 6 + (u.stats.resistencia - HEROES[u.id].stats.resistencia) * 4 + (u.hasPerk('casca_grossa') ? 15 : 0);
+  u.maxHp = u.baseHp + (u.lvl - 1) * 6 + (u.stats.resistencia - HEROES[u.id].stats.resistencia) * 4 + (u.hasPerk('casca_grossa') ? 15 : 0) + (u.id === 'arthur' ? 25 : 0);
   u.hp = Math.min(u.hp, u.maxHp);
   let ap = 6 + Math.floor(u.stats.velocidade / 3);
   if (u.hasPerk('maratonista')) ap += 1;

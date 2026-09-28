@@ -13,6 +13,8 @@ import { bus, clamp, wait } from '../util.js';
 import * as Save from '../game/save.js';
 import * as Story from '../game/story.js';
 import { BUILDS } from '../game/base.js';
+import { openPicker, pickerOpen } from './picker.js';
+import { PERIGO_NOME } from '../world/regions.js';
 
 const OPTS_KEY = 'aimores-dos-mortos-opcoes';
 
@@ -80,6 +82,20 @@ export class UI {
     bus.on('ending', kind => this.ending(kind));
     bus.on('intro', () => { this.pendingIntro = true; });
     bus.on('place', name => this.toast(`📍 ${name}`));
+    bus.on('region', rg => this.toast(`🗺️ ${rg.nome} — <b class="pg-${rg.perigo}">${PERIGO_NOME[rg.perigo]}</b>`, rg.perigo === 'vermelha' ? 'perigo' : ''));
+    bus.on('pick-survivor', o => {
+      if (o && o.reason === 'morte') { this.panels.close(); openPicker({ g: this.g, mode: 'morte', dead: o.dead, onPick: id => this.g.afterDeathPick(id) }); }
+      else this.swapMenu(o && o.id);
+    });
+  }
+  // "Trocar sobrevivente": só na base
+  swapMenu(focus = null) {
+    const g = this.g;
+    if (!g.state || pickerOpen()) return;
+    const why = g.switchBlock();
+    if (why) { this.toast(why, 'erro'); return; }
+    this.panels.close(); this.hideCtx(); this.hideTip();
+    openPicker({ g, mode: 'troca', focus, onPick: id => g.switchSurvivor(id) });
   }
   autosaveCheck() {
     const d = this.g.day(), hh = this.g.hour();
@@ -222,12 +238,13 @@ export class UI {
     const use = h('button', { class: 'tb use', title: 'Interagir', onclick: () => this.g.selected && this.g.rtInteract(this.g.selected) }, '✋');
     const run = h('button', { class: 'tb run', title: 'Correr', onclick: () => { this.runToggle = !this.runToggle; run.classList.toggle('on', this.runToggle); } }, '🏃');
     const sneak = h('button', { class: 'tb sneak', title: 'Agachar', onclick: () => this.g.selected && this.g.toggleSneak(this.g.selected) }, '🥷');
-    document.body.append(h('div', { id: 'touch-btns' }, atk, use, run, sneak));
+    const dodge = h('button', { class: 'tb dodge', title: 'Esquivar', onclick: () => this.g.selected && this.g.dodge(this.g.selected) }, '💨');
+    document.body.append(h('div', { id: 'touch-btns' }, atk, use, run, sneak, dodge));
     document.addEventListener('pointerup', () => { this.attackBtn = false; });
   }
   onKey(e) {
     const k = e.key.toLowerCase();
-    if (this.dialogOpen) return;
+    if (this.dialogOpen || pickerOpen()) return;
     if (document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
     const g = this.g;
     if (!g.state || g.phase === 'none') return;
@@ -243,10 +260,12 @@ export class UI {
     if (e.repeat) return;
     this.keys.add(k);
     const u = g.selected;
-    if (['1', '2', '3', '4'].includes(k)) { const hh = g.heroes[+k - 1]; if (hh && !hh.dead && !hh.st.downed) g.select(hh); return; }
+    // 1–4 / Tab / T: trocar de sobrevivente (só na base)
+    if (['1', '2', '3', '4'].includes(k)) { const hh = g.heroes[+k - 1]; if (hh && !hh.dead && hh !== g.active) { const why = g.switchBlock(); if (why) this.toast(why, 'erro'); else g.switchSurvivor(hh.id); } return; }
     switch (k) {
-      case 'tab': g.selectNext(e.shiftKey ? -1 : 1); break;
+      case 'tab': case 't': this.swapMenu(); break;
       case 'e': if (u) g.rtInteract(u); break;
+      case 'q': if (u) g.dodge(u); break;
       case 'c': if (u) g.toggleSneak(u); break;
       case 'z': this.S.rotate(-1); break;
       case 'x': this.S.rotate(1); break;
@@ -268,7 +287,7 @@ export class UI {
     const g = this.g;
     if (!g.input) return;
     const K = this.keys;
-    const free = !this.dialogOpen && !this.panels.cur;
+    const free = !this.dialogOpen && !this.panels.cur && !pickerOpen();
     let mx = 0, mz = 0;
     if (free) {
       if (K.has('w') || K.has('arrowup')) mz -= 1;
@@ -287,7 +306,7 @@ export class UI {
   pickAt(cx, cy) { return this.S.pick(cx, cy); }
   onClick(cx, cy, touch = false) {
     const g = this.g;
-    if (this.dialogOpen || this.panels.cur || !g.state || g.phase !== 'player' || g.busy) return;
+    if (this.dialogOpen || this.panels.cur || pickerOpen() || !g.state || g.phase !== 'player' || g.busy) return;
     const { unit, cell } = this.pickAt(cx, cy);
     if (!cell) return;
     const u = g.selected;
@@ -309,7 +328,7 @@ export class UI {
       if (unit && unit.kind === 'hero') { g.useSkill(u, sid, unit); return; }
       return;
     }
-    if (unit && unit.kind === 'hero' && unit !== u && !unit.st.downed) { g.select(unit); return; }
+    if (unit && unit.kind === 'hero' && unit !== u && unit.resting) { this.swapMenu(unit.id); return; }
     if (cell.x === u.x && cell.z === u.z && !unit) { this.openCtxAt(cx, cy); return; }
     const opts = g.optionsAt(u, cell.x, cell.z, unit);
     const first = opts.find(o => !o.disabled && !o.danger) || opts.find(o => !o.disabled);
@@ -320,7 +339,7 @@ export class UI {
   }
   openCtxAt(cx, cy) {
     const g = this.g;
-    if (this.dialogOpen || this.panels.cur || !g.state || g.phase !== 'player' || g.busy) return;
+    if (this.dialogOpen || this.panels.cur || pickerOpen() || !g.state || g.phase !== 'player' || g.busy) return;
     const { unit, cell } = this.pickAt(cx, cy);
     const u = g.selected;
     if (!cell || !u) return;
@@ -387,8 +406,8 @@ export class UI {
         curColor = '#ff4040';
       } else {
         lines.push(`<div class="h">${vu.name}</div>`);
-        if (vu.kind === 'hero') lines.push(`❤ ${Math.round(vu.hp)}/${vu.maxHp}${vu.st.downed ? ' · <span class="bad">caiu! precisa de ajuda</span>' : ''}`);
-        else lines.push(vu.faction === 'ally' ? 'Aliado — segue o grupo' : 'Clique para conversar');
+        if (vu.kind === 'hero') lines.push(`Nível ${vu.lvl} · ❤ ${Math.round(vu.hp)}/${vu.maxHp}`, vu.resting ? (g.switchBlock() ? '🏠 Descansando na base' : '🏠 Descansando — clique para <b>trocar de sobrevivente</b>') : '');
+        else lines.push(vu.faction === 'ally' ? 'Aliado — segue você' : 'Clique para conversar');
         this.S.showTarget(vu.x, vu.z, vu.kind === 'hero' ? '#4aff8a' : '#ffe04a');
         curColor = '#ffe04a';
       }
@@ -478,7 +497,7 @@ export class UI {
       ['pablicio', 'Se for o que eu tô pensando, eu vou ficar MUITO nervoso.'],
       ['arthur', 'É exatamente o que você tá pensando.'],
       ['carol', 'Calma. Primeiro a gente se junta. Depois a gente pensa. E todo mundo bebe água.'],
-      ['narr', '💡 <b>Como jogar:</b> ande com <b>WASD</b> (ou clique no chão; no celular, o joystick). <b>Espaço</b> ataca, <b>E</b> interage, <b>Shift</b> corre e <b>C</b> agacha. Corte árvores, quebre pedras e desmonte carros para <b>fabricar</b> (B) e <b>construir a base</b> (N). No mapa (M) dá para <b>viajar</b> para outras zonas. Teclas <b>1–4</b> trocam de personagem.'],
+      ['narr', '💡 <b>Como jogar:</b> você controla <b>um sobrevivente por vez</b>; os outros ficam na base (Casa da Turma), cada um com a própria mochila e o próprio nível. Ande com <b>WASD</b> (ou clique no chão; no celular, o joystick). <b>Espaço</b> ataca, <b>Q</b> esquiva, <b>E</b> interage, <b>Shift</b> corre e <b>C</b> agacha. Corte árvores, quebre pedras e desmonte carros para <b>fabricar</b> (B) e <b>construir a base</b> (N). No mapa (M) dá para <b>viajar</b> para outras zonas. De volta à base, <b>T</b> (ou 👥) troca de sobrevivente.'],
     ], {});
   }
   async gameOver() {

@@ -1,6 +1,6 @@
 // Missões principais e secundárias. Os ganchos (turno, entrar, vasculhou, pegou, matou,
 // opcoes, npcMorreu) são chamados pelo motor da história (game/story.js).
-import { questAdvance, questDone, questStart, questStep, questFail, flag, hero, anyHeroHas, takeFromParty, giveParty, scene, banter, Q, addClue } from '../game/story.js';
+import { questAdvance, questDone, questStart, questStep, questFail, flag, hero, anyHeroHas, takeFromParty, giveParty, scene, banter, Q, addClue, teamHas } from '../game/story.js';
 import { countItem } from '../game/units.js';
 import { bus, rng } from '../util.js';
 import { ITEMS } from './items.js';
@@ -123,15 +123,15 @@ export const QUESTS = {
   resgate: {
     nome: 'Esperando o Helicóptero', tipo: 'principal', xp: 0,
     resumo: 'O resgate vem buscar quem estiver no Campinho do Rio Doce. Só precisa estar vivo até lá.',
-    passos: [{ id: 'campinho', desc: 'Leve o grupo até o Campinho do Rio Doce e aguente até o helicóptero chegar.' }],
+    passos: [{ id: 'campinho', desc: 'Vá até o Campinho do Rio Doce (a turma da base vem junto) e aguente até o helicóptero chegar.' }],
     turno(g) {
       if (questStep(g, 'resgate') !== 'campinho') return;
-      const inField = g.liveHeroes.filter(h => !h.st.downed && h.x >= 106 && h.z <= 22);
+      const inField = g.fieldHeroes.filter(h => !h.st.downed && h.x >= 106 && h.z <= 22);
       const s = Q(g, 'resgate');
-      if (inField.length && inField.length === g.liveHeroes.filter(h => !h.st.downed).length) {
+      if (inField.length && inField.length === g.fieldHeroes.filter(h => !h.st.downed).length) {
         s.vars.t = (s.vars.t || 0) + 1;
         const left = 10 - s.vars.t;
-        if (s.vars.t === 1) { g.log('🚁 Estão todos no campinho. O helicóptero chega em 10 rodadas. Aguentem!', 'alerta'); spawnHorde(g, 114, 12, 6); }
+        if (s.vars.t === 1) { g.log('🚁 Você chegou ao campinho e chamou a turma da base pelo rádio. O helicóptero chega em 10 rodadas. Aguente!', 'alerta'); spawnHorde(g, 114, 12, 6); }
         if (left > 0 && s.vars.t % 3 === 0) { g.log(`🚁 O barulho das hélices se aproxima... faltam ${left} rodadas.`, 'alerta'); spawnHorde(g, 114, 12, 3); }
         if (left <= 0) { flag(g, 'fim', 'helicoptero'); bus.emit('ending', 'helicoptero'); }
       }
@@ -216,7 +216,7 @@ export const QUESTS = {
       if (questStep(g, 'defesa') !== 'defender') return;
       const s = Q(g, 'defesa');
       const igreja = g.map.buildings.find(b => b.type === 'igreja');
-      const perto = g.liveHeroes.some(h => Math.hypot(h.x - 63, h.z - 38) < 12);
+      const perto = g.fieldHeroes.some(h => Math.hypot(h.x - 63, h.z - 38) < 12);
       if (!perto) return;
       s.vars.t = (s.vars.t || 0) + 1;
       if (s.vars.t === 1 || s.vars.t === 4) spawnHorde(g, 63, 48, 5);
@@ -258,16 +258,13 @@ async function consertarOpala(g, u, p) {
   });
 }
 async function finalPonte(g, u) {
-  const fora = g.liveHeroes.filter(h => !h.st.downed && Math.hypot(h.x - u.x, h.z - u.z) > 5);
-  if (fora.length) { g.toast(`Espere o grupo todo perto do carro (${fora.map(h => h.name).join(', ')}).`, 'erro'); return; }
-  for (const h of g.liveHeroes) await g.S.units.play(h, 'vehicleIn');
-  const cura = anyHeroHas(g, 'hd_dados');
+  // a turma da base vem junto (combinado pelo rádio)
+  for (const h of g.fieldHeroes) await g.S.units.play(h, 'vehicleIn');
+  const cura = teamHas(g, 'hd_dados');
   flag(g, 'fim', cura ? 'ponte' : 'ponte_forcada');
   bus.emit('ending', cura ? 'ponte' : 'ponte_forcada');
 }
 async function finalTrem(g, u) {
-  const fora = g.liveHeroes.filter(h => !h.st.downed && Math.hypot(h.x - u.x, h.z - u.z) > 6);
-  if (fora.length) { g.toast(`Espere o grupo todo perto da locomotiva (${fora.map(h => h.name).join(', ')}).`, 'erro'); return; }
   if (!g.can(u, 4)) return;
   takeFromParty(g, 'combustivel', 2);
   await scene(g, [

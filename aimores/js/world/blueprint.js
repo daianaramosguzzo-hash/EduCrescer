@@ -39,6 +39,10 @@ export const ROOMS = {
   ';': { nome: 'Estacionamento', floor: 'estacionamento', out: true },
   ':': { nome: 'Calçada', floor: 'calcada', out: true },
   '"': { nome: 'Praça', floor: 'pedra', out: true },
+  // Unidade de Saúde
+  'α': { nome: 'Recepção', floor: 'granilite' },
+  'β': { nome: 'Consultório', floor: 'ceramica' },
+  'γ': { nome: 'Enfermaria', floor: 'granilite', loot: 'banheiro' },
 };
 
 const STRUCT_CH = { '#': S.WALL, '=': S.WINDOW, '+': S.DOOR, '!': S.DOOR, '$': S.DOOR, '&': S.DOOR, '%': S.MURO, '|': S.GRADE, '/': S.GATE, '^': S.FENCE };

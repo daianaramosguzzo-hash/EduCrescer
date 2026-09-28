@@ -15,7 +15,8 @@ import * as Story from './story.js';
 
 const ADJ = (a, x, z) => Math.max(Math.abs(a.x - x), Math.abs(a.z - z)) <= 1;
 
-// fogao: precisa de fogo (fogão, churrasqueira ou fogueira) · bancada: bancada de trabalho · nivel: nível mínimo
+// fogao: precisa de fogo (fogão, churrasqueira ou fogueira) · bancada: bancada de trabalho ·
+// estacao: 'armas' (bancada de armas) ou 'medica' (área médica) da base · nivel: nível mínimo
 export const RECIPES = [
   // na mão, em qualquer lugar
   { id: 'corda', nome: 'Corda', precisa: [['fibra', 3]], da: ['corda', 1], nivel: 1 },
@@ -44,6 +45,16 @@ export const RECIPES = [
   { id: 'machado', nome: 'Machado de verdade', precisa: [['metal', 5], ['madeira', 2]], da: ['machado', 1], bancada: true, nivel: 5 },
   { id: 'mun_pistola', nome: 'Recarregar balas de pistola', precisa: [['metal', 2], ['fosforos', 1]], da: ['mun_pistola', 6], bancada: true, nivel: 6 },
   { id: 'mochila', nome: 'Mochila de camping', precisa: [['pano', 4], ['corda', 2], ['fibra', 4]], da: ['mochila_camping', 1], bancada: true, nivel: 4 },
+  // na área médica da base (a Carol faz em dobro)
+  { id: 'ataduras_limpas', nome: 'Ataduras limpas', precisa: [['pano', 2]], da: ['atadura', 3], estacao: 'medica', nivel: 1 },
+  { id: 'soro', nome: 'Soro caseiro', precisa: [['agua', 1], ['ervas', 1]], da: ['soro_caseiro', 2], estacao: 'medica', nivel: 1 },
+  { id: 'remedio_ervas', nome: 'Remédio de ervas', precisa: [['ervas', 3], ['alcool|cachaca', 1]], da: ['remedios', 2], estacao: 'medica', nivel: 2 },
+  { id: 'kit', nome: 'Kit médico', precisa: [['atadura', 2], ['alcool', 1], ['remedios', 1]], da: ['kit_medico', 1], estacao: 'medica', nivel: 3 },
+  // na bancada de armas da base
+  { id: 'lanca_metal', nome: 'Lança com ponta de metal', precisa: [['madeira', 2], ['metal', 3], ['corda', 1]], da: ['lanca_metal', 1], estacao: 'armas', nivel: 4 },
+  { id: 'reforco', nome: 'Reforçar arma branca (metal e fita)', precisa: [['metal', 1], ['fita', 1]], repara: true, total: true, estacao: 'armas', nivel: 4 },
+  { id: 'mun_espingarda', nome: 'Cartuchos de espingarda', precisa: [['metal', 2], ['fosforos', 1]], da: ['mun_espingarda', 4], estacao: 'armas', nivel: 5 },
+  { id: 'mun_rifle', nome: 'Balas de rifle', precisa: [['metal', 3], ['fosforos', 1]], da: ['mun_rifle', 5], estacao: 'armas', nivel: 6 },
 ];
 
 export function installActions(Game) {
@@ -266,7 +277,7 @@ export function installActions(Game) {
           p.searched = true;
           this.noise(u.x, u.z, 1.5, u);
           // olho de gamer e sorte: item extra
-          const og = [0, 0.1, 0.2, 0.3][u.skill('olho_gamer')] + (effStat(u, 'sorte') - 5) * 0.02;
+          const og = [0, 0.1, 0.2, 0.3][u.skill('olho_gamer')] + (effStat(u, 'sorte') - 5) * 0.02 + (u.id === 'daiana' ? 0.25 : 0) + (u.skill('plano_de_aula') >= 2 ? 0.1 : 0);
           if (p.lootTable && rng.next() < og) {
             const extra = { loot: [] };
             rollExtra(extra, p.lootTable);
@@ -403,7 +414,7 @@ export function installActions(Game) {
         if (t !== u) u.face = Math.atan2(t.x - u.x, t.z - u.z);
         await view.play(u, med ? 'medicine' : 'eat');
         const k = (u.hasPerk('estomago') && !med ? 1.3 : 1);
-        const heal = (med ? (1 + [0, 0.3, 0.6, 0.9][u.skill('maos_que_curam')] + (u.hasPerk('socorrista') ? 0.25 : 0)) : 1);
+        const heal = (med ? (1 + [0, 0.3, 0.6, 0.9][u.skill('maos_que_curam')] + (u.hasPerk('socorrista') ? 0.25 : 0) + (u.id === 'carol' ? 0.5 : 0)) : 1);
         const n = t.need;
         const msgs = [];
         if (U.fome) { n.fome = clamp(n.fome + U.fome * k, 0, 100); msgs.push(`fome ${U.fome > 0 ? '+' : ''}${Math.round(U.fome * k)}`); }
@@ -442,6 +453,31 @@ export function installActions(Game) {
         this.log(`💖 ${u.name} levantou ${t.name}!`, 'bom');
         this.gainXp(u, 20);
         Story.relChange(this, u.id, t.id, 8);
+      });
+    },
+
+    // caído e sozinho: usa a própria atadura ou kit médico para levantar
+    selfRevive(u) {
+      if (!u || u.dead || !u.st.downed || u.reviving) return;
+      const item = countItem(u, 'kit_medico') ? 'kit_medico' : countItem(u, 'atadura') ? 'atadura' : null;
+      if (!item) { this.toastOnce('Sem atadura nem kit médico... aguente firme!'); return; }
+      u.reviving = true;
+      const view = this.view();
+      view.play(u, 'medicine');
+      this.toast(`🩹 ${u.name} está se enfaixando...`);
+      const t = u.skill('maos_que_curam') ? 1.2 : 2.2;
+      this.later(t, () => {
+        u.reviving = false;
+        if (u.dead || !u.st.downed) return;
+        removeItem(u, item, 1);
+        u.st.downed = 0; u.st.bleed = 0;
+        u.hp = Math.round(u.maxHp * (item === 'kit_medico' ? 0.45 : 0.25) * (u.skill('maos_que_curam') ? 1.3 : 1));
+        view.loop(u, 'idle');
+        // levanta com a adrenalina lá em cima e empurra quem estiver colado
+        for (const z of this.units) if (z.alive && this.hostile(z) && z.px !== undefined && Math.hypot(z.px - u.px, z.pz - u.pz) < 1.7) { this.knockback(z, u, 1); z.st.stun = Math.max(z.st.stun || 0, 1.2); }
+        view.say(u, rng.pick(['Ainda não foi dessa vez!', 'Levanta, levanta... bora!', 'Ai... mas tô de pé!']));
+        this.log(`💖 ${u.name} se levantou usando ${ITEMS[item].nome.toLowerCase()}!`, 'bom');
+        bus.emit('hud');
       });
     },
 
@@ -519,26 +555,30 @@ export function installActions(Game) {
     },
 
     // ------------------------------------------------------------ cozinhar, fabricar, descansar
+    // quanto de cada material a receita pede para este sobrevivente (Daiana organiza e economiza)
+    reqN(u, n) { return u && u.id === 'daiana' && n >= 3 ? n - 1 : n; },
     haveReq(u, req) {
-      const [ids, n] = req;
+      const ids = req[0], n = this.reqN(u, req[1]);
       return ids.split('|').some(id => countItem(u, id) >= n);
     },
     takeReq(u, req) {
-      const [ids, n] = req;
+      const ids = req[0], n = this.reqN(u, req[1]);
       const id = ids.split('|').find(i => countItem(u, i) >= n);
       if (id === 'taco' && u.eq.mao && u.eq.mao.id === 'taco' && !u.inv.find(e => e.id === 'taco')) { u.eq.mao = null; return; }
       if (id) removeItem(u, id, n);
     },
     // estações ao alcance (fogo e bancada) de quem vai fabricar
     stationsNear(u) {
-      let fogo = null, bancada = null;
+      let fogo = null, bancada = null, armas = null, medica = null;
       for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
         const p = this.map.prop(u.x + dx, u.z + dz);
         if (!p || p.removed) continue;
         if (PROPS[p.type].stove) fogo = p;
         if (PROPS[p.type].estacao === 'bancada' || p.type === 'bancada') bancada = p;
+        if (PROPS[p.type].estacao === 'armas') armas = p;
+        if (PROPS[p.type].estacao === 'medica') medica = p;
       }
-      return { fogo, bancada };
+      return { fogo, bancada, armas, medica };
     },
     recipeBlock(u, r) {
       const st = this.stationsNear(u);
@@ -546,6 +586,8 @@ export function installActions(Game) {
       if (r.fogao && !st.fogo) return 'Perto do fogo';
       if (r.fogao && !(st.fogo && st.fogo.type === 'fogueira') && countItem(u, 'fosforos') <= 0) return 'Fósforos';
       if (r.bancada && !st.bancada) return 'Na bancada';
+      if (r.estacao === 'armas' && !st.armas) return 'Na bancada de armas';
+      if (r.estacao === 'medica' && !st.medica) return 'Na área médica';
       if (!r.precisa.every(req => this.haveReq(u, req))) return 'Faltam itens';
       if (r.repara && !(u.eq.mao && u.eq.mao.dur !== undefined)) return 'Equipe a arma';
       return null;
@@ -554,15 +596,20 @@ export function installActions(Game) {
       const r = RECIPES.find(r => r.id === recipeId);
       if (!r) return;
       const why = this.recipeBlock(u, r);
-      if (why) { this.toast(why === 'Perto do fogo' ? 'Fique ao lado de um fogão, churrasqueira ou fogueira.' : why === 'Na bancada' ? 'Fique ao lado de uma bancada de trabalho.' : why === 'Fósforos' ? 'Precisa de fósforos para acender o fogão.' : why, 'erro'); return; }
+      if (why) { this.toast(why === 'Perto do fogo' ? 'Fique ao lado de um fogão, churrasqueira ou fogueira.' : why === 'Na bancada' ? 'Fique ao lado de uma bancada de trabalho.' : why === 'Na bancada de armas' ? 'Fique ao lado da bancada de armas da base.' : why === 'Na área médica' ? 'Fique ao lado da área médica da base.' : why === 'Fósforos' ? 'Precisa de fósforos para acender o fogão.' : why, 'erro'); return; }
       if (!this.can(u, 0)) return;
       await this.act(async () => {
         for (const req of r.precisa) this.takeReq(u, req);
         await this.view().play(u, 'interact');
-        if (r.repara) { const it = ITEMS[u.eq.mao.id]; u.eq.mao.dur = Math.min(it.w.dur, u.eq.mao.dur + Math.round(it.w.dur * 0.5)); this.log(`🩶 ${u.name} remendou a arma com silver tape.`, 'bom'); }
-        else { addItem(u, r.da[0], r.da[1]); this.log(`🛠️ ${u.name} fez: ${ITEMS[r.da[0]].nome}${r.da[1] > 1 ? ' ×' + r.da[1] : ''}.`, 'bom'); }
-        if (r.fogao || r.bancada) this.noise(u.x, u.z, 3, u);
-        this.gainXp(u, r.bancada ? 10 : 5);
+        if (r.repara) { const it = ITEMS[u.eq.mao.id]; u.eq.mao.dur = Math.min(it.w.dur, u.eq.mao.dur + Math.round(it.w.dur * (r.total ? 1 : 0.5))); this.log(r.total ? `🔧 ${u.name} reforçou a arma: novinha em folha.` : `🩶 ${u.name} remendou a arma com silver tape.`, 'bom'); }
+        else {
+          // Carol na área médica: rende o dobro
+          const n = r.da[1] * (r.estacao === 'medica' && u.id === 'carol' ? 2 : 1);
+          addItem(u, r.da[0], n);
+          this.log(`🛠️ ${u.name} fez: ${ITEMS[r.da[0]].nome}${n > 1 ? ' ×' + n : ''}.`, 'bom');
+        }
+        if (r.fogao || r.bancada || r.estacao === 'armas') this.noise(u.x, u.z, 3, u);
+        this.gainXp(u, r.bancada || r.estacao ? 10 : 5);
       });
     },
     async drinkTap(u, p) {
@@ -581,11 +628,11 @@ export function installActions(Game) {
     canSleep() {
       const b = this.map.buildings.find(b => b.safehouse || this.state.flags['refugio_' + b.id]);
       if (this.state.mode !== 'explore') return 'Não dá para dormir com perigo por perto.';
-      const hs = this.liveHeroes.filter(h => !h.st.downed);
+      const hs = this.fieldHeroes.filter(h => !h.st.downed);
       const bedInBase = this.map.props.some(p => !p.removed && PROPS[p.type].camaBase && p.extra && p.extra.built);
       const inside = hs.every(h => { const bb = this.map.buildingAt(h.x, h.z); return (bb && (bb.safehouse || this.state.flags['refugio_' + bb.id])) || (bedInBase && this.inBase(h.x, h.z)); });
-      if (!inside) return 'Todos precisam estar dentro de um esconderijo seguro (Casa da Turma ou Igreja).';
-      if (this.units.some(z => z.alive && this.hostile(z) && this.liveHeroes.some(h => Math.hypot(h.x - z.x, h.z - z.z) < 10))) return 'Tem zumbi perto demais para dormir.';
+      if (!inside) return 'Só dá para dormir num lugar seguro: Casa da Turma, Igreja ou numa cama construída na base.';
+      if (this.units.some(z => z.alive && this.hostile(z) && hs.some(h => Math.hypot(h.x - z.x, h.z - z.z) < 10))) return 'Tem zumbi perto demais para dormir.';
       return null;
     },
     async sleep(hours = 7) {
@@ -647,16 +694,13 @@ export function installActions(Game) {
           for (const h of this.liveHeroes) if (Math.hypot(h.x - u.x, h.z - u.z) <= 5) { h.need.moral = Math.min(100, h.need.moral + [15, 25, 35][r - 1]); h.st.panic = 0; view.floatText(h.x, h.z, '💛 Moral', 'heal'); }
         });
       } else if (id === 'voz_de_comando') {
-        if (!target || target === u || target.kind !== 'hero' || target.dead || target.st.downed) { this.toast('Escolha um aliado.', 'erro'); return; }
-        if (u.st.cmdUsed) { this.toast('Já usou a Voz de Comando nesta rodada.', 'erro'); return; }
-        if (Math.hypot(target.x - u.x, target.z - u.z) > 6) { this.toast('Aliado longe demais (máx. 6).', 'erro'); return; }
         await this.act(async () => {
-          this.spend(u, sk.pa); u.st.cmdUsed = true;
+          this.spend(u, sk.pa); u.cd[id] = sk.recarga[r - 1];
           const bonus = [2, 3, 4][r - 1];
-          target.st.haste = Math.ceil(bonus / 2);
-          view.say(u, rng.pick([`${target.name}, AGORA! Vai, vai, vai!`, 'Organiza essa fila! Um de cada vez!', `Presta atenção, ${target.name}! Isso cai na prova!`]));
-          view.floatText(target.x, target.z, '⚡ Acelerou!', 'xp');
-          this.log(`📣 ${u.name} deu uma ordem: ${target.name} ficou mais rápido por um tempo.`, 'bom');
+          const alvos = [u, ...this.units.filter(o => o.alive && o.faction === 'ally' && Math.hypot(o.x - u.x, o.z - u.z) <= 6)];
+          for (const o of alvos) { o.st.haste = Math.ceil(bonus / 2); view.floatText(o.x, o.z, '⚡ Acelerou!', 'xp'); }
+          view.say(u, rng.pick(['Foco, gente! Um de cada vez!', 'Organiza essa fila! Vai, vai, vai!', 'Presta atenção que isso cai na prova!']));
+          this.log(`📣 ${u.name} usou a Voz de Comando: ${alvos.length > 1 ? 'ela e os aliados ficaram' : 'ficou'} mais rápida por um tempo.`, 'bom');
         });
       } else if (id === 'surto') {
         await this.act(async () => {
@@ -701,10 +745,11 @@ export function installActions(Game) {
             if (w.tipo === 'distancia') opts.push({ label: 'Mirar (+15%)', ap: 1, fn: () => this.aim(u) });
           }
         } else if (t.kind === 'hero') {
-          opts.push({ label: `Selecionar ${t.name}`, ap: 0, fn: () => this.select(t) });
-          if (t.st.downed) opts.push({ label: `Levantar ${t.name}`, ap: u.skill('maos_que_curam') >= 3 ? 2 : 3, fn: () => this.revive(u, t) });
-          if (u.skill('voz_de_comando')) opts.push({ label: `Voz de Comando em ${t.name}`, ap: 2, fn: () => this.useSkill(u, 'voz_de_comando', t) });
-          if (cheb(u, t) <= 1) opts.push({ label: `Tratar/entregar item para ${t.name}`, ap: 0, fn: () => bus.emit('inventory', u, t) });
+          // quem está descansando na base: dá para trocar (só na base)
+          if (t.resting) {
+            const why = this.switchBlock();
+            opts.push({ label: why ? `${t.name} está descansando (troca só na base)` : `🔄 Trocar para ${t.name} (nível ${t.lvl})`, ap: 0, disabled: !!why, fn: () => bus.emit('pick-survivor', { reason: 'troca', id: t.id }) });
+          } else if (t.st.downed) opts.push({ label: `Levantar ${t.name}`, ap: u.skill('maos_que_curam') >= 3 ? 2 : 3, fn: () => this.revive(u, t) });
         } else if (t.kind === 'npc' && !t.dead) {
           opts.push({ label: `Conversar com ${t.name}`, ap: this.state.mode === 'combat' ? 1 : 0, fn: () => this.talk(u, t) });
           if (t.faction !== 'ally') opts.push({ label: `Atacar ${t.name}`, ap: u.weaponStats().pa || 2, fn: () => this.confirm(`Atacar ${t.name}? Isso pode ter consequências.`, () => this.attack(u, t)), danger: true });
@@ -720,7 +765,7 @@ export function installActions(Game) {
         if (d.barricade) opts.push({ label: 'Remover barricada', ap: 2, fn: () => this.unbarricade(u, d) });
         else if (d.locked) {
           const key = d.key;
-          const hasKey = key && this.liveHeroes.some(h => countItem(h, key) > 0);
+          const hasKey = key && countItem(u, key) > 0;
           if (key === 'corrente') {
             opts.push({ label: 'Portão acorrentado — arrebentar com pé de cabra', ap: 3, fn: () => countItem(u, 'pe_de_cabra') || u.eq.mao?.id === 'pe_de_cabra' ? this.unlockDoor(u, d, 'pe') : this.toast('Precisa de um pé de cabra.', 'erro'), disabled: !(countItem(u, 'pe_de_cabra')) });
             if (u.skill('mao_na_graxa')) opts.push({ label: 'Soltar a corrente (Mão na Graxa)', ap: 2, fn: () => this.unlockDoor(u, d, 'gazua') });

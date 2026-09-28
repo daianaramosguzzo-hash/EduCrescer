@@ -100,7 +100,7 @@ export function zombieWound(g, z, hero) {
   const Z = ZOMBIES[z.type];
   const ar = armor(hero);
   // o vizinho do prólogo (tutorial) só arranha
-  const bite = !z.ai?.prologo && rng.next() < Z.mordida * (1 - ar.mordida) * (1 - (hero.stats.resistencia - 5) * 0.04);
+  const bite = !z.ai?.prologo && rng.next() < Z.mordida * (1 - ar.mordida) * (1 - (hero.stats.resistencia - 5) * 0.04) * (hero.id === 'arthur' ? 0.6 : 1);
   if (bite) {
     hero.wounds.push({ tipo: 'mordida', grav: 2, tratado: false });
     hero.st.infected = true;
