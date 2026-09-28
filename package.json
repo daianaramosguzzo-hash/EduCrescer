@@ -1,9 +1,8 @@
 {
-  "name": "crescemon-brasa-3d",
-  "productName": "Criaturas Imaginárias",
-  "version": "1.5.1",
-  "description": "Criaturas Imaginárias — RPG 3D de capturar e treinar criaturas, criação Arthur Guzzo",
-  "author": "Arthur Guzzo",
+  "name": "ultimo-refugio-aimores",
+  "productName": "Último Refúgio",
+  "version": "0.1.0",
+  "description": "Último Refúgio: Aimorés — jogo de sobrevivência pós-apocalíptico 2,5D",
   "license": "UNLICENSED",
   "private": true,
   "main": "desktop/main.js",
@@ -12,9 +11,8 @@
     "dist:win": "electron-builder --win nsis --x64 --publish never"
   },
   "build": {
-    "appId": "br.educrescer.crescemon",
-    "productName": "Criaturas Imaginárias",
-    "copyright": "Arthur Guzzo",
+    "appId": "br.educrescer.ultimorefugio",
+    "productName": "Último Refúgio",
     "directories": {
       "output": "dist",
       "buildResources": "desktop"
@@ -45,8 +43,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Criaturas Imaginárias",
-      "artifactName": "Criaturas-Imaginarias-Setup-${version}.${ext}",
+      "shortcutName": "Último Refúgio",
+      "artifactName": "Ultimo-Refugio-Setup-${version}.${ext}",
       "installerIcon": "desktop/icon.ico",
       "uninstallerIcon": "desktop/icon.ico",
       "language": "1046"

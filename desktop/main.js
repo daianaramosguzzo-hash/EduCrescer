@@ -1,4 +1,4 @@
-// Criaturas Imaginárias — versão desktop (Electron)
+// Último Refúgio: Aimorés — versão desktop (Electron)
 const { app, BrowserWindow, protocol, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -19,14 +19,13 @@ const MIME = {
   '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
 };
 
-// O Electron põe o nome do app ("Criaturas Imaginárias") no User-Agent de cada
+// O Electron põe o nome do app ("Último Refúgio") no User-Agent de cada
 // pedido de arquivo; cabeçalho com acento é rejeitado e o jogo abria sem CSS nem
 // scripts. O User-Agent passa a usar só caracteres sem acento.
 app.userAgentFallback = app.userAgentFallback.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7e]/g, '');
 
-// O jogo mudou de nome (antes "Crescemon Brasa 3D"): a pasta de dados continua
-// a mesma para não perder o progresso salvo de quem já jogava.
-app.setPath('userData', path.join(app.getPath('appData'), 'Crescemon Brasa 3D'));
+// pasta de dados sem acento (o progresso salvo fica aqui)
+app.setPath('userData', path.join(app.getPath('appData'), 'Ultimo Refugio Aimores'));
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -34,8 +33,8 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 500,
-    backgroundColor: '#1a1420',
-    title: 'Criaturas Imaginárias',
+    backgroundColor: '#16140f',
+    title: 'Último Refúgio: Aimorés',
     icon: path.join(__dirname, 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, sandbox: true },
@@ -54,9 +53,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
-  // Lê o arquivo direto (funciona dentro do app.asar). Antes usava net.fetch com
-  // uma URL file://, que falha quando a pasta de instalação tem acento
-  // ("Criaturas Imaginárias") e deixava o jogo sem CSS nem scripts.
+  // Lê o arquivo direto (funciona dentro do app.asar e em pastas com acento).
   protocol.handle('app', async req => {
     const { pathname } = new URL(req.url);
     const file = path.normalize(path.join(ROOT, decodeURIComponent(pathname)));

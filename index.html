@@ -3,74 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#1a1420">
-  <title>Criaturas Imaginárias</title>
+  <meta name="theme-color" content="#16140f">
+  <title>Último Refúgio: Aimorés</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@400;600;700&family=Permanent+Marker&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="vignette"></div>
+  <div id="floaters"></div>
 
-  <div id="location"></div>
-  <div id="toast" class="hidden"></div>
-
-  <!-- batalha -->
-  <div id="battle-ui" class="hidden">
-    <div id="hud-foe" class="hud hidden"></div>
-    <div id="hud-balls" class="hidden"></div>
-    <div id="hud-ally" class="hud hidden"></div>
-  </div>
-  <div id="battle-menu" class="panel hidden"></div>
-
-  <!-- diálogo e menus -->
-  <div id="dialog" class="hidden">
-    <div id="dialog-name" class="hidden"></div>
-    <div id="dialog-text"></div>
-    <div id="dialog-arrow" class="hidden">▼</div>
-  </div>
-  <div id="choice" class="panel hidden"></div>
-  <div id="start-menu" class="panel hidden"></div>
-  <div id="screen" class="hidden"></div>
-  <div id="preview" class="hidden"><canvas width="256" height="256"></canvas><div class="pv-name"></div></div>
-
-  <!-- controles de toque -->
-  <div id="touch">
-    <div class="dpad">
-      <button data-act="up" class="d-up" aria-label="Cima">▲</button>
-      <button data-act="left" class="d-left" aria-label="Esquerda">◀</button>
-      <button data-act="right" class="d-right" aria-label="Direita">▶</button>
-      <button data-act="down" class="d-down" aria-label="Baixo">▼</button>
-    </div>
-    <div class="ab">
-      <button data-act="b" class="btn-b" aria-label="B">B</button>
-      <button data-act="a" class="btn-a" aria-label="A">A</button>
-    </div>
-    <button data-act="menu" class="btn-menu" aria-label="Menu">☰</button>
-  </div>
-
-  <div id="flash"></div>
+  <div id="hud" class="hidden"></div>
+  <div id="toasts"></div>
+  <div id="feed"></div>
+  <div id="panel" class="hidden"></div>
+  <div id="dialog" class="hidden"></div>
+  <div id="choice" class="hidden"></div>
+  <div id="death" class="hidden"></div>
+  <div id="intro" class="hidden"></div>
+  <div id="confirm" class="hidden"></div>
   <div id="fade"></div>
-  <div id="credits" class="hidden"></div>
 
   <!-- título -->
-  <div id="title">
-    <div class="title-inner">
+  <div id="title" class="hidden">
+    <div class="tbox">
       <div class="logo">
-        <span class="l1">CRIATURAS</span>
-        <span class="l2">IMAGINÁRIAS</span>
-        <span class="l3">criação Arthur Guzzo</span>
+        <div class="l1">ÚLTIMO REFÚGIO</div>
+        <div class="l2">AIMORÉS</div>
+        <div class="l3">sobrevivência pós-apocalíptica</div>
       </div>
-      <img class="hero" src="assets/heroi.webp" alt="Herói">
-      <label class="name">Nome do herói
-        <input id="name-input" maxlength="10" placeholder="Cris" autocomplete="off">
-      </label>
-      <div class="buttons">
-        <button id="btn-new" disabled>Carregando…</button>
-        <button id="btn-continue" class="hidden">Continuar</button>
+      <div class="tbtns">
+        <button id="btn-continue" class="hidden">▶ Continuar</button>
+        <button id="btn-new">✚ Novo jogo</button>
+        <button id="btn-help">❔ Como jogar</button>
       </div>
-      <p class="help">Setas/WASD: andar · Z/Espaço: interagir · X: correr/voltar · Esc: menu</p>
+      <p class="tfoot">Salvo automaticamente no navegador · v0.1</p>
+    </div>
+    <img class="hero" src="assets/arthur.png" alt="Arthur">
+  </div>
+
+  <div id="help" class="hidden">
+    <div class="hbox">
+      <h2>Como jogar</h2>
+      <p>Você é <b>Arthur</b>, sozinho num Aimorés tomado pelos mortos. Colete, fabrique, construa e descubra o que aconteceu.</p>
+      <table>
+        <tr><th>Ação</th><th>Teclado e mouse</th><th>Celular</th></tr>
+        <tr><td>Andar / correr</td><td>WASD ou setas / Shift</td><td>Joystick / 🏃</td></tr>
+        <tr><td>Atacar</td><td>Espaço ou clique</td><td>⚔️</td></tr>
+        <tr><td>Coletar, abrir, conversar</td><td>E</td><td>✋</td></tr>
+        <tr><td>Curar / recarregar</td><td>Q / R</td><td>🩹 / 🔄</td></tr>
+        <tr><td>Inventário · Crafting · Construção</td><td>I · C · B</td><td>🎒 🔨 🧱</td></tr>
+        <tr><td>Mapa · Missões · Habilidades · Sobreviventes</td><td>M · J · K · P</td><td>🗺️ 📜 ⭐ 👥</td></tr>
+        <tr><td>Pausa / sair do menu</td><td>Esc</td><td>⚙️ / ✕</td></tr>
+      </table>
+      <ul>
+        <li>🍖 Fome e 💧 sede caem com o tempo. Zeradas, tiram vida.</li>
+        <li>🔊 Tiros e correria fazem barulho e atraem zumbis.</li>
+        <li>⛺ Construa só no terreno da base. Baús guardam seus itens; na base, o crafting usa os baús.</li>
+        <li>🎒 Se morrer, seus itens ficam numa mochila no local. Volte para buscar.</li>
+        <li>👥 Outros sobreviventes aparecem na história. A troca de personagem é feita na base.</li>
+      </ul>
+      <button class="close">Entendi</button>
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="lbox">
+      <div class="l1">ÚLTIMO REFÚGIO</div><div class="l2">AIMORÉS</div>
+      <div class="lbar"><div></div></div>
+      <div class="lmsg">Carregando...</div>
     </div>
   </div>
 
