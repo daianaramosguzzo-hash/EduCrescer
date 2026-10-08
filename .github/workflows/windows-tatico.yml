@@ -2,10 +2,14 @@ name: Instalador Windows (Força Tática)
 
 # Gera o instalador .exe do Força Tática numa máquina Windows.
 # Rode manualmente pela aba Actions ou crie uma tag tatico-v<versão> (ex.: tatico-v1.0.0).
+# Também roda a cada push na branch do jogo que mexa nele, publicando a Release
+# da versão em tatico/desktop/builder.json (a tag é criada pelo próprio fluxo).
 on:
   workflow_dispatch:
   push:
     tags: ['tatico-v*']
+    branches: ['claude/counter-strike-game-3l82ix']
+    paths: ['tatico/**', 'lib/**', '.github/workflows/windows-tatico.yml']
 
 permissions:
   contents: write
