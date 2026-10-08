@@ -15,6 +15,24 @@ No GitHub Pages fica em `https://<usuário>.github.io/<repositório>/tatico/`. P
 
 No menu dá para escolher o time (Ataque, Defesa, automático ou **Só assistir** os bots), a dificuldade dos bots, quantos jogadores por time (1 a 5), o tamanho da partida, a sensibilidade do mouse, o volume e a voz do rádio. O jogo lembra essas escolhas.
 
+### Versão para Windows (instalável)
+
+O jogo também vira um programa de Windows com **Electron**, separado do das Criaturas (ícone, atalho e pasta de instalação próprios).
+
+- **Instalar:** execute `Forca-Tatica-Setup-<versão>.exe` e escolha a pasta. O instalador cria atalhos na área de trabalho e no menu Iniciar, e dá para desinstalar pelo Painel de Controle.
+- **Tela cheia:** aperte **F11**. No programa, o **Ctrl** agacha sem perigo (Ctrl+W não fecha nada).
+- **Aviso do Windows:** como o instalador não é assinado digitalmente, o Windows pode mostrar *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
+
+Para gerar o instalador:
+
+```bash
+npm install
+npm run start:tatico   # abre o jogo numa janela de desktop
+npm run dist:tatico    # gera dist-tatico/Forca-Tatica-Setup-<versão>.exe (no Linux precisa do Wine)
+```
+
+O fluxo do GitHub Actions **Instalador Windows (Força Tática)** gera o `.exe` numa máquina Windows. Rode-o pela aba **Actions** ou crie uma tag `tatico-v*` (ex.: `tatico-v1.0.0`) para publicar o instalador numa Release. A versão fica em `tatico/desktop/builder.json` (`extraMetadata.version`).
+
 ### Controles
 
 | Ação | Tecla |
@@ -104,6 +122,7 @@ tatico/js/hud.js      HUD, radar, compra e placar
 tatico/js/fx.js       marcas de tiro, partículas, traçantes, clarões e fumaça
 tatico/js/audio.js    sons sintetizados (Web Audio) e voz do rádio
 tatico/js/textures.js texturas feitas em código
+tatico/desktop/       versão Windows: janela (Electron), ícone e configuração do instalador
 ```
 
 Para ver os bots jogando sozinhos numa partida rápida, abra `/tatico/?auto=1`.

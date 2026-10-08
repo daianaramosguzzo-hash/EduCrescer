@@ -161,6 +161,6 @@ desktop/           versão de desktop (Electron): janela, ícone e instalador
 
 ## Força Tática (tiro tático)
 
-A pasta `tatico/` traz um segundo jogo, independente das Criaturas: um tiro tático em primeira pessoa no estilo Counter-Strike. Tem Ataque contra Defesa, bomba nos bombs A e B, economia por rodada, compra de armas, recuo com padrão de spray, granadas e bots. Com o servidor rodando, abra `http://localhost:8000/tatico/`. Controles, regras e mecânicas estão em [`tatico/LEIAME.md`](tatico/LEIAME.md).
+A pasta `tatico/` traz um segundo jogo, independente das Criaturas: um tiro tático em primeira pessoa no estilo Counter-Strike. Tem Ataque contra Defesa, bomba nos bombs A e B, economia por rodada, compra de armas, recuo com padrão de spray, granadas e bots. Com o servidor rodando, abra `http://localhost:8000/tatico/`. Ele também tem instalador próprio para Windows (`npm run dist:tatico` ou o fluxo **Instalador Windows (Força Tática)** no Actions). Controles, regras e mecânicas estão em [`tatico/LEIAME.md`](tatico/LEIAME.md).
 
 Jogo de fã sem fins comerciais. "Pokémon" e "FireRed" são marcas de seus respectivos donos. Este projeto só se inspira na estrutura da história e não usa nenhum personagem, nome, imagem ou música oficial.

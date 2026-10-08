@@ -1,0 +1,47 @@
+{
+  "appId": "br.educrescer.forcatatica",
+  "productName": "Força Tática",
+  "copyright": "EduCrescer",
+  "extraMetadata": {
+    "name": "forca-tatica",
+    "productName": "Força Tática",
+    "version": "1.0.0",
+    "description": "Força Tática — tiro tático em primeira pessoa contra bots",
+    "main": "tatico/desktop/main.js"
+  },
+  "directories": {
+    "output": "dist-tatico",
+    "buildResources": "tatico/desktop"
+  },
+  "files": [
+    "tatico/index.html",
+    "tatico/css/**",
+    "tatico/js/**",
+    "tatico/desktop/main.js",
+    "tatico/desktop/icon.png",
+    "lib/three.module.min.js"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "tatico/desktop/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Força Tática",
+    "artifactName": "Forca-Tatica-Setup-${version}.${ext}",
+    "installerIcon": "tatico/desktop/icon.ico",
+    "uninstallerIcon": "tatico/desktop/icon.ico",
+    "language": "1046"
+  }
+}
