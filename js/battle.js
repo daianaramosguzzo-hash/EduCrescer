@@ -3,7 +3,7 @@ import * as THREE from '../lib/three.module.min.js';
 import { SPECIES, MOVES, ITEMS, TYPES, typeMult } from './data.js';
 import { createCreature, recalc, nameOf, xpForLevel, movesAtLevel } from './creature.js';
 import { makeCreature, makeHuman, makeOrb, toon, LOOKS, HERO_LOOK, GRADIENT } from './models.js';
-import { SKIES, shared, makeSky, makeMountains, plantTrees, plantTufts, tuftGeometry, waterMaterial, TEX, texMat, boxW, hash as ehash, flowerGeometry, rockGeometry, rockMaterial, hullGeometry, bushGeometry } from './env.js';
+import { SKIES, shared, makeSky, makeMountains, plantTrees, plantTufts, tuftGeometry, waterMaterial, TEX, texMat, boxW, hash as ehash, flowerGeometry, rockGeometry, rockMaterial, hullGeometry, bushGeometry, hasProp, plantPropRocks } from './env.js';
 import { say, ask, list, hideDialog, hpColor, partyScreen, bagScreen, typeBadge, versus } from './ui.js';
 import { sfx, playMusic } from './audio.js';
 
@@ -146,8 +146,11 @@ export class BattleScene {
         const a = -2 + (i / 8) * 4;
         rocks.push({ x: Math.sin(a) * 7 + (ehash(i, 1) - 0.5) * 2, y: 0, z: -Math.cos(a) * 5 - 1.5, s: 0.25 + ehash(i, 2) * 0.35, r: ehash(i, 4) * 6 });
       }
-      const rg = rockGeometry(31);
-      this.env.add(plantTufts(rocks, rg, { material: rockMaterial(), outline: hullGeometry(rg) }));
+      if (hasProp('rocks')) this.env.add(plantPropRocks(rocks.map(q => ({ ...q, y: -0.03, s: q.s * 2.4 })), { shadows: false }));
+      else {
+        const rg = rockGeometry(31);
+        this.env.add(plantTufts(rocks, rg, { material: rockMaterial(), outline: hullGeometry(rg) }));
+      }
       this.env.add(makeMountains(0, -6, 26, pr, 7));
     } else {
       this.scene.background = new THREE.Color(bg.sky);

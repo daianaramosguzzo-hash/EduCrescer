@@ -3,6 +3,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import { GRADIENT } from './models.js';
 import { DETAIL_TEX, MAT_TEX, setTexAnisotropy } from './textures.js';
+import { PROPS, propHull } from './props.js';
 
 // uniforms compartilhados pelos shaders (tempo e posição do herói)
 export const shared = { time: { value: 0 }, player: { value: new THREE.Vector3(0, -99, 0) } };
@@ -21,7 +22,7 @@ export const SKIES = {
     waterShallow: '#7fd0d4', waterDeep: '#2a78ac', water: '#3a9ee0',
     trunk: '#7a4e2a', pine: ['#2e7a44', '#3f944f', '#58b05c'], leaf: ['#4aa246', '#62ba52', '#7ccc62'], palm: '#4fae4a',
     mountain: '#6f9c8a', snow: true, clouds: true, cloud: '#ffffff', cloudShade: '#a8c4e0',
-    kinds: { round: 0.55, pine: 0.45 }, butterflies: true,
+    kinds: { round: 0.55, pine: 0.45 }, autumn: 0.16, butterflies: true,
   },
   beach: {
     top: '#2c9aea', horizon: '#d8f6ff', bottom: '#c0e8f4', fog: '#d0f0fa', fogNear: 24, fogFar: 64,
@@ -43,7 +44,7 @@ export const SKIES = {
     waterShallow: '#5aa0a0', waterDeep: '#1f5a70', water: '#2a7aa0',
     trunk: '#5e3c22', pine: ['#1f5a34', '#2a6e3e', '#3a8448'], leaf: ['#2e7a36', '#3e8e40', '#58a44c'], palm: '#3a8a3a',
     mountain: '#2f5a45', snow: false, clouds: false,
-    kinds: { pine: 0.75, round: 0.25 }, fireflies: true, leaves: true,
+    kinds: { pine: 0.75, round: 0.25 }, autumn: 0.25, fireflies: true, leaves: true,
   },
   sunset: {
     top: '#2d2f6e', horizon: '#ffb27a', bottom: '#d08a70', fog: '#eaa888', fogNear: 20, fogFar: 58,
@@ -54,7 +55,7 @@ export const SKIES = {
     waterShallow: '#e0a890', waterDeep: '#5a4a8a', water: '#8a78c0',
     trunk: '#6a4028', pine: ['#3a6a3a', '#4a7e42', '#62924a'], leaf: ['#d8702a', '#e8a030', '#c84a2a'], palm: '#8aa040',
     mountain: '#6a5a8a', snow: true, clouds: true, cloud: '#ffd8c8', cloudShade: '#b07890',
-    kinds: { round: 0.6, pine: 0.4 }, motes: true,
+    kinds: { round: 0.6, pine: 0.4 }, autumn: 0.3, motes: true,
   },
   storm: {
     top: '#1c2036', horizon: '#6a6c8c', bottom: '#4a4a62', fog: '#5c5e7c', fogNear: 14, fogFar: 46,
@@ -775,6 +776,16 @@ const VARIANTS = { pine: 3, round: 3, birch: 1, palm: 2, cactus: 3, dead: 2, jun
 export function plantTrees(list, p, { shadows = true } = {}) {
   const g = new THREE.Group();
   const groups = {};
+  // parte das árvores redondas vira a árvore laranja do BlenderKit (onde o clima pede)
+  if (p.autumn && PROPS.tree) {
+    const autumn = [];
+    list = list.filter(t => {
+      if (t.kind !== 'round' || hash(Math.floor(t.x * 7) + 41, Math.floor(t.z * 5) + 17) >= p.autumn) return true;
+      autumn.push(t);
+      return false;
+    });
+    g.add(plantAutumnTrees(autumn, { shadows }));
+  }
   for (const t of list) {
     const v = Math.floor(hash(Math.floor(t.x * 3) + 11, Math.floor(t.z * 3) + 5) * VARIANTS[t.kind]) % VARIANTS[t.kind];
     const key = t.kind + '|' + v + '|' + (t.lo ? 1 : 0);
@@ -1003,13 +1014,60 @@ export function rockOutlineMaterial() {
   return cachedGeo('rockOl', () => new THREE.MeshBasicMaterial({ color: OUTLINE_COLOR, side: THREE.BackSide }));
 }
 
+// ------------------------------------------------ cenário do BlenderKit (js/props.js)
+export function hasProp(name) { return !!PROPS[name]; }
+const propMats = new Map();
+function propMat(key, build) {
+  if (!propMats.has(key)) propMats.set(key, build());
+  return propMats.get(key);
+}
+// rochas com musgo; list: [{ x, y, z, s (largura), r, sy? }]
+export function plantPropRocks(list, { shadows = true, outline = true, fade = 0, seed = 0 } = {}) {
+  const g = new THREE.Group();
+  if (!PROPS.rocks || !list.length) return g;
+  const mat = propMat('rock' + fade, () => windify(new THREE.MeshToonMaterial({ map: PROPS.rocks[0].map, color: new THREE.Color('#ffffff').multiplyScalar(1.45), gradientMap: GRADIENT }), { amp: 0, fade }));
+  const by = PROPS.rocks.map(() => []);
+  for (const t of list) by[Math.floor(hash(Math.floor(t.x * 7) + seed, Math.floor(t.z * 11)) * by.length) % by.length].push(t);
+  by.forEach((l, i) => {
+    if (!l.length) return;
+    const geo = PROPS.rocks[i].geo;
+    g.add(plantTufts(l, geo, { material: mat, shadows, fade, outline: outline ? propHull(geo, 0.028) : null }));
+  });
+  return g;
+}
+// touceira de capim (cartões com transparência), tingida com a cor do bioma
+export function plantPropGrass(list, color, { push = 0, amp = 0.35, fade = 30 } = {}) {
+  if (!PROPS.grass || !list.length) return new THREE.Group();
+  const c = new THREE.Color(color);
+  const mat = propMat('grass' + c.getHexString() + push + amp + fade, () => windify(new THREE.MeshToonMaterial({
+    map: PROPS.grass.map, color: c.multiplyScalar(2.6), alphaTest: 0.42, side: THREE.DoubleSide, gradientMap: GRADIENT,
+  }), { base: 0, amp, push, fade }));
+  return plantTufts(list, PROPS.grass.geo, { material: mat });
+}
+// árvore laranja (bordo de outono); list: [{ x, y, z, s, r, lo }]
+export function plantAutumnTrees(list, { shadows = true } = {}) {
+  const g = new THREE.Group();
+  if (!PROPS.tree || !list.length) return g;
+  const trunk = propMat('autumnTrunk', () => windify(new THREE.MeshToonMaterial({ map: PROPS.tree.trunkMap, color: '#e8dcd0', gradientMap: GRADIENT }), { base: 0.9, amp: 0.02 }));
+  const leaves = propMat('autumnLeaves', () => windify(new THREE.MeshToonMaterial({ map: PROPS.tree.leafMap, alphaTest: 0.5, side: THREE.DoubleSide, gradientMap: GRADIENT }), { base: 0.6, amp: 0.03 }));
+  for (const lo of [false, true]) {
+    const l = list.filter(t => !!t.lo === lo).map(t => ({ ...t, sy: t.s * (0.9 + hash(t.x * 5, t.z) * 0.25) }));
+    if (!l.length) continue;
+    const set = lo ? PROPS.tree.lo : PROPS.tree.hi;
+    g.add(plantTufts(l, set.trunk, { material: trunk, shadows: shadows && !lo }));
+    g.add(plantTufts(l, set.leaves, { material: leaves, shadows: shadows && !lo }));
+  }
+  return g;
+}
+
 // Espalha decoração de forma natural (posições por hash com jitter, sem grade
 // visível), respeitando o que pode ficar em cada tipo de quadrado.
 // opts: { W, H, PAD, tileExt, heightAt, isBlockedDecor(x,z), p, density }
 export function scatterDecor(o) {
   const { W, H, PAD, tileExt, heightAt, p, density = 1, isBuilding } = o;
   const g = new THREE.Group();
-  const lists = { grass: [], grass2: [], dry: [], plant: [], fern: [], leaf: [], twig: [], pebble: [], rock: [], bush: [], flowers: {} };
+  const lists = { grass: [], grass2: [], dry: [], plant: [], fern: [], leaf: [], twig: [], pebble: [], rock: [], bush: [], lush: [], flowers: {} };
+  const lush = !!PROPS.grass;
   const flowerCols = ['#f05a7a', '#ffd23a', '#ffffff', '#b07af0', '#ff8a3a', '#6ab0ff'];
   const R = (x, z, k) => hash(x * 73 + k * 19, z * 131 + k * 7);
   const near = (x, z, t) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => tileExt(x + dx, z + dz) === t);
@@ -1046,6 +1104,8 @@ export function scatterDecor(o) {
         }
         if (R(x, z, 16) < 0.25) { const [px, pz] = pt(17); lists.twig.push({ x: px, y: y0(px, pz), z: pz, s: 0.7 + R(x, z, 18) * 0.7, r: R(x, z, 19) * 6.28 }); }
       }
+      // touceiras de capim do BlenderKit: perto das árvores e fora da área de andar
+      if (lush && dOut < 4 && R(x, z, 62) < (dOut > 0 ? 0.16 : byTree ? 0.14 : 0.03) * density * density) { const [px, pz] = pt(63, 0.6); const s = 0.7 + R(x, z, 64) * 0.5; lists.lush.push({ x: px, y: y0(px, pz), z: pz, s, sy: s * 1.5, r: R(x, z, 65) * 6.28 }); }
       if (R(x, z, 20) < 0.1) { const [px, pz] = pt(21); lists.pebble.push({ x: px, y: y0(px, pz), z: pz, s: 0.05 + R(x, z, 22) * 0.06, r: R(x, z, 23) * 6.28, tint: R(x, z, 24) }); }
     } else if (t === ',') {
       const nP = Math.round((1 + R(x, z, 25) * 3) * density);
@@ -1082,7 +1142,9 @@ export function scatterDecor(o) {
   g.add(plantTufts(lists.twig, twigGeometry(p.trunk), { material: windify(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: GRADIENT }), { amp: 0, fade: 22 }) }));
   const pebMat = windify(new THREE.MeshToonMaterial({ vertexColors: true, map: MAT_TEX.rock(), gradientMap: GRADIENT }), { amp: 0, fade: 24 });
   g.add(plantTufts(lists.pebble.map(q => ({ ...q, sy: q.s * 0.7 })), rockGeometry(3, '#b0a898', null, 0), { material: pebMat }));
-  if (lists.rock.length) g.add(plantTufts(lists.rock, rockGeometry(9), { material: windify(new THREE.MeshToonMaterial({ vertexColors: true, map: MAT_TEX.rock(), gradientMap: GRADIENT }), { amp: 0 }), shadows: true, outline: hullGeometry(rockGeometry(9)) }));
+  g.add(plantPropGrass(lists.lush, p.grass, { fade: 34 }));
+  if (lists.rock.length && PROPS.rocks) g.add(plantPropRocks(lists.rock.map(q => ({ ...q, y: q.y + 0.02, s: q.s * 2.2 })), { seed: 3 }));
+  else if (lists.rock.length) g.add(plantTufts(lists.rock, rockGeometry(9), { material: windify(new THREE.MeshToonMaterial({ vertexColors: true, map: MAT_TEX.rock(), gradientMap: GRADIENT }), { amp: 0 }), shadows: true, outline: hullGeometry(rockGeometry(9)) }));
   if (lists.bush.length) {
     const bA = bushGeometry(p, 1), bB = bushGeometry(p, 2);
     const half = Math.ceil(lists.bush.length / 2);

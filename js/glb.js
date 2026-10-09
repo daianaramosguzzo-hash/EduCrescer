@@ -42,7 +42,7 @@ export async function loadGlbModels() {
 }
 
 // Hospedagens que não servem .glb recebem uma cópia em base64 (arquivo .glb.txt)
-async function fetchGlb(loader, file) {
+export async function fetchGlb(loader, file) {
   try { return await loader.loadAsync(file); } catch (e) {
     const r = await fetch(file + '.txt');
     if (!r.ok) throw e;

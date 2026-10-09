@@ -4,6 +4,7 @@ import { SPECIES, ITEMS, MOVES } from './data.js';
 import { createCreature, healFull, nameOf, reviveUid } from './creature.js';
 import { makeHuman, makeCreature, HERO_LOOK, LOOKS } from './models.js';
 import { loadGlbModels } from './glb.js';
+import { loadProps } from './props.js';
 import { World, DIRS } from './world.js';
 import { MAPS, rivalFinalParty } from './maps.js';
 import { BattleScene, Battle, buildTrainerParty } from './battle.js';
@@ -53,7 +54,7 @@ function applyQuality(q) {
   if (vig) vig.classList.toggle('hidden', Q.post);
   resize();
 }
-await Promise.all([loadGlbModels(), UI.preloadArt()]); // modelos GLB e ilustrações (retratos, insígnias); o que faltar fica de fora
+await Promise.all([loadGlbModels(), loadProps(), UI.preloadArt()]); // modelos GLB e ilustrações (retratos, insígnias); o que faltar fica de fora
 const heroModel = makeHuman(HERO_LOOK);
 world.setPlayerModel(heroModel);
 

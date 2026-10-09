@@ -6,7 +6,7 @@ import { sfx } from './audio.js';
 import {
   SKIES, shared, setAnisotropy, makeSky, makeMountains, buildTerrain, waterMaterial, plantTrees, plantTufts,
   tuftGeometry, TEX, texMat, boxW, blobShadow, Ambient, hash as ehash,
-  scatterDecor, rockGeometry, rockMaterial, hullGeometry,
+  scatterDecor, rockGeometry, rockMaterial, hullGeometry, hasProp, plantPropRocks, plantPropGrass,
 } from './env.js';
 
 export const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -367,7 +367,7 @@ export class World {
     });
     this.mapGroup.add(mts);
 
-    const trees = [], tall = [], fences = [], rocks = [];
+    const trees = [], tall = [], tallBK = [], fences = [], rocks = [];
     const kinds = Object.entries(pr.kinds);
     const pickKind = (x, z) => {
       let r = ehash(x * 7 + 3, z * 5 + 1);
@@ -391,7 +391,9 @@ export class World {
             s: 0.8 + h * 0.5, r: h * 6.28, kind, lo: dOut > 2,
           });
         } else if (t === 'G') {
-          const n = Math.max(4, Math.round(7 * density));
+          // com a touceira do BlenderKit, cada quadrado ganha uma e menos tufos procedurais
+          if (hasProp('grass')) tallBK.push({ x: x + (ehash(x * 3, z * 7) - 0.5) * 0.2, z: z + (ehash(x * 7, z * 3) - 0.5) * 0.2, s: 1.05 + h * 0.2, sy: 2.4 + h * 0.4, r: h * 6.28 });
+          const n = hasProp('grass') ? Math.max(3, Math.round(4 * density)) : Math.max(4, Math.round(7 * density));
           for (let k = 0; k < n; k++) {
             tall.push({ x: x + (ehash(x * 7 + k, z) - 0.5) * 0.9, z: z + (ehash(x, z * 5 + k) - 0.5) * 0.9, s: 0.8 + ehash(k, x + z) * 0.45, r: ehash(x + k, z) * 6.28, v: k % 2 });
           }
@@ -406,6 +408,7 @@ export class World {
       const gB = tuftGeometry(0.6, 10, dark, new THREE.Color(pr.grassLight).lerp(new THREE.Color('#e8e090'), 0.25).getStyle(), 0.2, 5);
       this.mapGroup.add(plantTufts(tall.filter(t => !t.v), gA, { push: 0.55, shadows: true, amp: 0.13, fade: 0 }));
       this.mapGroup.add(plantTufts(tall.filter(t => t.v), gB, { push: 0.55, shadows: true, amp: 0.15, fade: 0 }));
+      this.mapGroup.add(plantPropGrass(tallBK, pr.tall, { push: 0.25, amp: 0.12, fade: 0 }));
     }
     // vegetação espalhada: capim baixo e seco, flores, plantas, samambaias,
     // arbustos, folhas caídas, gravetos, pedrinhas e rochas
@@ -430,7 +433,15 @@ export class World {
       post.castShadow = rail.castShadow = true;
       this.mapGroup.add(post, cap, rail);
     }
-    if (rocks.length) {
+    if (rocks.length && hasProp('rocks')) {
+      // rochas com musgo do BlenderKit: uma grande e uma pequena por quadrado
+      const l = [];
+      rocks.forEach(([x, z]) => {
+        l.push({ x: x - 0.06, y: -0.03, z, s: 1.05, sy: 1.25, r: ehash(z, x) * 6.28 });
+        l.push({ x: x + 0.3, y: -0.02, z: z + 0.28, s: 0.45, r: ehash(x, z) * 6.28 });
+      });
+      this.mapGroup.add(plantPropRocks(l));
+    } else if (rocks.length) {
       // rochas irregulares com rachaduras e musgo, em três formatos
       const items = [[], [], []];
       rocks.forEach(([x, z]) => {
