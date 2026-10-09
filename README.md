@@ -126,6 +126,7 @@ Cada lendário tem um golpe exclusivo. Se ele não for capturado, continua no lu
 - Personagens e criaturas com materiais de tecido, couro, cabelo, pele, pelo e escamas, olhos com brilho, sobrancelhas e luz de contorno; cada criatura selvagem tem leve variação de cor e tamanho
 - Iluminação com luz de preenchimento, sombras suaves, oclusão de ambiente pintada, correção de cor por clima e brilho discreto
 - Herói (Leo) e Pingolote com modelos GLB rigados e animados; o herói feito em código fica de reserva
+- Retratos ilustrados nas falas dos líderes, do Prof. Ipê, do rival, da mãe e dos vilões; tela de "VS" antes das batalhas importantes; insígnias ilustradas no Cartão de Treinador e uma animação ao conquistar cada uma (artes geradas com o Mage)
 - Um bioma por lugar: dia nas vilas, floresta escura com vaga-lumes, praia ensolarada, pôr do sol na Rota Vitória, caatinga com mandacarus, chapada sob tempestade elétrica, Amazônia úmida com árvores gigantes e cipós, pantanal noturno com névoa e vaga-lumes
 - Pessoas "vivas": respiram, olham em volta e mexem os braços; os líderes de ginásio fazem gestos próprios e têm uma aura do seu tipo (brasas, faíscas, folhas, névoa, pedrinhas ou bolhas)
 - Casas com telhado de telhas, chaminé, janelas com floreiras, toldos e postes; interiores com piso de madeira ou azulejo, papel de parede e janelas com cortinas
@@ -155,7 +156,10 @@ js/input.js        teclado e toque
 lib/               Three.js (r170) e addons/ (GLTFLoader, SkeletonUtils, decodificador meshopt)
 assets/heroi.webp  ilustração do herói
 assets/models/     modelos 3D rigados: leo.glb (herói) e pingolote.glb
+assets/portraits/  retratos dos personagens (falas e tela de VS)
+assets/badges/     ilustrações das 6 insígnias
 tools/leo/         conversor que otimiza o GLB do herói exportado do Blender
+tools/arte/        recorta folhas de ilustrações em grade (retratos, insígnias)
 desktop/           versão de desktop (Electron): janela, ícone e instalador
 ```
 

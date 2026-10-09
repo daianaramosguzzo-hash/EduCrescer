@@ -43,6 +43,18 @@ export function portraitFor(name) {
 }
 export function badgeArt(id) { const url = `assets/badges/${id}.webp`; return ready.get(url) ? url : null; }
 
+// Insígnia grande girando no centro da tela ao ser conquistada
+export function badgePopup(id) {
+  const url = badgeArt(id);
+  if (!url) return;
+  const el = document.createElement('div');
+  el.id = 'badge-pop';
+  el.innerHTML = `<img src="${url}" alt="">`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('in'));
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, 2600);
+}
+
 // Tela de "VS" antes das batalhas importantes (líderes, rival e vilões)
 export function versus(name, subtitle = '') {
   const url = portraitFor(name);

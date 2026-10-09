@@ -196,7 +196,7 @@ const G = {
   flag: f => !!state.flags[f],
   set: (f, v = true) => { state.flags[f] = v; },
   hasBadge: b => state.badges.includes(b),
-  addBadge: b => { if (!state.badges.includes(b)) state.badges.push(b); },
+  addBadge: b => { if (!state.badges.includes(b)) { state.badges.push(b); UI.badgePopup(b); } },
   giveItem: (id, n = 1) => { state.bag[id] = (state.bag[id] || 0) + n; },
   takeItem: (id, n = 1) => { state.bag[id] = Math.max(0, (state.bag[id] || 0) - n); },
   seen: sp => { state.seen[sp] = true; },
