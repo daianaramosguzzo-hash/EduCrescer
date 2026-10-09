@@ -53,7 +53,7 @@ function applyQuality(q) {
   if (vig) vig.classList.toggle('hidden', Q.post);
   resize();
 }
-await loadGlbModels(); // herói e Pingolote em GLB (se falhar, ficam os procedurais)
+await Promise.all([loadGlbModels(), UI.preloadArt()]); // modelos GLB e ilustrações (retratos, insígnias); o que faltar fica de fora
 const heroModel = makeHuman(HERO_LOOK);
 world.setPlayerModel(heroModel);
 

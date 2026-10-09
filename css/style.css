@@ -204,3 +204,27 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1420; col
 }
 
 .title-inner button:disabled { opacity: .6; cursor: progress; }
+
+/* retratos nos diálogos */
+#dialog-portrait { position: absolute; left: 14px; bottom: 12px; width: 104px; height: 104px; object-fit: cover; border-radius: 10px; border: 3px solid var(--panel-border); background: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.2); }
+#dialog.has-portrait { padding-left: 134px; min-height: 132px; }
+@media (max-width: 600px) { #dialog-portrait { width: 72px; height: 72px; } #dialog.has-portrait { padding-left: 98px; min-height: 100px; } }
+/* insígnias ilustradas */
+.badge-img { width: 44px; height: 44px; object-fit: contain; filter: grayscale(1) brightness(1.15) opacity(.35); }
+.badge-img.on { filter: drop-shadow(0 0 4px rgba(255,220,120,.8)); }
+/* tela VS */
+#versus { position: fixed; inset: 0; z-index: 60; pointer-events: none; display: flex; align-items: center; background: rgba(10,6,20,0); transition: background .3s; }
+#versus.in { background: rgba(10,6,20,.55); }
+#versus.out { background: rgba(10,6,20,0); }
+#versus .vs-band { position: relative; width: 100%; height: min(42vh, 300px); display: flex; align-items: center; gap: 4%; padding: 0 6%;
+  background: linear-gradient(100deg, #e8743a 0%, #c0401a 55%, #3a1a10 100%); border-top: 5px solid #ffd23a; border-bottom: 5px solid #ffd23a;
+  transform: translateX(-110%) skewY(-4deg); transition: transform .35s cubic-bezier(.2,.9,.3,1.2); }
+#versus.in .vs-band { transform: translateX(0) skewY(-4deg); }
+#versus.out .vs-band { transform: translateX(110%) skewY(-4deg); }
+#versus img { height: 115%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; border: 5px solid #fff; box-shadow: 0 8px 0 rgba(0,0,0,.35); transform: skewY(4deg); }
+#versus .vs-text { display: flex; flex-direction: column; transform: skewY(4deg); color: #fff; }
+#versus .vs-sub { font-family: var(--font); font-weight: 800; font-size: clamp(14px, 2.6vw, 22px); color: #ffe6a0; }
+#versus .vs-name { font-family: var(--pixel); font-size: clamp(20px, 4.6vw, 44px); text-shadow: 4px 4px 0 #3a1a10; }
+#versus .vs-mark { margin-left: auto; font-family: var(--pixel); font-size: clamp(40px, 9vw, 96px); color: #ffd23a; text-shadow: 6px 6px 0 #3a1a10; transform: skewY(4deg); }
+#dialog.has-portrait #dialog-name { left: 134px; }
+@media (max-width: 600px) { #dialog.has-portrait #dialog-name { left: 98px; } }

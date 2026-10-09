@@ -18,6 +18,46 @@ export function hpBar(c) {
   return `<div class="hpbar"><i style="width:${p * 100}%;background:${hpColor(p)}"></i></div>`;
 }
 
+// ---------------------------------------------------- retratos
+// Ilustrações em assets/portraits/<chave>.webp e assets/badges/<id>.webp.
+// São carregadas no início; se um arquivo não existir, o jogo segue sem ele.
+const PORTRAIT_OF = {
+  'Basalto': 'basalto', 'Líder Basalto': 'basalto', 'Marina': 'marina', 'Líder Marina': 'marina',
+  'Jandira': 'jandira', 'Líder Jandira': 'jandira', 'Tião': 'tiao', 'Líder Tião': 'tiao',
+  'Ceci': 'ceci', 'Líder Ceci': 'ceci', 'Luar': 'luar', 'Líder Luar': 'luar',
+  'Prof. Ipê': 'prof', 'Gael': 'rival', 'Rival Gael': 'rival', 'Campeão Gael': 'rival', 'Mãe': 'mae',
+  'Chefe Breu': 'breu', 'Admin Nyx': 'nyx', 'Rainha Eclipse': 'eclipse',
+};
+const ready = new Map();
+function preload(url) {
+  return new Promise(res => { const im = new Image(); im.onload = () => { ready.set(url, true); res(true); }; im.onerror = () => res(false); im.src = url; });
+}
+export function preloadArt() {
+  const keys = [...new Set(Object.values(PORTRAIT_OF))].map(k => `assets/portraits/${k}.webp`);
+  return Promise.all([...keys, ...BADGES.map(b => `assets/badges/${b.id}.webp`)].map(preload));
+}
+export function portraitFor(name) {
+  const k = PORTRAIT_OF[name];
+  const url = k && `assets/portraits/${k}.webp`;
+  return url && ready.get(url) ? url : null;
+}
+export function badgeArt(id) { const url = `assets/badges/${id}.webp`; return ready.get(url) ? url : null; }
+
+// Tela de "VS" antes das batalhas importantes (líderes, rival e vilões)
+export function versus(name, subtitle = '') {
+  const url = portraitFor(name);
+  if (!url) return Promise.resolve();
+  const el = document.createElement('div');
+  el.id = 'versus';
+  el.innerHTML = `<div class="vs-band"><img src="${url}" alt=""><div class="vs-text"><span class="vs-sub">${subtitle}</span><span class="vs-name">${name}</span></div><span class="vs-mark">VS</span></div>`;
+  document.body.appendChild(el);
+  sfx('select');
+  return new Promise(res => {
+    requestAnimationFrame(() => el.classList.add('in'));
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => { el.remove(); res(); }, 350); }, 1900);
+  });
+}
+
 // ---------------------------------------------------- diálogo
 export function say(text, name = null, opts = {}) {
   const box = $('#dialog');
@@ -27,6 +67,8 @@ export function say(text, name = null, opts = {}) {
   box.classList.remove('hidden');
   nameEl.textContent = name || '';
   nameEl.classList.toggle('hidden', !name);
+  const pic = $('#dialog-portrait'), purl = name ? portraitFor(name) : null;
+  if (pic) { if (purl) pic.src = purl; pic.classList.toggle('hidden', !purl); box.classList.toggle('has-portrait', !!purl); }
   const full = fmt(text);
   txt.textContent = '';
   arrow.classList.add('hidden');
@@ -264,7 +306,8 @@ export async function trainerCard(state) {
         <p><b>Dinheiro:</b> ₢${state.money}</p>
         <p><b>Criaturadex:</b> ${Object.keys(state.caught).length}</p>
         <p><b>Tempo:</b> ${Math.floor(mins / 60)}h ${mins % 60}min</p>
-        <div class="badges">${BADGES.map(b => `<span class="badge ${state.badges.includes(b.id) ? 'on' : ''}" style="--c:${b.color}" title="${b.name}">◆</span>`).join('')}</div>
+        <div class="badges">${BADGES.map(b => { const art = badgeArt(b.id), on = state.badges.includes(b.id);
+          return art ? `<img class="badge-img ${on ? 'on' : ''}" src="${art}" alt="${b.name}" title="${b.name}">` : `<span class="badge ${on ? 'on' : ''}" style="--c:${b.color}" title="${b.name}">◆</span>`; }).join('')}</div>
         ${state.flags.campeao ? '<p class="champ">★ CAMPEÃO DA LIGA ★</p>' : ''}
       </div>
     </div>`;

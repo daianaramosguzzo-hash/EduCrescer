@@ -4,7 +4,7 @@ import { SPECIES, MOVES, ITEMS, TYPES, typeMult } from './data.js';
 import { createCreature, recalc, nameOf, xpForLevel, movesAtLevel } from './creature.js';
 import { makeCreature, makeHuman, makeOrb, toon, LOOKS, HERO_LOOK, GRADIENT } from './models.js';
 import { SKIES, shared, makeSky, makeMountains, plantTrees, plantTufts, tuftGeometry, waterMaterial, TEX, texMat, boxW, hash as ehash, flowerGeometry, rockGeometry, rockMaterial, hullGeometry, bushGeometry } from './env.js';
-import { say, ask, list, hideDialog, hpColor, partyScreen, bagScreen, typeBadge } from './ui.js';
+import { say, ask, list, hideDialog, hpColor, partyScreen, bagScreen, typeBadge, versus } from './ui.js';
 import { sfx, playMusic } from './audio.js';
 
 const $ = s => document.querySelector(s);
@@ -518,6 +518,8 @@ export class Battle {
 
     // introdução
     if (this.trainer) {
+      const t = this.trainer;
+      if (t.leader || t.rival || /Chefe|Admin|Rainha|Campeão/.test(t.name)) await versus(t.name, t.leader ? 'LÍDER DE GINÁSIO' : t.rival ? 'RIVAL' : /Campeão/.test(t.name) ? 'CAMPEÃO DA LIGA' : 'EQUIPE SOMBRA');
       await bs.introTrainer(this.trainer.look);
       await bs.introHero();
       await this.msg(`${this.trainer.name} quer batalhar!`);
