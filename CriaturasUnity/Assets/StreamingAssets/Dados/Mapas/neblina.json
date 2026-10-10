@@ -1,0 +1,156 @@
+{
+ "id": "neblina",
+ "sky": "pantano",
+ "name": "Vila Neblina",
+ "music": "city",
+ "bg": "grass",
+ "dark": true,
+ "rows": [
+  "TTTTTTTTTTTT,,TTTTTTTTTTTT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..........TT",
+  "TT.T......S.,,..WWWWWW..TT",
+  "TT..........,,..WWWWWW..TT",
+  "TT..........,,..........TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,S.........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT.WWWWW....,,..........TT",
+  "TT.WWWWW.T.....T......T.TT",
+  "TT......................TT",
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 2,
+   "w": 7,
+   "d": 5,
+   "style": "gym",
+   "door": 3,
+   "to": "ginasio6",
+   "label": "GINÁSIO",
+   "roof": "#4a3a6a"
+  },
+  {
+   "x": 16,
+   "z": 2,
+   "w": 5,
+   "d": 5,
+   "style": "center",
+   "door": 2,
+   "to": "centro6",
+   "label": "CENTRO"
+  },
+  {
+   "x": 4,
+   "z": 15,
+   "w": 4,
+   "d": 4,
+   "style": "shop",
+   "door": 1,
+   "to": "loja6",
+   "label": "LOJA"
+  },
+  {
+   "x": 16,
+   "z": 15,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "roof": "#3a3a5a"
+  }
+ ],
+ "signs": [
+  {
+   "x": 10,
+   "z": 9,
+   "text": "VILA NEBLINA — Aqui a lua é a nossa lanterna."
+  },
+  {
+   "x": 14,
+   "z": 16,
+   "text": "GINÁSIO DE NEBLINA — Líder: LUAR, a voz das sombras. Norte: atalho para a ROTA VITÓRIA."
+  }
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 12,
+   "to": "rota_pantano",
+   "tx": 22,
+   "tz": 6,
+   "dir": "left"
+  },
+  {
+   "x": 12,
+   "z": 0,
+   "to": "rotavitoria",
+   "tx": 18,
+   "tz": 4,
+   "dir": "up"
+  },
+  {
+   "x": 13,
+   "z": 0,
+   "to": "rotavitoria",
+   "tx": 18,
+   "tz": 4,
+   "dir": "up"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "nbvelha",
+   "x": 8,
+   "z": 10,
+   "dir": "down",
+   "look": "velho",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Aqui as pessoas contam histórias de CURUPIRA, BOITATÁ e MULA SEM CABEÇA. As crianças morrem de medo... e de vontade de ver!', 'Dona Cida');\r\n      }"
+   }
+  },
+  {
+   "id": "nbkid",
+   "x": 19,
+   "z": 13,
+   "dir": "left",
+   "look": "garoto",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Criaturas de SOMBRA são fracas contra SOMBRA e INSETO. A Luar sempre sorri quando alguém descobre isso.');\r\n      }"
+   }
+  },
+  {
+   "id": "nbguia",
+   "x": 14,
+   "z": 3,
+   "dir": "down",
+   "look": "guarda",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Esta trilha ao norte é um atalho direto para a ROTA VITÓRIA e a LIGA. Com seis insígnias, a Liga aceita o seu desafio!', 'Guarda');\r\n      }"
+   }
+  }
+ ]
+}

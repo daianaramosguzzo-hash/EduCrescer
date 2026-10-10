@@ -1,0 +1,153 @@
+{
+ "id": "rota1",
+ "sky": "day",
+ "name": "Rota 1",
+ "music": "route",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTT,,TTTTTTTTT",
+  "TTTTTTTTT,,TTTTTTTTT",
+  "TT.......,,GGGG...TT",
+  "TT..GGG..,,GGGG...TT",
+  "TT..GGG..,,GGGG...TT",
+  "TT..GGG..,,.......TT",
+  "TT.......,,....f..TT",
+  "TT..,,,,,,,.......TT",
+  "TT..,.....TTTT....TT",
+  "TT..,.GGG.TTTT.GG.TT",
+  "TT..,.GGG......GG.TT",
+  "TT..,.GGG......GG.TT",
+  "TT..,,,,,,,,,,,,..TT",
+  "TT.............,..TT",
+  "TTGGGG.........,..TT",
+  "TTGGGG..f......,..TT",
+  "TTGGGG.........,..TT",
+  "TT.......,,,,,,,..TT",
+  "TT.......,........TT",
+  "TT...TTT.,..GGGG..TT",
+  "TT...TTT.,..GGGG..TT",
+  "TT.......,..GGGG..TT",
+  "TT..GGG..,........TT",
+  "TT..GGG..,,,......TT",
+  "TT..GGG....,..S...TT",
+  "TT.........,......TT",
+  "TT.........,,.....TT",
+  "TT..........,,....TT",
+  "TT...........,....TT",
+  "TTTTTTTTTT,,TTTTTTTT"
+ ],
+ "signs": [
+  {
+   "x": 14,
+   "z": 24,
+   "text": "ROTA 1 — Vila Aurora ↔ Pedra-Verde."
+  }
+ ],
+ "warps": [
+  {
+   "x": 10,
+   "z": 29,
+   "to": "aurora",
+   "tx": 10,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 11,
+   "z": 29,
+   "to": "aurora",
+   "tx": 11,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 9,
+   "z": 0,
+   "to": "pedraverde",
+   "tx": 12,
+   "tz": 22,
+   "dir": "up"
+  },
+  {
+   "x": 10,
+   "z": 0,
+   "to": "pedraverde",
+   "tx": 13,
+   "tz": 22,
+   "dir": "up"
+  }
+ ],
+ "items": [
+  {
+   "id": "r1a",
+   "x": 17,
+   "z": 2,
+   "item": "pocao",
+   "n": 1
+  }
+ ],
+ "npcs": [
+  {
+   "id": "amostra",
+   "x": 7,
+   "z": 26,
+   "dir": "right",
+   "look": "vendedor",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        if (!G.flag('r1_amostra')) {\r\n          await G.say('Olá! Trabalho na Loja de Pedra-Verde. Estou distribuindo amostras grátis!', 'Vendedor');\r\n          G.set('r1_amostra');\r\n          G.giveItem('pocao', 2);\r\n          await G.say('{N} recebeu 2 POÇÕES!');\r\n        }\r\n        await G.say('Poções recuperam PV das suas criaturas. Use pela BOLSA durante a batalha!', 'Vendedor');\r\n      }"
+   }
+  },
+  {
+   "id": "r1kid",
+   "x": 16,
+   "z": 13,
+   "dir": "left",
+   "look": "garoto",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Criaturas selvagens se escondem no MATO ALTO. Se o seu parceiro estiver fraco, volte para casa para descansar!');\r\n      }"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.12,
+  "list": [
+   [
+    "ratitu",
+    2,
+    4,
+    35
+   ],
+   [
+    "pardalito",
+    2,
+    5,
+    35
+   ],
+   [
+    "taturana",
+    3,
+    4,
+    10
+   ],
+   [
+    "cutiara",
+    2,
+    4,
+    15
+   ],
+   [
+    "tucanito",
+    3,
+    5,
+    8
+   ]
+  ]
+ }
+}

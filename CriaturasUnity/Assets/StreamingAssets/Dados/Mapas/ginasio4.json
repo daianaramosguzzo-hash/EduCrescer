@@ -1,0 +1,180 @@
+{
+ "id": "ginasio4",
+ "name": "Ginásio de Relâmpago",
+ "interior": true,
+ "floor": "metal",
+ "music": "gym",
+ "bg": "gym",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 13,
+  "to": "relampago",
+  "tx": 6,
+  "tz": 7
+ },
+ "furniture": [
+  {
+   "type": "coil",
+   "x": 1,
+   "z": 1
+  },
+  {
+   "type": "coil",
+   "x": 9,
+   "z": 1
+  },
+  {
+   "type": "coil",
+   "x": 1,
+   "z": 5
+  },
+  {
+   "type": "coil",
+   "x": 9,
+   "z": 5
+  },
+  {
+   "type": "coil",
+   "x": 1,
+   "z": 9
+  },
+  {
+   "type": "coil",
+   "x": 9,
+   "z": 9
+  },
+  {
+   "type": "statue",
+   "x": 3,
+   "z": 11
+  },
+  {
+   "type": "statue",
+   "x": 7,
+   "z": 11
+  }
+ ],
+ "signs": [
+  {
+   "x": 3,
+   "z": 11,
+   "text": "GINÁSIO DE RELÂMPAGO. Vencedores: GAEL"
+  },
+  {
+   "x": 7,
+   "z": 11,
+   "text": "Líder: TIÃO. Dica: Elétrico é fraco contra Pedra; Planta resiste bem."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "g4inv",
+   "x": 3,
+   "z": 7,
+   "dir": "right",
+   "look": "eletricista",
+   "sight": 4,
+   "trainer": {
+    "name": "Inventor Caio",
+    "party": [
+     [
+      "ourizito",
+      26
+     ],
+     [
+      "faiscatu",
+      27
+     ]
+    ],
+    "money": 520,
+    "intro": "Minha nova invenção: uma batalha em alta voltagem!",
+    "lose": "Queimou o fusível...",
+    "after": "O Tião diz que toda falha é só um protótipo."
+   }
+  },
+  {
+   "id": "g4ele",
+   "x": 7,
+   "z": 4,
+   "dir": "left",
+   "look": "eletricista",
+   "sight": 3,
+   "trainer": {
+    "name": "Eletricista Nina",
+    "party": [
+     [
+      "besourito",
+      27
+     ],
+     [
+      "poraquinho",
+      27
+     ],
+     [
+      "bugiozap",
+      28
+     ]
+    ],
+    "money": 560,
+    "intro": "Cuidado com os fios desencapados... e comigo!",
+    "lose": "Fiquei sem sinal!",
+    "after": "Vai lá. O Tião adora um desafio."
+   }
+  },
+  {
+   "id": "tiao",
+   "x": 5,
+   "z": 2,
+   "dir": "down",
+   "look": "tiao",
+   "trainer": {
+    "name": "Líder Tião",
+    "party": [
+     [
+      "ourigado",
+      29
+     ],
+     [
+      "bugiovolt",
+      29
+     ],
+     [
+      "ararajuba",
+      30
+     ],
+     [
+      "trovatu",
+      31
+     ]
+    ],
+    "money": 3200,
+    "leader": true,
+    "intro": "Opa! Um visitante! Sou TIÃO, Líder do Ginásio de Relâmpago e inventor nas horas vagas. Minhas criaturas são movidas a raio. Preparado para levar um choque de realidade?",
+    "lose": "Incrível! Nem minhas contas previam isso. Você merece a INSÍGNIA RAIO!",
+    "after": "Depois da cidade começa a floresta dos igarapés. Muito verde, muita água... muita vida!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          G.addBadge('raio');\r\n          await G.say('{N} recebeu a INSÍGNIA RAIO!', null, 'badge');\r\n          await G.say('E leve estes orbes que eu mesmo aperfeiçoei!', 'Tião');\r\n          G.giveItem('superorbe', 5);\r\n          await G.say('{N} recebeu 5 SUPER ORBES!');\r\n        }"
+    }
+   }
+  }
+ ]
+}

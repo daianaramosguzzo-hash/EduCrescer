@@ -1,0 +1,238 @@
+{
+ "id": "santuario",
+ "sky": "forest",
+ "name": "Santuário da Floresta",
+ "music": "forest",
+ "bg": "forest",
+ "dark": true,
+ "rows": [
+  "TTTTTTTTTTTTTTTTTT",
+  "TTTTTT......TTTTTT",
+  "TTTT..........TTTT",
+  "TTT....ffff....TTT",
+  "TTT...f....f...TTT",
+  "TTT....ffff....TTT",
+  "TTTT....,,....TTTT",
+  "TTTTTTTT,,TTTTTTTT",
+  "TTGGGG..,,..GGGGTT",
+  "TTGGGG..,,..GGGGTT",
+  "TTGGG...,,...GGGTT",
+  "TT......,,......TT",
+  "TT..TT..,,..TT..TT",
+  "TT..TT..,,..TT..TT",
+  "TTGGGG..,,..GGGGTT",
+  "TTGGGG..,,..GGGGTT",
+  "TT......,,......TT",
+  "TT..............TT",
+  ",,,,,,,,,,......TT",
+  "TT..............TT",
+  "TT....GGGGGG....TT",
+  "TTTTTTTTTTTTTTTTTT"
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 18,
+   "to": "floresta",
+   "tx": 22,
+   "tz": 15,
+   "dir": "left"
+  }
+ ],
+ "items": [
+  {
+   "id": "sa1",
+   "x": 15,
+   "z": 11,
+   "item": "ultraorbe",
+   "n": 2
+  }
+ ],
+ "npcs": [
+  {
+   "id": "anciã",
+   "x": 13,
+   "z": 17,
+   "dir": "left",
+   "look": "velho",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('IPÊRION floresce uma vez por ano, como os ipês amarelos. Onde ele pisa, a floresta renasce.', 'Guardiã do Santuário');\r\n        await G.say('Aqueles brutamontes da Equipe Sombra querem prendê-lo numa máquina. Não deixe!', 'Guardiã do Santuário');\r\n      }"
+   }
+  },
+  {
+   "id": "sgrunt2",
+   "x": 4,
+   "z": 17,
+   "dir": "right",
+   "look": "sombra2",
+   "sight": 4,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "jiboiao",
+      42
+     ],
+     [
+      "fungalhao",
+      43
+     ]
+    ],
+    "money": 900,
+    "intro": "O Santuário agora pertence à Equipe Sombra!",
+    "lose": "Eu só queria colher cogumelos..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "sgrunt1",
+   "x": 9,
+   "z": 7,
+   "dir": "down",
+   "look": "sombra",
+   "sight": 4,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "guaralobo",
+      43
+     ],
+     [
+      "medusombra",
+      43
+     ],
+     [
+      "morcegao",
+      44
+     ]
+    ],
+    "money": 950,
+    "intro": "Nenhum passo a mais! O Admin Grafite está trabalhando.",
+    "lose": "Como?! Nossas defesas..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "grafite",
+   "x": 8,
+   "z": 7,
+   "dir": "down",
+   "look": "grafite",
+   "sight": 4,
+   "trainer": {
+    "name": "Admin Grafite",
+    "party": [
+     [
+      "rochedao",
+      44
+     ],
+     [
+      "magmarocha",
+      45
+     ],
+     [
+      "cristalord",
+      46
+     ]
+    ],
+    "money": 3000,
+    "intro": "HAH! Eu sou GRAFITE, o Admin mais forte da Equipe Sombra! A Rainha quer Ipêrion, e eu vou entregar. Vou te esmagar como pedra!",
+    "lose": "Minhas rochas... quebraram?!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => { await G.say('Tá bom, tá bom! Estou indo embora! A Rainha vai ficar furiosa...', 'Admin Grafite'); }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('tr_grafite')"
+   }
+  },
+  {
+   "id": "iperion",
+   "x": 8,
+   "z": 4,
+   "dir": "down",
+   "creature": "iperion",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('lend_iperion')",
+    "talk": "async G => {\r\n    if (need && !G.flag(need.flag)) { await G.say(need.msg); return; }\r\n    await G.say(intro);\r\n    await G.cry(sp);\r\n    const r = await G.wildBattle(sp, lvl, { legendary: true });\r\n    if (r === 'caught') {\r\n      G.set('lend_' + sp);\r\n      await G.say(`Incrível! ${G.speciesName(sp)} decidiu seguir você!`, null, 'fanfare');\r\n      const all = ['solaris', 'abissal', 'iperion', 'trovonca'].every(k => G.flag('lend_' + k));\r\n      if (all && !G.flag('lendas4')) {\r\n        G.set('lendas4');\r\n        await G.say('As 4 criaturas lendárias estão com você! Sol, mar, floresta e trovão, finalmente em paz.');\r\n      }\r\n    } else if (r !== 'lose') {\r\n      await G.say(`${G.speciesName(sp)} recuou para recuperar as forças... Volte para tentar de novo!`);\r\n    }\r\n  }"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.12,
+  "list": [
+   [
+    "fungito",
+    42,
+    45,
+    16
+   ],
+   [
+    "vagalumi",
+    42,
+    45,
+    14
+   ],
+   [
+    "jiboiao",
+    43,
+    46,
+    10
+   ],
+   [
+    "preguito",
+    42,
+    45,
+    12
+   ],
+   [
+    "colibrilho",
+    43,
+    46,
+    10
+   ],
+   [
+    "borbolux",
+    42,
+    45,
+    14
+   ],
+   [
+    "saparrao",
+    43,
+    45,
+    10
+   ],
+   [
+    "micolumi",
+    42,
+    45,
+    8
+   ]
+  ]
+ }
+}

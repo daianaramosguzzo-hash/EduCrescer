@@ -1,0 +1,68 @@
+{
+ "id": "casa_rival",
+ "name": "Casa do Gael",
+ "interior": true,
+ "floor": "wood",
+ "music": "home",
+ "rows": [
+  "#########",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "####_####"
+ ],
+ "exit": {
+  "x": 4,
+  "z": 7,
+  "to": "aurora",
+  "tx": 15,
+  "tz": 7
+ },
+ "furniture": [
+  {
+   "type": "table",
+   "x": 3,
+   "z": 3,
+   "w": 3,
+   "d": 1
+  },
+  {
+   "type": "shelf",
+   "x": 1,
+   "z": 1,
+   "w": 3,
+   "d": 1
+  },
+  {
+   "type": "plant",
+   "x": 7,
+   "z": 1
+  },
+  {
+   "type": "rug",
+   "x": 3,
+   "z": 5,
+   "w": 3,
+   "d": 1,
+   "walk": true
+  }
+ ],
+ "npcs": [
+  {
+   "id": "lia",
+   "x": 6,
+   "z": 3,
+   "dir": "left",
+   "look": "lia",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        if (!G.flag('starter')) {\r\n          await G.say('Oi, {N}! O Gael saiu cedinho para o laboratório do vovô. Ele estava tão ansioso!', 'Lia');\r\n        } else {\r\n          await G.say('Oi, {N}! Suas criaturas parecem cansadas. Deixa eu ajudar!', 'Lia');\r\n          G.healParty();\r\n          await G.say('Suas criaturas estão prontas para continuar!');\r\n          await G.say('Meu irmão vive dizendo que vai ser o melhor treinador do mundo... Mas acho que você pode surpreendê-lo!', 'Lia');\r\n        }\r\n      }"
+   }
+  }
+ ]
+}

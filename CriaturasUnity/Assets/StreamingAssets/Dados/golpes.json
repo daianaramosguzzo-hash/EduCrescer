@@ -1,0 +1,498 @@
+{
+ "list": [
+  {
+   "id": "investida",
+   "name": "Investida",
+   "type": "normal",
+   "pow": 40,
+   "acc": 100,
+   "pp": 35
+  },
+  {
+   "id": "arranhao",
+   "name": "Arranhão",
+   "type": "normal",
+   "pow": 40,
+   "acc": 100,
+   "pp": 35
+  },
+  {
+   "id": "ataquerapido",
+   "name": "Ataque Rápido",
+   "type": "normal",
+   "pow": 40,
+   "acc": 100,
+   "pp": 30,
+   "pri": 1
+  },
+  {
+   "id": "mordida",
+   "name": "Mordida",
+   "type": "normal",
+   "pow": 60,
+   "acc": 100,
+   "pp": 25
+  },
+  {
+   "id": "cabecada",
+   "name": "Cabeçada",
+   "type": "normal",
+   "pow": 70,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "golpecorpo",
+   "name": "Golpe de Corpo",
+   "type": "normal",
+   "pow": 85,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "rosnado",
+   "name": "Rosnado",
+   "type": "normal",
+   "cat": "status",
+   "acc": 100,
+   "pp": 40,
+   "eff": {
+    "stat": "atk",
+    "n": -1,
+    "who": "foe"
+   }
+  },
+  {
+   "id": "cauda",
+   "name": "Chicote de Cauda",
+   "type": "normal",
+   "cat": "status",
+   "acc": 100,
+   "pp": 30,
+   "eff": {
+    "stat": "def",
+    "n": -1,
+    "who": "foe"
+   }
+  },
+  {
+   "id": "endurecer",
+   "name": "Endurecer",
+   "type": "normal",
+   "cat": "status",
+   "acc": 100,
+   "pp": 30,
+   "eff": {
+    "stat": "def",
+    "n": 1,
+    "who": "self"
+   }
+  },
+  {
+   "id": "crescer",
+   "name": "Crescer",
+   "type": "normal",
+   "cat": "status",
+   "acc": 100,
+   "pp": 20,
+   "eff": {
+    "stat": "atk",
+    "n": 1,
+    "who": "self"
+   }
+  },
+  {
+   "id": "agilidade",
+   "name": "Agilidade",
+   "type": "normal",
+   "cat": "status",
+   "acc": 100,
+   "pp": 20,
+   "eff": {
+    "stat": "spd",
+    "n": 2,
+    "who": "self"
+   }
+  },
+  {
+   "id": "recuperar",
+   "name": "Recuperar",
+   "type": "normal",
+   "cat": "status",
+   "acc": 100,
+   "pp": 10,
+   "heal": 0.5
+  },
+  {
+   "id": "brasa",
+   "name": "Brasa",
+   "type": "fogo",
+   "pow": 40,
+   "acc": 100,
+   "pp": 25
+  },
+  {
+   "id": "rodafogo",
+   "name": "Roda de Fogo",
+   "type": "fogo",
+   "pow": 60,
+   "acc": 100,
+   "pp": 25
+  },
+  {
+   "id": "lancachamas",
+   "name": "Lança-Chamas",
+   "type": "fogo",
+   "pow": 90,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "rajadaignea",
+   "name": "Rajada Ígnea",
+   "type": "fogo",
+   "pow": 110,
+   "acc": 85,
+   "pp": 5
+  },
+  {
+   "id": "jato",
+   "name": "Jato d'Água",
+   "type": "agua",
+   "pow": 40,
+   "acc": 100,
+   "pp": 25
+  },
+  {
+   "id": "raiobolha",
+   "name": "Raio Bolha",
+   "type": "agua",
+   "pow": 65,
+   "acc": 100,
+   "pp": 20
+  },
+  {
+   "id": "ondaforte",
+   "name": "Onda Forte",
+   "type": "agua",
+   "pow": 90,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "hidrobomba",
+   "name": "Hidrobomba",
+   "type": "agua",
+   "pow": 110,
+   "acc": 80,
+   "pp": 5
+  },
+  {
+   "id": "chicote",
+   "name": "Chicote de Cipó",
+   "type": "planta",
+   "pow": 45,
+   "acc": 100,
+   "pp": 25
+  },
+  {
+   "id": "megadreno",
+   "name": "Mega Dreno",
+   "type": "planta",
+   "pow": 45,
+   "acc": 100,
+   "pp": 15,
+   "drain": 0.5
+  },
+  {
+   "id": "folhanavalha",
+   "name": "Folha Navalha",
+   "type": "planta",
+   "pow": 60,
+   "acc": 95,
+   "pp": 25
+  },
+  {
+   "id": "tempestade",
+   "name": "Tempestade Verde",
+   "type": "planta",
+   "pow": 100,
+   "acc": 90,
+   "pp": 5
+  },
+  {
+   "id": "ferrao",
+   "name": "Ferrão",
+   "type": "inseto",
+   "pow": 40,
+   "acc": 100,
+   "pp": 35
+  },
+  {
+   "id": "fiodeseda",
+   "name": "Fio de Seda",
+   "type": "inseto",
+   "cat": "status",
+   "acc": 95,
+   "pp": 40,
+   "eff": {
+    "stat": "spd",
+    "n": -2,
+    "who": "foe"
+   }
+  },
+  {
+   "id": "zumbido",
+   "name": "Zumbido",
+   "type": "inseto",
+   "pow": 65,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "tesourax",
+   "name": "Tesoura X",
+   "type": "inseto",
+   "pow": 80,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "bicada",
+   "name": "Bicada",
+   "type": "voador",
+   "pow": 35,
+   "acc": 100,
+   "pp": 35
+  },
+  {
+   "id": "asaaerea",
+   "name": "Asa Aérea",
+   "type": "voador",
+   "pow": 60,
+   "acc": 100,
+   "pp": 25
+  },
+  {
+   "id": "rasante",
+   "name": "Rasante",
+   "type": "voador",
+   "pow": 90,
+   "acc": 95,
+   "pp": 15
+  },
+  {
+   "id": "rocha",
+   "name": "Arremesso de Rocha",
+   "type": "pedra",
+   "pow": 50,
+   "acc": 90,
+   "pp": 15
+  },
+  {
+   "id": "deslizamento",
+   "name": "Deslizamento",
+   "type": "pedra",
+   "pow": 75,
+   "acc": 90,
+   "pp": 10
+  },
+  {
+   "id": "gumepedra",
+   "name": "Gume de Pedra",
+   "type": "pedra",
+   "pow": 100,
+   "acc": 80,
+   "pp": 5
+  },
+  {
+   "id": "choque",
+   "name": "Choque",
+   "type": "eletrico",
+   "pow": 40,
+   "acc": 100,
+   "pp": 30
+  },
+  {
+   "id": "faisca",
+   "name": "Faísca",
+   "type": "eletrico",
+   "pow": 65,
+   "acc": 100,
+   "pp": 20
+  },
+  {
+   "id": "relampago",
+   "name": "Relâmpago",
+   "type": "eletrico",
+   "pow": 90,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "lambida",
+   "name": "Lambida",
+   "type": "sombra",
+   "pow": 30,
+   "acc": 100,
+   "pp": 30
+  },
+  {
+   "id": "sugarvida",
+   "name": "Sugar Vida",
+   "type": "sombra",
+   "pow": 60,
+   "acc": 100,
+   "pp": 15,
+   "drain": 0.5
+  },
+  {
+   "id": "bolasombria",
+   "name": "Bola Sombria",
+   "type": "sombra",
+   "pow": 80,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "desesperada",
+   "name": "Luta Desesperada",
+   "type": "normal",
+   "pow": 50,
+   "acc": 100,
+   "pp": 1,
+   "recoil": 0.25
+  },
+  {
+   "id": "raiocristal",
+   "name": "Raio de Cristal",
+   "type": "pedra",
+   "pow": 80,
+   "acc": 95,
+   "pp": 10
+  },
+  {
+   "id": "chamasolar",
+   "name": "Chama Solar",
+   "type": "fogo",
+   "pow": 120,
+   "acc": 90,
+   "pp": 5
+  },
+  {
+   "id": "maremoto",
+   "name": "Maremoto",
+   "type": "agua",
+   "pow": 120,
+   "acc": 90,
+   "pp": 5
+  },
+  {
+   "id": "sombraabissal",
+   "name": "Sombra Abissal",
+   "type": "sombra",
+   "pow": 95,
+   "acc": 100,
+   "pp": 10
+  },
+  {
+   "id": "florada",
+   "name": "Florada do Ipê",
+   "type": "planta",
+   "pow": 110,
+   "acc": 95,
+   "pp": 5,
+   "drain": 0.3
+  },
+  {
+   "id": "trovaoselvagem",
+   "name": "Trovão Selvagem",
+   "type": "eletrico",
+   "pow": 120,
+   "acc": 85,
+   "pp": 5
+  },
+  {
+   "id": "espinhos",
+   "name": "Espinhos",
+   "type": "planta",
+   "pow": 65,
+   "acc": 100,
+   "pp": 20
+  },
+  {
+   "id": "bombasemente",
+   "name": "Bomba de Semente",
+   "type": "planta",
+   "pow": 80,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "fogofatuo",
+   "name": "Fogo-Fátuo",
+   "type": "fogo",
+   "pow": 75,
+   "acc": 95,
+   "pp": 15
+  },
+  {
+   "id": "sertao",
+   "name": "Calor do Sertão",
+   "type": "fogo",
+   "pow": 95,
+   "acc": 90,
+   "pp": 10
+  },
+  {
+   "id": "uivotrovao",
+   "name": "Uivo Trovão",
+   "type": "eletrico",
+   "pow": 75,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "mordidasombria",
+   "name": "Mordida Sombria",
+   "type": "sombra",
+   "pow": 70,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "nevoa",
+   "name": "Névoa Noturna",
+   "type": "sombra",
+   "cat": "status",
+   "acc": 100,
+   "pp": 20,
+   "eff": {
+    "stat": "atk",
+    "n": -1,
+    "who": "foe"
+   }
+  },
+  {
+   "id": "mergulho",
+   "name": "Mergulho",
+   "type": "agua",
+   "pow": 80,
+   "acc": 100,
+   "pp": 15
+  },
+  {
+   "id": "cascoduro",
+   "name": "Casco Duro",
+   "type": "pedra",
+   "cat": "status",
+   "acc": 100,
+   "pp": 15,
+   "eff": {
+    "stat": "def",
+    "n": 2,
+    "who": "self"
+   }
+  }
+ ]
+}

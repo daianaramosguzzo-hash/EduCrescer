@@ -356,6 +356,8 @@ export class World {
     const base = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), hasSea ? waterMaterial(pr.water, 1) : new THREE.MeshToonMaterial({ color: pr.grassDark }));
     base.rotation.x = -Math.PI / 2;
     base.position.set(this.W / 2, hasSea ? -0.14 : -0.4, this.H / 2);
+    // nomes dos grupos: a versão Unity troca terreno e vegetação pelos do Terrain Sample
+    base.name = hasSea ? 'agua_fundo' : 'chao_fundo';
     this.mapGroup.add(base);
     // montanhas no horizonte (não sobre o mar)
     const R = Math.max(this.W, this.H) / 2 + PAD + 4;
@@ -365,6 +367,7 @@ export class World {
       const tz = Math.round(Math.max(-PAD, Math.min(this.H + PAD - 1, m.position.z)));
       return tileExt(tx, tz) !== 'W';
     });
+    mts.name = 'montanhas';
     this.mapGroup.add(mts);
 
     const trees = [], tall = [], tallBK = [], fences = [], rocks = [];
@@ -406,16 +409,21 @@ export class World {
       const dark = new THREE.Color(pr.tall).multiplyScalar(0.65).getStyle();
       const gA = tuftGeometry(0.7, 12, dark, pr.grassLight, 0.18, 4);
       const gB = tuftGeometry(0.6, 10, dark, new THREE.Color(pr.grassLight).lerp(new THREE.Color('#e8e090'), 0.25).getStyle(), 0.2, 5);
-      this.mapGroup.add(plantTufts(tall.filter(t => !t.v), gA, { push: 0.55, shadows: true, amp: 0.13, fade: 0 }));
-      this.mapGroup.add(plantTufts(tall.filter(t => t.v), gB, { push: 0.55, shadows: true, amp: 0.15, fade: 0 }));
-      this.mapGroup.add(plantPropGrass(tallBK, pr.tall, { push: 0.25, amp: 0.12, fade: 0 }));
+      const mato = new THREE.Group();
+      mato.name = 'mato_alto';
+      mato.add(plantTufts(tall.filter(t => !t.v), gA, { push: 0.55, shadows: true, amp: 0.13, fade: 0 }));
+      mato.add(plantTufts(tall.filter(t => t.v), gB, { push: 0.55, shadows: true, amp: 0.15, fade: 0 }));
+      mato.add(plantPropGrass(tallBK, pr.tall, { push: 0.25, amp: 0.12, fade: 0 }));
+      this.mapGroup.add(mato);
     }
     // vegetação espalhada: capim baixo e seco, flores, plantas, samambaias,
     // arbustos, folhas caídas, gravetos, pedrinhas e rochas
-    this.mapGroup.add(scatterDecor({
+    const decor = scatterDecor({
       W: this.W, H: this.H, PAD, tileExt, heightAt, p: pr, density,
       isBuilding: (x, z) => !!this.buildingAt(x, z) || this.tile(x, z) === 'S',
-    }));
+    });
+    decor.name = 'decoracao';
+    this.mapGroup.add(decor);
     const m4 = new THREE.Matrix4();
     if (fences.length) {
       const wood = texMat(TEX.planks(), '#f4ece0');
@@ -440,7 +448,9 @@ export class World {
         l.push({ x: x - 0.06, y: -0.03, z, s: 1.05, sy: 1.25, r: ehash(z, x) * 6.28 });
         l.push({ x: x + 0.3, y: -0.02, z: z + 0.28, s: 0.45, r: ehash(x, z) * 6.28 });
       });
-      this.mapGroup.add(plantPropRocks(l));
+      const g = plantPropRocks(l);
+      g.name = 'rochas';
+      this.mapGroup.add(g);
     } else if (rocks.length) {
       // rochas irregulares com rachaduras e musgo, em três formatos
       const items = [[], [], []];
@@ -451,7 +461,9 @@ export class World {
       });
       items.forEach((l, v) => {
         const geo = rockGeometry(20 + v);
-        this.mapGroup.add(plantTufts(l, geo, { material: rockMaterial(), outline: hullGeometry(geo), shadows: true }));
+        const g = plantTufts(l, geo, { material: rockMaterial(), outline: hullGeometry(geo), shadows: true });
+        g.name = 'rochas';
+        this.mapGroup.add(g);
       });
     }
     // espuma nas margens: mapa de proximidade da terra para o shader da água

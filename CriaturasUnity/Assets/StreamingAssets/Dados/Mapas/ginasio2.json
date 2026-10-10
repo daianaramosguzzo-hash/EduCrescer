@@ -1,0 +1,131 @@
+{
+ "id": "ginasio2",
+ "name": "Ginásio de Cidade Maré",
+ "interior": true,
+ "floor": "pool",
+ "music": "gym",
+ "bg": "pool",
+ "rows": [
+  "#############",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#_WWW___WWW_#",
+  "#_WWW___WWW_#",
+  "#_WWW___WWW_#",
+  "#_WWW___WWW_#",
+  "#_WWW___WWW_#",
+  "#_WWW___WWW_#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "######_######"
+ ],
+ "exit": {
+  "x": 6,
+  "z": 13,
+  "to": "mare",
+  "tx": 6,
+  "tz": 8
+ },
+ "furniture": [
+  {
+   "type": "plant",
+   "x": 1,
+   "z": 1
+  },
+  {
+   "type": "plant",
+   "x": 11,
+   "z": 1
+  },
+  {
+   "type": "statue",
+   "x": 4,
+   "z": 11
+  },
+  {
+   "type": "statue",
+   "x": 8,
+   "z": 11
+  }
+ ],
+ "signs": [
+  {
+   "x": 4,
+   "z": 11,
+   "text": "GINÁSIO DE CIDADE MARÉ. Vencedores: GAEL"
+  },
+  {
+   "x": 8,
+   "z": 11,
+   "text": "Líder: MARINA. Dica: Água é fraca contra Planta e Elétrico."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "g2nad",
+   "x": 5,
+   "z": 8,
+   "dir": "right",
+   "look": "nadador",
+   "sight": 3,
+   "trainer": {
+    "name": "Nadadora Iara",
+    "party": [
+     [
+      "estrelito",
+      14
+     ],
+     [
+      "lambarito",
+      14
+     ],
+     [
+      "sirito",
+      15
+     ]
+    ],
+    "money": 300,
+    "intro": "Para chegar até a Marina, vai ter que passar por mim!",
+    "lose": "Afundei...",
+    "after": "A Marina treina todo dia ao nascer do sol."
+   }
+  },
+  {
+   "id": "marina",
+   "x": 6,
+   "z": 2,
+   "dir": "down",
+   "look": "marina",
+   "trainer": {
+    "name": "Líder Marina",
+    "party": [
+     [
+      "estrelito",
+      16
+     ],
+     [
+      "sirito",
+      16
+     ],
+     [
+      "pirarucao",
+      18
+     ]
+    ],
+    "money": 2000,
+    "leader": true,
+    "intro": "Olá! Sou MARINA, Líder do Ginásio de Cidade Maré. Minhas ondas vão levar você de volta para casa!",
+    "lose": "Uau! Você é como uma tempestade! Merece esta insígnia.",
+    "after": "A Liga das Criaturas fica depois da Rota Vitória. Estou torcendo por você!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          G.addBadge('mare');\r\n          await G.say('{N} recebeu a INSÍGNIA MARÉ!', null, 'badge');\r\n          await G.say('Tome, vai precisar disto. Dizem que há mais quatro ginásios depois da Rota Vitória!', 'Marina');\r\n          G.giveItem('reviver', 2);\r\n          await G.say('{N} recebeu 2 REVIVER!');\r\n        }"
+    }
+   }
+  }
+ ]
+}

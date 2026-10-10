@@ -1,0 +1,647 @@
+{
+ "pessoas": {
+  "mae": {
+   "lider": null,
+   "escala": 1
+  },
+  "prof": {
+   "lider": null,
+   "escala": 1
+  },
+  "rival": {
+   "lider": null,
+   "escala": 1
+  },
+  "lia": {
+   "lider": null,
+   "escala": 1
+  },
+  "enfermeira": {
+   "lider": null,
+   "escala": 1
+  },
+  "vendedor": {
+   "lider": null,
+   "escala": 1
+  },
+  "garoto": {
+   "lider": null,
+   "escala": 1
+  },
+  "garota": {
+   "lider": null,
+   "escala": 1
+  },
+  "inseto": {
+   "lider": null,
+   "escala": 1
+  },
+  "campista": {
+   "lider": null,
+   "escala": 1
+  },
+  "basalto": {
+   "lider": "pedra",
+   "escala": 1
+  },
+  "marina": {
+   "lider": "agua",
+   "escala": 1
+  },
+  "nadador": {
+   "lider": null,
+   "escala": 1
+  },
+  "sombra": {
+   "lider": null,
+   "escala": 1
+  },
+  "breu": {
+   "lider": null,
+   "escala": 1
+  },
+  "velho": {
+   "lider": null,
+   "escala": 1
+  },
+  "guarda": {
+   "lider": null,
+   "escala": 1
+  },
+  "as": {
+   "lider": null,
+   "escala": 1
+  },
+  "sombra2": {
+   "lider": null,
+   "escala": 1
+  },
+  "nyx": {
+   "lider": null,
+   "escala": 1
+  },
+  "grafite": {
+   "lider": null,
+   "escala": 1.15
+  },
+  "vulto": {
+   "lider": null,
+   "escala": 1
+  },
+  "eclipse": {
+   "lider": null,
+   "escala": 1
+  },
+  "jandira": {
+   "lider": "fogo",
+   "escala": 1
+  },
+  "tiao": {
+   "lider": "eletrico",
+   "escala": 1
+  },
+  "ceci": {
+   "lider": "planta",
+   "escala": 1
+  },
+  "luar": {
+   "lider": "sombra",
+   "escala": 1
+  },
+  "vaqueiro": {
+   "lider": null,
+   "escala": 1
+  },
+  "eletricista": {
+   "lider": null,
+   "escala": 1
+  },
+  "botanica": {
+   "lider": null,
+   "escala": 1
+  },
+  "medium": {
+   "lider": null,
+   "escala": 1
+  },
+  "mateiro": {
+   "lider": null,
+   "escala": 1
+  }
+ },
+ "criaturas": {
+  "brasito": {
+   "altura": 0.893,
+   "flutua": false
+  },
+  "flamaposa": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "vulcaposa": {
+   "altura": 1.728,
+   "flutua": false
+  },
+  "pingolote": {
+   "glb": "pingolote",
+   "altura": null
+  },
+  "marolote": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "tsunamolote": {
+   "altura": 1.728,
+   "flutua": false
+  },
+  "capibroto": {
+   "altura": 0.936,
+   "flutua": false
+  },
+  "capifolha": {
+   "altura": 1.368,
+   "flutua": false
+  },
+  "capiflora": {
+   "altura": 1.8,
+   "flutua": false
+  },
+  "ratitu": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "ratanaz": {
+   "altura": 1.08,
+   "flutua": false
+  },
+  "pardalito": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "gavialto": {
+   "altura": 1.152,
+   "flutua": false
+  },
+  "taturana": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "casulito": {
+   "altura": 0.792,
+   "flutua": false
+  },
+  "borbolux": {
+   "altura": 1.232,
+   "flutua": true
+  },
+  "joanito": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "faiscatu": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "trovatu": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "pedrolho": {
+   "altura": 0.792,
+   "flutua": false
+  },
+  "rochedao": {
+   "altura": 1.44,
+   "flutua": false
+  },
+  "lambarito": {
+   "altura": 0.792,
+   "flutua": true
+  },
+  "pirarucao": {
+   "altura": 2.2,
+   "flutua": true
+  },
+  "estrelito": {
+   "altura": 0.968,
+   "flutua": true
+  },
+  "sirito": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "sombrino": {
+   "altura": 0.968,
+   "flutua": true
+  },
+  "assombrado": {
+   "altura": 1.672,
+   "flutua": true
+  },
+  "morcegote": {
+   "altura": 0.792,
+   "flutua": true
+  },
+  "morcegao": {
+   "altura": 1.496,
+   "flutua": true
+  },
+  "cutiara": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "cutiaco": {
+   "altura": 1.123,
+   "flutua": false
+  },
+  "tucanito": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "tucanaco": {
+   "altura": 1.152,
+   "flutua": false
+  },
+  "sapito": {
+   "altura": 0.605,
+   "flutua": false
+  },
+  "saparrao": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "jiboinha": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "jiboiao": {
+   "altura": 1.368,
+   "flutua": false
+  },
+  "vagalumi": {
+   "altura": 0.739,
+   "flutua": true
+  },
+  "fungito": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "fungalhao": {
+   "altura": 1.224,
+   "flutua": false
+  },
+  "cristalito": {
+   "altura": 0.792,
+   "flutua": true
+  },
+  "cristalord": {
+   "altura": 1.496,
+   "flutua": true
+  },
+  "aguaviva": {
+   "altura": 0.792,
+   "flutua": true
+  },
+  "medusombra": {
+   "altura": 1.408,
+   "flutua": true
+  },
+  "carvaozinho": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "magmarocha": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "papagaia": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "guarazito": {
+   "altura": 0.691,
+   "flutua": false
+  },
+  "guaralobo": {
+   "altura": 1.267,
+   "flutua": false
+  },
+  "colibrinho": {
+   "altura": 0.432,
+   "flutua": false
+  },
+  "colibrilho": {
+   "altura": 0.792,
+   "flutua": false
+  },
+  "preguito": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "manatino": {
+   "altura": 0.968,
+   "flutua": true
+  },
+  "manatao": {
+   "altura": 1.936,
+   "flutua": true
+  },
+  "sacirola": {
+   "altura": 0.792,
+   "flutua": true
+  },
+  "ariranhito": {
+   "altura": 0.634,
+   "flutua": false
+  },
+  "ariranhao": {
+   "altura": 1.224,
+   "flutua": false
+  },
+  "tamandito": {
+   "altura": 0.792,
+   "flutua": false
+  },
+  "poraquinho": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "poraquao": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "micolumi": {
+   "altura": 0.576,
+   "flutua": false
+  },
+  "calanguito": {
+   "altura": 0.605,
+   "flutua": false
+  },
+  "calangrao": {
+   "altura": 1.224,
+   "flutua": false
+  },
+  "mandacarito": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "mandacarua": {
+   "altura": 1.368,
+   "flutua": false
+  },
+  "carcarazinho": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "carcarasa": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "seriemito": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "seriemaz": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "bugiozap": {
+   "altura": 0.691,
+   "flutua": false
+  },
+  "bugiovolt": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "ourizito": {
+   "altura": 0.605,
+   "flutua": false
+  },
+  "ourigado": {
+   "altura": 1.181,
+   "flutua": false
+  },
+  "besourito": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "besourovolt": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "ararinha": {
+   "altura": 0.605,
+   "flutua": false
+  },
+  "ararajuba": {
+   "altura": 1.224,
+   "flutua": false
+  },
+  "vitorinha": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "vitoriao": {
+   "altura": 1.44,
+   "flutua": false
+  },
+  "acaizinho": {
+   "altura": 0.634,
+   "flutua": false
+  },
+  "acaizeiro": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "botinho": {
+   "altura": 0.88,
+   "flutua": true
+  },
+  "botorosa": {
+   "altura": 2.024,
+   "flutua": true
+  },
+  "uirapuru": {
+   "altura": 0.576,
+   "flutua": false
+  },
+  "oncinha": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "oncapintada": {
+   "altura": 1.512,
+   "flutua": false
+  },
+  "castanhito": {
+   "altura": 0.691,
+   "flutua": false
+  },
+  "castanhal": {
+   "altura": 1.512,
+   "flutua": false
+  },
+  "guaraninho": {
+   "altura": 0.634,
+   "flutua": false
+  },
+  "guaranazao": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "jacarezito": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "jacarezao": {
+   "altura": 1.584,
+   "flutua": false
+  },
+  "mulaflama": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "curupirito": {
+   "altura": 0.662,
+   "flutua": false
+  },
+  "curupirao": {
+   "altura": 1.368,
+   "flutua": false
+  },
+  "boitatinha": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "boitata": {
+   "altura": 1.728,
+   "flutua": false
+  },
+  "urutau": {
+   "altura": 0.72,
+   "flutua": false
+  },
+  "corujito": {
+   "altura": 0.576,
+   "flutua": false
+  },
+  "corujao": {
+   "altura": 1.224,
+   "flutua": false
+  },
+  "orquidinha": {
+   "altura": 0.648,
+   "flutua": false
+  },
+  "orquinoite": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "jabutinho": {
+   "altura": 0.634,
+   "flutua": false
+  },
+  "jabutao": {
+   "altura": 1.368,
+   "flutua": false
+  },
+  "antinha": {
+   "altura": 0.749,
+   "flutua": false
+  },
+  "antao": {
+   "altura": 1.44,
+   "flutua": false
+  },
+  "quatizinho": {
+   "altura": 0.605,
+   "flutua": false
+  },
+  "quatirao": {
+   "altura": 1.152,
+   "flutua": false
+  },
+  "piranhinha": {
+   "altura": 0.704,
+   "flutua": true
+  },
+  "piranhao": {
+   "altura": 1.672,
+   "flutua": true
+  },
+  "miquito": {
+   "altura": 0.605,
+   "flutua": false
+  },
+  "micoleao": {
+   "altura": 1.224,
+   "flutua": false
+  },
+  "maracujito": {
+   "altura": 0.634,
+   "flutua": false
+  },
+  "maracujina": {
+   "altura": 1.296,
+   "flutua": false
+  },
+  "solaris": {
+   "altura": 2.016,
+   "flutua": false
+  },
+  "abissal": {
+   "altura": 2.16,
+   "flutua": false
+  },
+  "iperion": {
+   "altura": 1.728,
+   "flutua": false
+  },
+  "trovonca": {
+   "altura": 1.656,
+   "flutua": false
+  }
+ },
+ "mapas": [
+  "casa",
+  "aurora",
+  "casa_rival",
+  "lab",
+  "rota1",
+  "pedraverde",
+  "centro1",
+  "loja1",
+  "ginasio1",
+  "floresta",
+  "mare",
+  "centro2",
+  "loja2",
+  "ginasio2",
+  "rotavitoria",
+  "santuario",
+  "gruta",
+  "pico",
+  "liga",
+  "rota_sertao",
+  "mandacaru",
+  "centro3",
+  "loja3",
+  "ginasio3",
+  "rota_chapada",
+  "relampago",
+  "centro4",
+  "loja4",
+  "ginasio4",
+  "rota_igarape",
+  "igarape",
+  "centro5",
+  "loja5",
+  "ginasio5",
+  "rota_pantano",
+  "neblina",
+  "centro6",
+  "loja6",
+  "ginasio6"
+ ]
+}

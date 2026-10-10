@@ -1,0 +1,469 @@
+{
+ "id": "rotavitoria",
+ "sky": "sunset",
+ "name": "Rota Vitória",
+ "music": "route",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTT",
+  "TT................TT",
+  "TT................TT",
+  "TT................TT",
+  "TT.................,",
+  "TT................TT",
+  "TT...,,,,,,,,,,...TT",
+  "TTTTTTTTT,TTTTTTTTTT",
+  "TTTTTTTTT,TTTTTTTTTT",
+  "TT......,,,,......TT",
+  "TT..GGG.,..,.GGG..TT",
+  "TT..GGG.,..,.GGG..TT",
+  "TT..GGG.,..,.GGG..TT",
+  "TT......,,,,......TT",
+  "TTTTTT....,....TTTTT",
+  "TT.GGGGG..,..GGGG.TT",
+  "TT.GGGGG..,..GGGG.TT",
+  "TT.GGGGG..,..GGGG.TT",
+  "TT........,.......TT",
+  "TT..TTTT..,..TTTT.TT",
+  "TT..TTTT..,..TTTT.TT",
+  ",,........,.......TT",
+  "TTGGGG....,,,,,...TT",
+  "TTGGGG........,...TT",
+  "TTGGGG..GGGG..,...TT",
+  "TT......GGGG..,...TT",
+  "TT......GGGG..,...TT",
+  "TT......,,,,,,,.S.TT",
+  "TT......,,,,,,,,,,,,",
+  "TT......,.........TT",
+  "TT......,.........TT",
+  "TTTTTTTT,TTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 5,
+   "z": 1,
+   "w": 9,
+   "d": 5,
+   "style": "liga",
+   "door": 4,
+   "to": "liga",
+   "label": "LIGA"
+  }
+ ],
+ "warps": [
+  {
+   "x": 8,
+   "z": 31,
+   "to": "mare",
+   "tx": 12,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 0,
+   "z": 21,
+   "to": "pico",
+   "tx": 14,
+   "tz": 20,
+   "dir": "left"
+  },
+  {
+   "x": 19,
+   "z": 28,
+   "to": "rota_sertao",
+   "tx": 1,
+   "tz": 6,
+   "dir": "right"
+  },
+  {
+   "x": 19,
+   "z": 4,
+   "to": "neblina",
+   "tx": 12,
+   "tz": 1,
+   "dir": "down"
+  }
+ ],
+ "signs": [
+  {
+   "x": 16,
+   "z": 27,
+   "text": "LESTE: ROTA DO SERTÃO e os quatro ginásios do interior. A Liga exige 6 insígnias!"
+  }
+ ],
+ "items": [
+  {
+   "id": "rv1",
+   "x": 16,
+   "z": 18,
+   "item": "elixir",
+   "n": 1
+  },
+  {
+   "id": "rv2",
+   "x": 3,
+   "z": 9,
+   "item": "superorbe",
+   "n": 3
+  }
+ ],
+ "npcs": [
+  {
+   "id": "ligaguarda",
+   "x": 9,
+   "z": 6,
+   "dir": "down",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.state.badges.length < 6",
+    "talk": "async G => {\r\n        const n = G.state.badges.length;\r\n        await G.say(`A LIGA DAS CRIATURAS só aceita treinadores com 6 insígnias. Você tem ${n}. Os outros ginásios ficam a leste, depois da ROTA DO SERTÃO!`, 'Guarda da Liga');\r\n      }"
+   }
+  },
+  {
+   "id": "as1",
+   "x": 7,
+   "z": 18,
+   "dir": "right",
+   "look": "as",
+   "sight": 3,
+   "trainer": {
+    "name": "Ás Leo",
+    "party": [
+     [
+      "gavialto",
+      17
+     ],
+     [
+      "faiscatu",
+      17
+     ],
+     [
+      "ratanaz",
+      18
+     ]
+    ],
+    "money": 700,
+    "intro": "Quem quer chegar na Liga precisa passar pelos Ases! Prepare-se!",
+    "lose": "Você é digno da Liga...",
+    "after": "O campeão atual é bem jovem, sabia? Chegou lá antes de todo mundo."
+   }
+  },
+  {
+   "id": "as2",
+   "x": 15,
+   "z": 23,
+   "dir": "left",
+   "look": "as",
+   "sight": 3,
+   "trainer": {
+    "name": "Ás Nina",
+    "party": [
+     [
+      "borbolux",
+      18
+     ],
+     [
+      "estrelito",
+      18
+     ],
+     [
+      "trovatu",
+      19
+     ]
+    ],
+    "money": 760,
+    "intro": "Treinei a vida inteira para este momento. Vamos lá!",
+    "lose": "Incrível! Que estratégia!",
+    "after": "Não esqueça de curar suas criaturas antes de entrar na Liga."
+   }
+  },
+  {
+   "id": "breu",
+   "x": 9,
+   "z": 9,
+   "dir": "down",
+   "look": "breu",
+   "sight": 3,
+   "trainer": {
+    "name": "Chefe Breu",
+    "party": [
+     [
+      "sombrino",
+      19
+     ],
+     [
+      "morcegao",
+      20
+     ],
+     [
+      "ratanaz",
+      21
+     ]
+    ],
+    "money": 2500,
+    "intro": "Então você é a criança que derrotou meu recruta na floresta. Eu sou BREU, chefe da EQUIPE SOMBRA. Vou mostrar o verdadeiro poder das sombras!",
+    "lose": "Impossível... Vencido por alguém que trata as criaturas como amigas?",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          await G.say('Talvez... eu tenha esquecido o que é crescer ao lado deles. A Equipe Sombra está acabada.', 'Chefe Breu');\r\n          await G.say('Siga em frente, {N}. A Liga espera por você.', 'Chefe Breu');\r\n        }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('tr_breu')"
+   }
+  },
+  {
+   "id": "rvgrunt1",
+   "x": 8,
+   "z": 12,
+   "dir": "down",
+   "look": "sombra2",
+   "sight": 2,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "jiboinha",
+      17
+     ],
+     [
+      "sacirola",
+      18
+     ]
+    ],
+    "money": 420,
+    "intro": "A Equipe Sombra controla esta rota! Volte para casa, pirralho!",
+    "lose": "Como assim eu perdi?!"
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "rvgrunt2",
+   "x": 10,
+   "z": 16,
+   "dir": "down",
+   "look": "sombra",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "guarazito",
+      17
+     ],
+     [
+      "fungito",
+      18
+     ],
+     [
+      "morcegote",
+      18
+     ]
+    ],
+    "money": 440,
+    "intro": "Ninguém chega até o Chefe Breu sem passar por mim!",
+    "lose": "Ai... o Chefe vai me colocar pra limpar a base inteira..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "alpinista",
+   "x": 1,
+   "z": 21,
+   "dir": "right",
+   "look": "campista",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('campeao')",
+    "talk": "async G => {\r\n        await G.say('Esta trilha sobe até o PICO TROVÃO. As tempestades lá em cima são terríveis. Só o campeão da Liga pode subir.', 'Alpinista');\r\n      }"
+   }
+  },
+  {
+   "id": "alpinista2",
+   "x": 2,
+   "z": 20,
+   "dir": "down",
+   "look": "campista",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.flag('campeao')",
+    "talk": "async G => {\r\n        await G.say('Vi gente de preto subindo o Pico Trovão, com máquinas estranhas... Cuidado lá em cima, campeão!', 'Alpinista');\r\n      }"
+   }
+  },
+  {
+   "id": "eclipse",
+   "x": 15,
+   "z": 3,
+   "dir": "down",
+   "look": "eclipse",
+   "sight": 3,
+   "trainer": {
+    "name": "Rainha Eclipse",
+    "party": [
+     [
+      "assombrado",
+      50
+     ],
+     [
+      "medusombra",
+      50
+     ],
+     [
+      "jiboiao",
+      51
+     ],
+     [
+      "boitata",
+      51
+     ],
+     [
+      "magmarocha",
+      52
+     ],
+     [
+      "morcegao",
+      53
+     ]
+    ],
+    "money": 8000,
+    "intro": "Então você é o novo campeão. Eu sou ECLIPSE, a verdadeira RAINHA da Equipe Sombra. Breu era só um fantoche. Com os 4 lendários, vou apagar o sol e trazer uma noite que nunca termina! Saia do meu caminho!",
+    "lose": "Impossível... A luz... venceu a sombra?",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          await G.say('Suas criaturas lutam com o coração... As minhas só lutavam por medo.', 'Rainha Eclipse');\r\n          await G.say('Talvez uma noite eterna não fizesse ninguém crescer. A Equipe Sombra está acabada. De verdade, desta vez.', 'Rainha Eclipse');\r\n          G.set('sombra_fim');\r\n        }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => G.flag('campeao') && !G.flag('tr_eclipse')"
+   }
+  },
+  {
+   "id": "solaris",
+   "x": 15,
+   "z": 1,
+   "dir": "down",
+   "creature": "solaris",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.flag('campeao') && !G.flag('lend_solaris')",
+    "talk": "async G => {\r\n    if (need && !G.flag(need.flag)) { await G.say(need.msg); return; }\r\n    await G.say(intro);\r\n    await G.cry(sp);\r\n    const r = await G.wildBattle(sp, lvl, { legendary: true });\r\n    if (r === 'caught') {\r\n      G.set('lend_' + sp);\r\n      await G.say(`Incrível! ${G.speciesName(sp)} decidiu seguir você!`, null, 'fanfare');\r\n      const all = ['solaris', 'abissal', 'iperion', 'trovonca'].every(k => G.flag('lend_' + k));\r\n      if (all && !G.flag('lendas4')) {\r\n        G.set('lendas4');\r\n        await G.say('As 4 criaturas lendárias estão com você! Sol, mar, floresta e trovão, finalmente em paz.');\r\n      }\r\n    } else if (r !== 'lose') {\r\n      await G.say(`${G.speciesName(sp)} recuou para recuperar as forças... Volte para tentar de novo!`);\r\n    }\r\n  }"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.12,
+  "list": [
+   [
+    "sombrino",
+    16,
+    19,
+    12
+   ],
+   [
+    "ratanaz",
+    17,
+    19,
+    12
+   ],
+   [
+    "gavialto",
+    17,
+    19,
+    12
+   ],
+   [
+    "faiscatu",
+    16,
+    19,
+    10
+   ],
+   [
+    "pedrolho",
+    16,
+    18,
+    10
+   ],
+   [
+    "morcegote",
+    16,
+    18,
+    6
+   ],
+   [
+    "guarazito",
+    16,
+    19,
+    12
+   ],
+   [
+    "cristalito",
+    16,
+    18,
+    8
+   ],
+   [
+    "carvaozinho",
+    16,
+    18,
+    8
+   ],
+   [
+    "colibrinho",
+    17,
+    19,
+    8
+   ],
+   [
+    "tamandito",
+    17,
+    19,
+    8
+   ],
+   [
+    "sacirola",
+    17,
+    19,
+    6
+   ],
+   [
+    "poraquinho",
+    16,
+    18,
+    6
+   ]
+  ]
+ }
+}

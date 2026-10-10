@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8e410366a471c540bfd1ceac4e39f2f, type: 3}
+  m_Name: Natureza
+  m_EditorClassIdentifier: Assembly-CSharp::Criaturas.Natureza
+  pinheiros:
+  - {fileID: 2503636403554334455, guid: 451d860cead90b64bbbab1639909594c, type: 3}
+  - {fileID: 1127992084609228112, guid: 34776a9356ed54141bf7fed4fded28a0, type: 3}
+  - {fileID: 1722164173232303198, guid: 942660f4ebcf9cd438f45122b0ad63eb, type: 3}
+  - {fileID: 8316334779356437779, guid: 35e087cfaa0f57244b67615777188d3e, type: 3}
+  coniferas:
+  - {fileID: 4012337630082778474, guid: cce4d8667f2436a479759f07084d8ff4, type: 3}
+  - {fileID: 6060788920606015911, guid: e730e362773695e408e48f59e6dff87a, type: 3}
+  capim:
+  - {fileID: 398929321252300881, guid: 4e6885e0d11bd224fa27617a4657c329, type: 3}
+  - {fileID: 1718442328122675833, guid: 3d4dd2affe15db043a6502ae256cd0d4, type: 3}
+  - {fileID: 5138664864039170994, guid: 8aa8def6286fc784ba128570ec475974, type: 3}
+  capimAlto:
+  - {fileID: 6846659341408791651, guid: 4c72217d56dcb6749a897a75cad1f34e, type: 3}
+  - {fileID: 5443344685879028270, guid: 4dfd50a1f648e984f8188be70774f281, type: 3}
+  capimSeco:
+  - {fileID: 7369509780391000685, guid: 912739ab7781de749876d674ef8dd365, type: 3}
+  - {fileID: 8486787402013068894, guid: 9e8508e3025d9c844810b83c5607c09e, type: 3}
+  - {fileID: 5784118704813857101, guid: 176a42107ce66c44aa74a67424591597, type: 3}
+  - {fileID: 889445777815560387, guid: 054bf5cf244ff2e4083cbf8eca205cf0, type: 3}
+  samambaias:
+  - {fileID: 2085449277718671952, guid: 6629880e46886724fa0107d3035304e6, type: 3}
+  - {fileID: 4798742950742889349, guid: 5e7ace55a7bfd0d4f9ba3c05024e9d79, type: 3}
+  - {fileID: 1647502441230210415, guid: 4786e2698ac97a949a9209febfcbd49b, type: 3}
+  arbustos:
+  - {fileID: 6011036630121576164, guid: 0ec1c69bd47ad864f96cc2b516f6cd4b, type: 3}
+  - {fileID: 2803505663424749585, guid: b273de0d6e5818a4cb3195ce4f376ccb, type: 3}
+  - {fileID: 1565408744048187519, guid: e6fd4411c0e008642b42a086f0d297ca, type: 3}
+  - {fileID: 7219107292882874463, guid: 0d2d600394cae8e4f908c5bdd1154222, type: 3}
+  flores:
+  - {fileID: 8267427934229748759, guid: cce04f533c148314abf74aff71206ec7, type: 3}
+  - {fileID: 658749458356824200, guid: dd902ff2a6f685041be127af00c09664, type: 3}
+  pedras:
+  - {fileID: 1338854965163658714, guid: dd1cb49c7d40bfb44a9b4201f7f74b6c, type: 3}
+  - {fileID: 185186776739890662, guid: e71b98edf7da4b448bc6ae07b82d6935, type: 3}
+  - {fileID: 5032137256400794150, guid: 0d60a9157fc09ee4f9c059a176c8d1da, type: 3}
+  - {fileID: 1030678204986712962, guid: 398b156fac7c6f44db09e9ad046c24dd, type: 3}
+  rochedos:
+  - {fileID: 7852789787880968506, guid: 957579ed33eb22040bb203c8100f624f, type: 3}
+  - {fileID: 5378006302162387446, guid: 5e1b58f75618fc340baeccee09741a0e, type: 3}
+  - {fileID: 5936893128028724840, guid: f611d77947a7ec74692548d60ef94887, type: 3}
+  - {fileID: 3375602384960043644, guid: a93f80d252523a14d9206681c7713ce8, type: 3}
+  - {fileID: 1862941254676340, guid: 6a8a77a07da1ab74bb3d34fe70501b7d, type: 3}
+  - {fileID: 6179546325909802286, guid: d300c554f4589a640a733a84d30422d4, type: 3}
+  - {fileID: 7601787364241631101, guid: 6b63070b5a692dc4389c591157da475d, type: 3}
+  grama: {fileID: 8574412962073106934, guid: e83e5b2c03473f74983ef0f5b9c160c0, type: 2}
+  gramaMato: {fileID: 8574412962073106934, guid: bd1fcb10d2c5b5d4ba6e01a34e4735be, type: 2}
+  musgo: {fileID: 8574412962073106934, guid: c92d180648e3c4149b7f024457016b52, type: 2}
+  terra: {fileID: 8574412962073106934, guid: ffb94bff813c3c041b5c22cc023fb25e, type: 2}
+  seixos: {fileID: 8574412962073106934, guid: 4e32022d306550941935a9898d9a184c, type: 2}
+  margem: {fileID: 8574412962073106934, guid: b5fcb6edb24b4544dbcf0dad9462ee5b, type: 2}
+  penhasco: {fileID: 8574412962073106934, guid: 7ba7a711695a4904a86967c335f59fc9, type: 2}
+  urze: {fileID: 8574412962073106934, guid: 795e383430200a14bb52726e97a0e7f4, type: 2}
+  areiaEscura: {fileID: 8574412962073106934, guid: 823d80b2a8eb07748b59d1aa37a1e7fb, type: 2}

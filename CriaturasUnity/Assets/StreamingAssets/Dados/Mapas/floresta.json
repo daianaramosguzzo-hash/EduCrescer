@@ -1,0 +1,307 @@
+{
+ "id": "floresta",
+ "sky": "forest",
+ "name": "Floresta Sussurro",
+ "music": "forest",
+ "bg": "forest",
+ "dark": true,
+ "rows": [
+  "TTTTTTTTTTT,TTTTTTTTTTTT",
+  "TTTTTTTTTTT,TTTTTTTTTTTT",
+  "TTTTTTTTTTT,TTTTTTTTTTTT",
+  "TT...GGGGG.,...GGGGG..TT",
+  "TT...GGGGG.,...GGGGG..TT",
+  "TT..TTTTTTT,TTTTTTT...TT",
+  "TT..T.....,,......T...TT",
+  "TT..T.GGG.,.GGGG..T.GGTT",
+  "TT....GGG.,.GGGG....GGTT",
+  "TTTTTTTTT.,.TTTTTTTTGGTT",
+  "TTGGGG....,.......TTGGTT",
+  "TTGGGG....,,,,....TT..TT",
+  "TT..TTTTTT...,TT..TT..TT",
+  "TT..TGGGGT...,TT......TT",
+  "TT..TGGGGT...,TTTTTTT.TT",
+  "TT....GG.....,....GGG.,,",
+  "TT....GG.....,....GGG.TT",
+  "TTTTTTTT..,,,,TTTTTTTTTT",
+  "TT......,,,.....GGGG..TT",
+  "TT.GGG..,.......GGGG..TT",
+  "TT.GGG..,..TTTT.GGGG..TT",
+  "TT.GGG..,..TTTT.......TT",
+  "TT......,,,,,,,,,,....TT",
+  "TTTTTTT.......GGG.,...TT",
+  "TT.GGGG.......GGG.,...TT",
+  "TT.GGGG..TTT......,...TT",
+  "TT.......TTT.GGG..,...TT",
+  "TT...,,,,,,,,GGG..,...TT",
+  "TT...,....TTTTTTTT,...TT",
+  "TT...,...........,,...TT",
+  "TT...,,,,,,,,,,,,,....TT",
+  "TT..........,,........TT",
+  "TT..........,,........TT",
+  "TTTTTTTTTTTT,,TTTTTTTTTT"
+ ],
+ "warps": [
+  {
+   "x": 12,
+   "z": 33,
+   "to": "pedraverde",
+   "tx": 12,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 13,
+   "z": 33,
+   "to": "pedraverde",
+   "tx": 12,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 11,
+   "z": 0,
+   "to": "mare",
+   "tx": 11,
+   "tz": 20,
+   "dir": "up"
+  },
+  {
+   "x": 23,
+   "z": 15,
+   "to": "santuario",
+   "tx": 1,
+   "tz": 18,
+   "dir": "right"
+  }
+ ],
+ "items": [
+  {
+   "id": "fl1",
+   "x": 21,
+   "z": 11,
+   "item": "orbe",
+   "n": 3
+  },
+  {
+   "id": "fl2",
+   "x": 3,
+   "z": 13,
+   "item": "superpocao",
+   "n": 1
+  },
+  {
+   "id": "fl3",
+   "x": 21,
+   "z": 23,
+   "item": "reviver",
+   "n": 1
+  }
+ ],
+ "npcs": [
+  {
+   "id": "flinseto1",
+   "x": 4,
+   "z": 27,
+   "dir": "right",
+   "look": "inseto",
+   "sight": 4,
+   "trainer": {
+    "name": "Caçador Caio",
+    "party": [
+     [
+      "joanito",
+      7
+     ],
+     [
+      "taturana",
+      7
+     ]
+    ],
+    "money": 140,
+    "intro": "Ei! Você também caça insetos? Vamos batalhar!",
+    "lose": "Nããão! Meus insetinhos!",
+    "after": "Taturanas viram Casulitos, e Casulitos viram lindos Borbolux!"
+   }
+  },
+  {
+   "id": "flinseto2",
+   "x": 14,
+   "z": 11,
+   "dir": "left",
+   "look": "inseto",
+   "sight": 3,
+   "trainer": {
+    "name": "Caçadora Bia",
+    "party": [
+     [
+      "casulito",
+      8
+     ],
+     [
+      "joanito",
+      8
+     ],
+     [
+      "borbolux",
+      10
+     ]
+    ],
+    "money": 200,
+    "intro": "Meus insetos cresceram muito! Quer ver?",
+    "lose": "Suas criaturas cresceram mais que as minhas...",
+    "after": "Dizem que tem um tatu elétrico raríssimo nesta floresta."
+   }
+  },
+  {
+   "id": "grunt",
+   "x": 11,
+   "z": 2,
+   "dir": "down",
+   "look": "sombra",
+   "sight": 1,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "ratitu",
+      9
+     ],
+     [
+      "morcegote",
+      10
+     ]
+    ],
+    "money": 300,
+    "intro": "Parado aí! Nós, da EQUIPE SOMBRA, estamos caçando criaturas raras nesta floresta. Ninguém passa!",
+    "lose": "Argh! Perdi para uma criança!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          await G.say('Tanto faz! O CHEFE BREU vai dominar todas as criaturas da região!', 'Recruta Sombra');\r\n          await G.say('A Equipe Sombra ainda vai voltar!', 'Recruta Sombra');\r\n          G.set('floresta_ok');\r\n        }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('tr_grunt')"
+   }
+  },
+  {
+   "id": "florestal",
+   "x": 22,
+   "z": 15,
+   "dir": "left",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('campeao')",
+    "talk": "async G => {\r\n        await G.say('Esta trilha leva ao SANTUÁRIO DA FLORESTA, onde vive um guardião lendário. Só o campeão da Liga pode passar.', 'Guarda-florestal');\r\n      }"
+   }
+  },
+  {
+   "id": "florestal2",
+   "x": 21,
+   "z": 14,
+   "dir": "down",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.flag('campeao')",
+    "talk": "async G => {\r\n        await G.say('Campeão! A Equipe Sombra entrou no Santuário. Proteja IPÊRION, por favor!', 'Guarda-florestal');\r\n      }"
+   }
+  },
+  {
+   "id": "flvelho",
+   "x": 19,
+   "z": 19,
+   "dir": "left",
+   "look": "velho",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Shhh... ouça. As árvores sussurram. Dizem que só quem cuida bem das suas criaturas consegue atravessar a floresta.', 'Andarilho');\r\n      }"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.13,
+  "list": [
+   [
+    "taturana",
+    4,
+    6,
+    20
+   ],
+   [
+    "casulito",
+    5,
+    7,
+    12
+   ],
+   [
+    "joanito",
+    5,
+    8,
+    18
+   ],
+   [
+    "pardalito",
+    5,
+    7,
+    14
+   ],
+   [
+    "faiscatu",
+    6,
+    8,
+    7
+   ],
+   [
+    "morcegote",
+    5,
+    7,
+    6
+   ],
+   [
+    "fungito",
+    5,
+    7,
+    12
+   ],
+   [
+    "vagalumi",
+    6,
+    8,
+    8
+   ],
+   [
+    "jiboinha",
+    6,
+    8,
+    8
+   ],
+   [
+    "preguito",
+    6,
+    7,
+    6
+   ],
+   [
+    "micolumi",
+    5,
+    7,
+    6
+   ]
+  ]
+ }
+}

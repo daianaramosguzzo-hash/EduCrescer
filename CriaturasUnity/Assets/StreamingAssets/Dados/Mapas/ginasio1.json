@@ -1,0 +1,147 @@
+{
+ "id": "ginasio1",
+ "name": "Ginásio de Pedra-Verde",
+ "interior": true,
+ "floor": "stone",
+ "music": "gym",
+ "bg": "gym",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 13,
+  "to": "pedraverde",
+  "tx": 6,
+  "tz": 8
+ },
+ "furniture": [
+  {
+   "type": "boulder",
+   "x": 1,
+   "z": 4
+  },
+  {
+   "type": "boulder",
+   "x": 2,
+   "z": 4
+  },
+  {
+   "type": "boulder",
+   "x": 8,
+   "z": 4
+  },
+  {
+   "type": "boulder",
+   "x": 9,
+   "z": 4
+  },
+  {
+   "type": "boulder",
+   "x": 1,
+   "z": 9
+  },
+  {
+   "type": "boulder",
+   "x": 9,
+   "z": 9
+  },
+  {
+   "type": "statue",
+   "x": 3,
+   "z": 11
+  },
+  {
+   "type": "statue",
+   "x": 7,
+   "z": 11
+  }
+ ],
+ "signs": [
+  {
+   "x": 3,
+   "z": 11,
+   "text": "GINÁSIO DE PEDRA-VERDE. Vencedores: GAEL"
+  },
+  {
+   "x": 7,
+   "z": 11,
+   "text": "Líder: BASALTO. Dica: Pedra é forte contra Fogo, Voador e Inseto."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "g1camp",
+   "x": 3,
+   "z": 7,
+   "dir": "right",
+   "look": "campista",
+   "sight": 5,
+   "trainer": {
+    "name": "Campista Téo",
+    "party": [
+     [
+      "pedrolho",
+      8
+     ],
+     [
+      "ratitu",
+      9
+     ]
+    ],
+    "money": 180,
+    "intro": "Ei! Você está a mil anos de distância do Basalto! Primeiro, me vença!",
+    "lose": "Uau... você é forte mesmo.",
+    "after": "O Basalto é bem mais forte que eu. Boa sorte!"
+   }
+  },
+  {
+   "id": "basalto",
+   "x": 5,
+   "z": 2,
+   "dir": "down",
+   "look": "basalto",
+   "trainer": {
+    "name": "Líder Basalto",
+    "party": [
+     [
+      "pedrolho",
+      10
+     ],
+     [
+      "sirito",
+      11
+     ],
+     [
+      "pedrolho",
+      12
+     ]
+    ],
+    "money": 1200,
+    "leader": true,
+    "intro": "Sou BASALTO, Líder do Ginásio de Pedra-Verde! Minha força é firme como rocha. Mostre-me sua determinação!",
+    "lose": "Eu subestimei você... Tome, isto é a prova da sua vitória!",
+    "after": "Existem muitos treinadores fortes por aí. Continue crescendo!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          G.addBadge('rocha');\r\n          await G.say('{N} recebeu a INSÍGNIA ROCHA!', null, 'badge');\r\n          await G.say('Com ela, o guarda vai deixar você entrar na Floresta Sussurro. E a loja agora vende SUPER POÇÕES!', 'Basalto');\r\n          G.giveItem('superpocao', 2);\r\n          await G.say('{N} recebeu 2 SUPER POÇÕES!');\r\n        }"
+    }
+   }
+  }
+ ]
+}

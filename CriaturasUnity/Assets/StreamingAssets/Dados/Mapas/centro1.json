@@ -1,0 +1,92 @@
+{
+ "id": "centro1",
+ "name": "Centro de Criaturas de Pedra-Verde",
+ "interior": true,
+ "floor": "tile",
+ "music": "center",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#__CCCCC__#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 8,
+  "to": "pedraverde",
+  "tx": 6,
+  "tz": 16
+ },
+ "furniture": [
+  {
+   "type": "machine",
+   "x": 7,
+   "z": 1,
+   "w": 2,
+   "d": 1
+  },
+  {
+   "type": "pc",
+   "x": 1,
+   "z": 1,
+   "w": 1,
+   "d": 1
+  },
+  {
+   "type": "plant",
+   "x": 9,
+   "z": 7
+  },
+  {
+   "type": "plant",
+   "x": 1,
+   "z": 7
+  },
+  {
+   "type": "bench",
+   "x": 8,
+   "z": 5,
+   "w": 2,
+   "d": 1
+  }
+ ],
+ "npcs": [
+  {
+   "id": "enf",
+   "x": 5,
+   "z": 2,
+   "dir": "down",
+   "look": "enfermeira",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Bem-vindo ao Centro de Criaturas! Aqui cuidamos das suas criaturas até ficarem 100%.', 'Enfermeira Clara');\r\n        const r = await G.ask('Quer que eu cuide das suas criaturas?', ['Sim', 'Não']);\r\n        if (r === 0) {\r\n          G.state.lastCenter = { map: id, x: 5, z: 4 };\r\n          await G.healScene();\r\n          await G.say('Pronto! Suas criaturas estão totalmente recuperadas. Volte sempre!', 'Enfermeira Clara');\r\n        } else await G.say('Volte quando precisar!', 'Enfermeira Clara');\r\n      }"
+   }
+  },
+  {
+   "id": "visit",
+   "x": 2,
+   "z": 5,
+   "dir": "right",
+   "look": "garota",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('O computador ali no canto guarda as criaturas que não cabem na sua equipe. Você pode levar até 6!');\r\n      }"
+   }
+  }
+ ],
+ "pcs": [
+  {
+   "x": 1,
+   "z": 1
+  }
+ ]
+}

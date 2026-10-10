@@ -1,0 +1,147 @@
+{
+ "id": "igarape",
+ "sky": "amazonia",
+ "name": "Vila Igarapé",
+ "music": "city",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..WWWWWW..TT",
+  "TT.Tf.....S.,,..WWWWWW..TT",
+  "TT..........,,..WWWWWW..TT",
+  "TT..........,,..........TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,,,",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,S.........TT",
+  "TT......f...,,........f.TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT.WWWW.....,,..........TT",
+  "TT.WWWW........T......T.TT",
+  "TT......................TT",
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 2,
+   "w": 7,
+   "d": 5,
+   "style": "gym",
+   "door": 3,
+   "to": "ginasio5",
+   "label": "GINÁSIO",
+   "roof": "#3a8a3a"
+  },
+  {
+   "x": 16,
+   "z": 2,
+   "w": 5,
+   "d": 5,
+   "style": "center",
+   "door": 2,
+   "to": "centro5",
+   "label": "CENTRO"
+  },
+  {
+   "x": 4,
+   "z": 15,
+   "w": 4,
+   "d": 4,
+   "style": "shop",
+   "door": 1,
+   "to": "loja5",
+   "label": "LOJA"
+  },
+  {
+   "x": 16,
+   "z": 15,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "roof": "#8a5a3a"
+  }
+ ],
+ "signs": [
+  {
+   "x": 10,
+   "z": 9,
+   "text": "VILA IGARAPÉ — Onde o rio e a floresta crescem juntos."
+  },
+  {
+   "x": 14,
+   "z": 16,
+   "text": "GINÁSIO DE IGARAPÉ — Líder: CECI, a guardiã da floresta."
+  }
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 12,
+   "to": "rota_igarape",
+   "tx": 22,
+   "tz": 6,
+   "dir": "left"
+  },
+  {
+   "x": 25,
+   "z": 12,
+   "to": "rota_pantano",
+   "tx": 1,
+   "tz": 6,
+   "dir": "right"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "igpesc",
+   "x": 15,
+   "z": 11,
+   "dir": "up",
+   "look": "nadador",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('O boto-cor-de-rosa aparece no rio quando tem festa na vila. Já vi um BOTINHO pular três vezes seguidas!', 'Pescador Raimundo');\r\n      }"
+   }
+  },
+  {
+   "id": "igvo",
+   "x": 8,
+   "z": 10,
+   "dir": "down",
+   "look": "velho",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Cada árvore desta floresta guarda uma história. A CASTANHEIRA mais velha tem mais de quinhentos anos!', 'Vô Benedito');\r\n      }"
+   }
+  },
+  {
+   "id": "igmenina",
+   "x": 19,
+   "z": 20,
+   "dir": "left",
+   "look": "garota",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Depois daqui, a trilha entra no PANTANAL. Dizem que lá é sempre noite... e que a Equipe Sombra voltou a aparecer!');\r\n      }"
+   }
+  }
+ ]
+}

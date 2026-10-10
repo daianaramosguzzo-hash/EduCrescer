@@ -1,0 +1,285 @@
+{
+ "id": "lab",
+ "name": "Laboratório do Prof. Ipê",
+ "interior": true,
+ "floor": "tile",
+ "music": "lab",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 9,
+  "to": "aurora",
+  "tx": 14,
+  "tz": 13
+ },
+ "furniture": [
+  {
+   "type": "shelf",
+   "x": 1,
+   "z": 1,
+   "w": 3,
+   "d": 1
+  },
+  {
+   "type": "shelf",
+   "x": 7,
+   "z": 1,
+   "w": 3,
+   "d": 1
+  },
+  {
+   "type": "table",
+   "x": 6,
+   "z": 3,
+   "w": 3,
+   "d": 1
+  },
+  {
+   "type": "pc",
+   "x": 1,
+   "z": 4,
+   "w": 1,
+   "d": 1
+  },
+  {
+   "type": "machine",
+   "x": 1,
+   "z": 5,
+   "w": 1,
+   "d": 1
+  },
+  {
+   "type": "plant",
+   "x": 9,
+   "z": 8
+  },
+  {
+   "type": "plant",
+   "x": 1,
+   "z": 8
+  },
+  {
+   "type": "table",
+   "x": 8,
+   "z": 6,
+   "w": 2,
+   "d": 1
+  }
+ ],
+ "signs": [
+  {
+   "x": 1,
+   "z": 4,
+   "text": "Há um e-mail aberto: \"Pesquisa sobre a ave lendária SOLARIS — dizem que aparece para quem vence a Liga...\""
+  }
+ ],
+ "npcs": [
+  {
+   "id": "prof",
+   "x": 5,
+   "z": 1,
+   "dir": "down",
+   "look": "prof",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async function profTalk(G) {\r\n  if (!G.flag('starter')) {\r\n    if (G.flag('metProf')) await G.say('Escolha uma das criaturas na mesa, {N}!', 'Prof. Ipê');\r\n    else await G.say('Olá! Sou o Prof. Ipê. Estou pesquisando sobre criaturas.', 'Prof. Ipê');\r\n    return;\r\n  }\r\n  if (G.flag('encomenda') && !G.flag('dex')) {\r\n    await G.say('Ah! Minha encomenda! Obrigado, {N}!', 'Prof. Ipê');\r\n    G.takeItem('encomenda');\r\n    await G.say('Isto aqui é uma CRIATURADEX! Uma enciclopédia que registra toda criatura que você vê ou captura.', 'Prof. Ipê');\r\n    G.set('dex');\r\n    await G.say('{N} recebeu a CRIATURADEX!', null, 'fanfare');\r\n    await G.say('E para capturar criaturas selvagens, use estes ORBES. Enfraqueça a criatura antes de jogar!', 'Prof. Ipê');\r\n    G.giveItem('orbe', 5);\r\n    await G.say('{N} recebeu 5 ORBES!');\r\n    await G.say('Meu sonho é completar a Criaturadex. Conto com você! E se quiser se tornar um grande treinador, vença os Ginásios e desafie a LIGA!', 'Prof. Ipê');\r\n    return;\r\n  }\r\n  if (G.flag('campeao')) {\r\n    const n = ['solaris', 'abissal', 'iperion', 'trovonca'].filter(k => G.flag('lend_' + k)).length;\r\n    await G.say(`Lendários protegidos por você: ${n} de 4.`, 'Prof. Ipê');\r\n    if (n < 4) await G.say('Ipêrion no Santuário da Floresta, Abissal na Gruta Abissal, Trovonça no Pico Trovão e Solaris na Rota Vitória. A Equipe Sombra não pode pegá-los!', 'Prof. Ipê');\r\n    else await G.say('Todos os 4! Você é uma lenda, {N}!', 'Prof. Ipê');\r\n  }\r\n  if (G.flag('dex')) {\r\n    const n = G.caughtCount();\r\n    await G.say(`Vamos ver sua Criaturadex... Você já capturou ${n} criaturas e viu ${G.seenCount()}!`, 'Prof. Ipê');\r\n    if (n < 5) await G.say('É só o começo! Explore o mato alto em cada rota.', 'Prof. Ipê');\r\n    else if (n < 12) await G.say('Muito bem! Você está crescendo como treinador!', 'Prof. Ipê');\r\n    else await G.say('Fantástico! Você é um verdadeiro pesquisador!', 'Prof. Ipê');\r\n    return;\r\n  }\r\n  await G.say('Vá até PEDRA-VERDE, ao norte da Rota 1. Estou esperando uma encomenda na loja de lá.', 'Prof. Ipê');\r\n}"
+   }
+  },
+  {
+   "id": "rival",
+   "x": 4,
+   "z": 3,
+   "dir": "down",
+   "look": "rival",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.flag('metProf') && !G.flag('rival1')",
+    "talk": "async G => {\r\n        if (!G.flag('starter')) await G.say('Hehe, vai logo escolher! Eu já sei qual vou pegar!', 'Gael');\r\n        else await G.say('Minha criatura parece bem mais forte que a sua!', 'Gael');\r\n      }"
+   }
+  },
+  {
+   "id": "ajud",
+   "x": 8,
+   "z": 7,
+   "dir": "up",
+   "look": "garoto",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Eu sou assistente do Prof. Ipê! Estamos estudando como as criaturas evoluem quando treinam bastante.');\r\n      }"
+   }
+  },
+  {
+   "id": "orb_brasito",
+   "x": 6,
+   "z": 3,
+   "dir": "down",
+   "orb": true,
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.state.starter !== sp && G.state.rivalStarter !== sp",
+    "talk": "G => pickStarter(G, sp, 6 + i)"
+   }
+  },
+  {
+   "id": "orb_pingolote",
+   "x": 7,
+   "z": 3,
+   "dir": "down",
+   "orb": true,
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.state.starter !== sp && G.state.rivalStarter !== sp",
+    "talk": "G => pickStarter(G, sp, 6 + i)"
+   }
+  },
+  {
+   "id": "orb_capibroto",
+   "x": 8,
+   "z": 3,
+   "dir": "down",
+   "orb": true,
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.state.starter !== sp && G.state.rivalStarter !== sp",
+    "talk": "G => pickStarter(G, sp, 6 + i)"
+   }
+  }
+ ],
+ "triggers": [
+  {
+   "x": 1,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 2,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 3,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 4,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 5,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 6,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 7,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 8,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  },
+  {
+   "x": 9,
+   "z": 7,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.flag('starter') && !G.flag('rival1')",
+    "run": "async function rivalBattle1(G) {\r\n  const rv = G.npc('rival');\r\n  await G.say('Espera aí, {N}! Vamos ver qual criatura é mais forte!', 'Gael');\r\n  await G.player.face('up');\r\n  const px = G.player.x, col = G.state.rivalCol || 6;\r\n  const path = [];\r\n  path.push(...Array(Math.max(0, col - 5)).fill('left'));\r\n  path.push(...Array(4).fill('down'));\r\n  if (px < 5) path.push(...Array(5 - px).fill('left'));\r\n  if (px > 5) path.push(...Array(px - 5).fill('right'));\r\n  await rv.walk(path);\r\n  await rv.face('down');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [[G.state.rivalStarter, 5]], money: 100, rival: true, canLose: true,\r\n    intro: '', lose: 'O quê?! Eu escolhi a criatura errada!', winText: 'Hahaha! Eu sou demais!',\r\n  });\r\n  G.set('rival1');\r\n  if (!won) await G.say('Viu só? Eu vou ser o maior treinador do mundo!', 'Gael');\r\n  await G.say('Vou treinar minha criatura até ela ficar invencível. Até mais, {N}!', 'Gael');\r\n  const side = px === 5 ? 4 : 5;\r\n  const hz = side > rv.x ? Array(side - rv.x).fill('right') : Array(rv.x - side).fill('left');\r\n  await rv.walk([...hz, 'down', 'down', 'down']);\r\n  rv.hide();\r\n  G.healParty();\r\n  await G.say('Sua criatura está cansada. Deixe-me curá-la.', 'Prof. Ipê');\r\n  await G.say('Suas criaturas foram curadas!');\r\n  await G.say('{N}, se você for até PEDRA-VERDE, ao norte da Rota 1, passe na loja. Estou esperando uma encomenda.', 'Prof. Ipê');\r\n  G.refresh();\r\n}"
+   }
+  }
+ ]
+}

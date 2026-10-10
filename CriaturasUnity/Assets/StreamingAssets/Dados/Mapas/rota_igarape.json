@@ -1,0 +1,190 @@
+{
+ "id": "rota_igarape",
+ "sky": "amazonia",
+ "name": "Rota dos Igarapés",
+ "music": "forest",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTTTTTT",
+  "TTTT..TTTT....TTTT..TTTT",
+  "TT..GGGGG..WW..GGGGGG.TT",
+  "TT..GGGGGT.WW..GGGGGG.TT",
+  "TT..GGGGG..WW..GGGGGG.TT",
+  "TT....................TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,",
+  "TT....S...............TT",
+  "TT.GGGGGG.WWWW.......TTT",
+  "TT.GGGGGG.WWWW.GGGGGG.TT",
+  "TT.GGGGGG.WWWW.GGGGGG.TT",
+  "TT.GGGGGG.WWWW.GGGGGG.TT",
+  "TT.GGGGGGTWWWWTGGGGGG.TT",
+  "TT........WWWW........TT",
+  "TTTT..TTTT....TTTT..TTTT",
+  "TTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 6,
+   "to": "relampago",
+   "tx": 24,
+   "tz": 12,
+   "dir": "left"
+  },
+  {
+   "x": 23,
+   "z": 6,
+   "to": "igarape",
+   "tx": 1,
+   "tz": 12,
+   "dir": "right"
+  }
+ ],
+ "signs": [
+  {
+   "x": 6,
+   "z": 7,
+   "text": "ROTA DOS IGARAPÉS — Leste: VILA IGARAPÉ. Respeite a floresta: ela é a casa de milhares de criaturas."
+  }
+ ],
+ "items": [
+  {
+   "id": "ri1",
+   "x": 20,
+   "z": 13,
+   "item": "reviver",
+   "n": 1
+  }
+ ],
+ "npcs": [
+  {
+   "id": "rimat",
+   "x": 9,
+   "z": 5,
+   "dir": "down",
+   "look": "mateiro",
+   "sight": 3,
+   "trainer": {
+    "name": "Mateiro Joca",
+    "party": [
+     [
+      "acaizinho",
+      29
+     ],
+     [
+      "antinha",
+      29
+     ],
+     [
+      "uirapuru",
+      30
+     ]
+    ],
+    "money": 600,
+    "intro": "Conheço cada trilha desta mata. Duvido que você me vença aqui!",
+    "lose": "A mata escolheu você...",
+    "after": "Se ouvir o canto do UIRAPURU, fique quietinho. Dá sorte!"
+   }
+  },
+  {
+   "id": "ribot",
+   "x": 16,
+   "z": 7,
+   "dir": "up",
+   "look": "botanica",
+   "sight": 3,
+   "trainer": {
+    "name": "Botânica Lina",
+    "party": [
+     [
+      "orquidinha",
+      29
+     ],
+     [
+      "castanhito",
+      30
+     ],
+     [
+      "guaraninho",
+      30
+     ]
+    ],
+    "money": 620,
+    "intro": "Estou catalogando as plantas da Amazônia. Quer ver as mais fortes?",
+    "lose": "Você entende de natureza!",
+    "after": "A Líder CECI é a guardiã desta floresta. Criaturas de FOGO e VOADOR funcionam contra ela."
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.13,
+  "list": [
+   [
+    "vitorinha",
+    27,
+    30,
+    10
+   ],
+   [
+    "acaizinho",
+    27,
+    30,
+    12
+   ],
+   [
+    "botinho",
+    27,
+    30,
+    8
+   ],
+   [
+    "castanhito",
+    27,
+    30,
+    10
+   ],
+   [
+    "guaraninho",
+    27,
+    30,
+    10
+   ],
+   [
+    "oncinha",
+    28,
+    30,
+    5
+   ],
+   [
+    "antinha",
+    27,
+    30,
+    10
+   ],
+   [
+    "uirapuru",
+    29,
+    30,
+    3
+   ],
+   [
+    "orquidinha",
+    27,
+    30,
+    8
+   ],
+   [
+    "maracujito",
+    27,
+    30,
+    8
+   ],
+   [
+    "preguito",
+    27,
+    30,
+    6
+   ]
+  ]
+ }
+}

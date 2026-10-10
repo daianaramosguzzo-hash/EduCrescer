@@ -1,0 +1,184 @@
+{
+ "id": "ginasio6",
+ "name": "Ginásio de Neblina",
+ "interior": true,
+ "floor": "dark",
+ "music": "gym",
+ "bg": "cave",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 13,
+  "to": "neblina",
+  "tx": 6,
+  "tz": 7
+ },
+ "furniture": [
+  {
+   "type": "lantern",
+   "x": 1,
+   "z": 1
+  },
+  {
+   "type": "lantern",
+   "x": 9,
+   "z": 1
+  },
+  {
+   "type": "lantern",
+   "x": 1,
+   "z": 5
+  },
+  {
+   "type": "lantern",
+   "x": 9,
+   "z": 5
+  },
+  {
+   "type": "lantern",
+   "x": 1,
+   "z": 9
+  },
+  {
+   "type": "lantern",
+   "x": 9,
+   "z": 9
+  },
+  {
+   "type": "statue",
+   "x": 3,
+   "z": 11
+  },
+  {
+   "type": "statue",
+   "x": 7,
+   "z": 11
+  }
+ ],
+ "signs": [
+  {
+   "x": 3,
+   "z": 11,
+   "text": "GINÁSIO DE NEBLINA. Vencedores: GAEL"
+  },
+  {
+   "x": 7,
+   "z": 11,
+   "text": "Líder: LUAR. Dica: Sombra é fraca contra Sombra e Inseto."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "g6med",
+   "x": 3,
+   "z": 7,
+   "dir": "right",
+   "look": "medium",
+   "sight": 4,
+   "trainer": {
+    "name": "Médium Vera",
+    "party": [
+     [
+      "assombrado",
+      34
+     ],
+     [
+      "urutau",
+      34
+     ]
+    ],
+    "money": 700,
+    "intro": "Os espíritos me contaram que você viria... e que ia perder!",
+    "lose": "Os espíritos erraram...",
+    "after": "A Luar enxerga o que ninguém vê."
+   }
+  },
+  {
+   "id": "g6cac",
+   "x": 7,
+   "z": 4,
+   "dir": "left",
+   "look": "mateiro",
+   "sight": 3,
+   "trainer": {
+    "name": "Caçador Noturno Ivo",
+    "party": [
+     [
+      "jacarezito",
+      34
+     ],
+     [
+      "piranhao",
+      35
+     ],
+     [
+      "corujao",
+      35
+     ]
+    ],
+    "money": 740,
+    "intro": "No escuro, eu vejo tudo. Você consegue dizer o mesmo?",
+    "lose": "Fui pego de surpresa!",
+    "after": "Siga as lanternas até a Luar."
+   }
+  },
+  {
+   "id": "luar",
+   "x": 5,
+   "z": 2,
+   "dir": "down",
+   "look": "luar",
+   "trainer": {
+    "name": "Líder Luar",
+    "party": [
+     [
+      "corujao",
+      36
+     ],
+     [
+      "orquinoite",
+      37
+     ],
+     [
+      "curupirao",
+      37
+     ],
+     [
+      "jacarezao",
+      38
+     ],
+     [
+      "boitata",
+      39
+     ]
+    ],
+    "money": 4200,
+    "leader": true,
+    "intro": "Shhh... escute a névoa. Sou LUAR, Líder do Ginásio de Neblina. As sombras não são más: são só o lugar onde a luz descansa. Vamos ver se a sua luz aguenta a minha noite?",
+    "lose": "Sua luz é mais forte do que eu imaginava. A INSÍGNIA LUA é sua.",
+    "after": "Com seis insígnias, a Liga espera por você. O atalho ao norte leva direto até lá.",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          G.addBadge('lua');\r\n          await G.say('{N} recebeu a INSÍGNIA LUA!', null, 'badge');\r\n          await G.say('Seis insígnias! Agora você pode desafiar a LIGA DAS CRIATURAS. Leve isto... vai precisar.', 'Luar');\r\n          G.giveItem('ultraorbe', 2);\r\n          await G.say('{N} recebeu 2 ULTRA ORBES!');\r\n        }"
+    }
+   }
+  }
+ ]
+}

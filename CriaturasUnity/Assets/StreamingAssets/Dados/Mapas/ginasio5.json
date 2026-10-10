@@ -1,0 +1,180 @@
+{
+ "id": "ginasio5",
+ "name": "Ginásio de Igarapé",
+ "interior": true,
+ "floor": "jungle",
+ "music": "gym",
+ "bg": "gym",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 13,
+  "to": "igarape",
+  "tx": 6,
+  "tz": 7
+ },
+ "furniture": [
+  {
+   "type": "tree",
+   "x": 1,
+   "z": 1
+  },
+  {
+   "type": "tree",
+   "x": 9,
+   "z": 1
+  },
+  {
+   "type": "tree",
+   "x": 1,
+   "z": 6
+  },
+  {
+   "type": "tree",
+   "x": 9,
+   "z": 6
+  },
+  {
+   "type": "plant",
+   "x": 1,
+   "z": 10
+  },
+  {
+   "type": "plant",
+   "x": 9,
+   "z": 10
+  },
+  {
+   "type": "statue",
+   "x": 3,
+   "z": 11
+  },
+  {
+   "type": "statue",
+   "x": 7,
+   "z": 11
+  }
+ ],
+ "signs": [
+  {
+   "x": 3,
+   "z": 11,
+   "text": "GINÁSIO DE IGARAPÉ. Vencedores: GAEL"
+  },
+  {
+   "x": 7,
+   "z": 11,
+   "text": "Líder: CECI. Dica: Planta é fraca contra Fogo, Voador e Inseto."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "g5bot",
+   "x": 3,
+   "z": 8,
+   "dir": "right",
+   "look": "botanica",
+   "sight": 4,
+   "trainer": {
+    "name": "Botânica Flora",
+    "party": [
+     [
+      "maracujina",
+      31
+     ],
+     [
+      "vitorinha",
+      30
+     ]
+    ],
+    "money": 620,
+    "intro": "As plantas deste ginásio foram plantadas pela Ceci. E eu cuido delas!",
+    "lose": "Murchei...",
+    "after": "A Ceci conversa com as árvores. Sério!"
+   }
+  },
+  {
+   "id": "g5mat",
+   "x": 7,
+   "z": 5,
+   "dir": "left",
+   "look": "mateiro",
+   "sight": 3,
+   "trainer": {
+    "name": "Mateiro Davi",
+    "party": [
+     [
+      "acaizeiro",
+      31
+     ],
+     [
+      "oncinha",
+      31
+     ],
+     [
+      "castanhito",
+      31
+     ]
+    ],
+    "money": 660,
+    "intro": "Na floresta, quem não se adapta não cresce. Vamos lá!",
+    "lose": "Você cresceu mais rápido que bambu!",
+    "after": "Boa sorte com a guardiã."
+   }
+  },
+  {
+   "id": "ceci",
+   "x": 5,
+   "z": 2,
+   "dir": "down",
+   "look": "ceci",
+   "trainer": {
+    "name": "Líder Ceci",
+    "party": [
+     [
+      "vitoriao",
+      33
+     ],
+     [
+      "castanhal",
+      33
+     ],
+     [
+      "guaranazao",
+      34
+     ],
+     [
+      "acaizeiro",
+      35
+     ]
+    ],
+    "money": 3600,
+    "leader": true,
+    "intro": "Seja bem-vindo à floresta. Eu sou CECI, Líder do Ginásio de Igarapé. Minhas criaturas crescem com a chuva e com o sol. Mostre o que você aprendeu com as suas!",
+    "lose": "A floresta sorriu para você hoje. Receba a INSÍGNIA FOLHA.",
+    "after": "Cuide da natureza, e ela sempre vai cuidar de você.",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          G.addBadge('folha');\r\n          await G.say('{N} recebeu a INSÍGNIA FOLHA!', null, 'badge');\r\n          await G.say('Estas sementes curam qualquer cansaço. Quer dizer... estas POÇÕES!', 'Ceci');\r\n          G.giveItem('superpocao', 4);\r\n          await G.say('{N} recebeu 4 SUPER POÇÕES!');\r\n        }"
+    }
+   }
+  }
+ ]
+}

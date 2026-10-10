@@ -1,0 +1,65 @@
+{
+ "list": [
+  {
+   "id": "pocao",
+   "name": "Poção",
+   "price": 300,
+   "desc": "Recupera 20 PV de uma criatura.",
+   "use": "heal",
+   "amount": 20
+  },
+  {
+   "id": "superpocao",
+   "name": "Super Poção",
+   "price": 700,
+   "desc": "Recupera 60 PV de uma criatura.",
+   "use": "heal",
+   "amount": 60
+  },
+  {
+   "id": "reviver",
+   "name": "Reviver",
+   "price": 1500,
+   "desc": "Reanima uma criatura desmaiada com metade dos PV.",
+   "use": "revive"
+  },
+  {
+   "id": "elixir",
+   "name": "Elixir",
+   "price": 1200,
+   "desc": "Restaura todos os PP dos golpes de uma criatura.",
+   "use": "pp"
+  },
+  {
+   "id": "orbe",
+   "name": "Orbe",
+   "price": 200,
+   "desc": "Orbe para capturar criaturas selvagens.",
+   "use": "ball",
+   "bonus": 1
+  },
+  {
+   "id": "superorbe",
+   "name": "Super Orbe",
+   "price": 600,
+   "desc": "Orbe com chance de captura maior.",
+   "use": "ball",
+   "bonus": 1.5
+  },
+  {
+   "id": "ultraorbe",
+   "name": "Ultra Orbe",
+   "price": 1200,
+   "desc": "Orbe dourado com chance de captura muito maior. Ideal para lendários.",
+   "use": "ball",
+   "bonus": 2.5
+  },
+  {
+   "id": "encomenda",
+   "name": "Encomenda",
+   "price": 0,
+   "desc": "Um pacote para o Prof. Ipê.",
+   "use": "key"
+  }
+ ]
+}

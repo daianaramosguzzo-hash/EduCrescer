@@ -1,0 +1,176 @@
+{
+ "id": "ginasio3",
+ "name": "Ginásio de Mandacaru",
+ "interior": true,
+ "floor": "lava",
+ "music": "gym",
+ "bg": "gym",
+ "rows": [
+  "###########",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#_________#",
+  "#####_#####"
+ ],
+ "exit": {
+  "x": 5,
+  "z": 13,
+  "to": "mandacaru",
+  "tx": 6,
+  "tz": 7
+ },
+ "furniture": [
+  {
+   "type": "brazier",
+   "x": 1,
+   "z": 1
+  },
+  {
+   "type": "brazier",
+   "x": 9,
+   "z": 1
+  },
+  {
+   "type": "brazier",
+   "x": 1,
+   "z": 6
+  },
+  {
+   "type": "brazier",
+   "x": 9,
+   "z": 6
+  },
+  {
+   "type": "cactus",
+   "x": 1,
+   "z": 10
+  },
+  {
+   "type": "cactus",
+   "x": 9,
+   "z": 10
+  },
+  {
+   "type": "statue",
+   "x": 3,
+   "z": 11
+  },
+  {
+   "type": "statue",
+   "x": 7,
+   "z": 11
+  }
+ ],
+ "signs": [
+  {
+   "x": 3,
+   "z": 11,
+   "text": "GINÁSIO DE MANDACARU. Vencedores: GAEL"
+  },
+  {
+   "x": 7,
+   "z": 11,
+   "text": "Líder: JANDIRA. Dica: Fogo é fraco contra Água e Pedra."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "g3vaq",
+   "x": 3,
+   "z": 8,
+   "dir": "right",
+   "look": "vaqueiro",
+   "sight": 4,
+   "trainer": {
+    "name": "Vaqueiro Tonho",
+    "party": [
+     [
+      "calanguito",
+      22
+     ],
+     [
+      "carcarazinho",
+      22
+     ]
+    ],
+    "money": 460,
+    "intro": "Para chegar na Jandira, tem que aguentar o calor!",
+    "lose": "Arre égua, que força!",
+    "after": "A Jandira nunca foge de um desafio."
+   }
+  },
+  {
+   "id": "g3fog",
+   "x": 7,
+   "z": 5,
+   "dir": "left",
+   "look": "as",
+   "sight": 3,
+   "trainer": {
+    "name": "Fogueteira Bia",
+    "party": [
+     [
+      "miquito",
+      23
+     ],
+     [
+      "carvaozinho",
+      23
+     ],
+     [
+      "brasito",
+      23
+     ]
+    ],
+    "money": 480,
+    "intro": "Minhas criaturas brilham como fogos de São João!",
+    "lose": "Apagaram meus fogos...",
+    "after": "Siga em frente. A Jandira está esperando."
+   }
+  },
+  {
+   "id": "jandira",
+   "x": 5,
+   "z": 2,
+   "dir": "down",
+   "look": "jandira",
+   "trainer": {
+    "name": "Líder Jandira",
+    "party": [
+     [
+      "carcarazinho",
+      24
+     ],
+     [
+      "calangrao",
+      25
+     ],
+     [
+      "micoleao",
+      27
+     ]
+    ],
+    "money": 2800,
+    "leader": true,
+    "intro": "Eita, que coragem! Sou JANDIRA, Líder do Ginásio de Mandacaru. Aqui no sertão o fogo forja os fortes. Vamos ver se você aguenta o calor!",
+    "lose": "Que batalha arretada! Você mereceu, visse? Tome a sua insígnia.",
+    "after": "Depois da chapada fica Cidade Relâmpago. Leve criaturas de PEDRA ou PLANTA para lá!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          G.addBadge('chama');\r\n          await G.say('{N} recebeu a INSÍGNIA CHAMA!', null, 'badge');\r\n          await G.say('Guarde isso também. Vai ajudar nas próximas batalhas.', 'Jandira');\r\n          G.giveItem('elixir', 2);\r\n          await G.say('{N} recebeu 2 ELIXIRES!');\r\n        }"
+    }
+   }
+  }
+ ]
+}

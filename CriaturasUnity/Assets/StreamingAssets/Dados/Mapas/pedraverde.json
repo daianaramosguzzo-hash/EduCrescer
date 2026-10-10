@@ -1,0 +1,224 @@
+{
+ "id": "pedraverde",
+ "sky": "day",
+ "name": "Pedra-Verde",
+ "music": "city",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTT,TTTTTTTTTTTTT",
+  "TTTTTTTTTTTT,TTTTTTTTTTTTT",
+  "TT.........,,,,.........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,.....f....TT",
+  "TT.f........,,..........TT",
+  "TT..........,,..S.......TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..........TT",
+  "TT..f.......,,.......f..TT",
+  "TT.......S..,,..........TT",
+  "TTRR........,,........RRTT",
+  "TTRR........,,........RRTT",
+  "TT..........,,..........TT",
+  "TTTTTTTTTTTT,,TTTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 3,
+   "w": 7,
+   "d": 5,
+   "style": "gym",
+   "door": 3,
+   "to": "ginasio1",
+   "label": "GINÁSIO",
+   "roof": "#8a7a6a"
+  },
+  {
+   "x": 16,
+   "z": 4,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "roof": "#6a9a3a"
+  },
+  {
+   "x": 4,
+   "z": 12,
+   "w": 5,
+   "d": 4,
+   "style": "center",
+   "door": 2,
+   "to": "centro1",
+   "label": "CENTRO"
+  },
+  {
+   "x": 16,
+   "z": 12,
+   "w": 4,
+   "d": 4,
+   "style": "shop",
+   "door": 1,
+   "to": "loja1",
+   "label": "LOJA"
+  }
+ ],
+ "signs": [
+  {
+   "x": 9,
+   "z": 19,
+   "text": "PEDRA-VERDE — A cidade das rochas firmes."
+  },
+  {
+   "x": 16,
+   "z": 11,
+   "text": "GINÁSIO DE PEDRA-VERDE — Líder: BASALTO, o treinador de rocha inabalável."
+  }
+ ],
+ "warps": [
+  {
+   "x": 12,
+   "z": 23,
+   "to": "rota1",
+   "tx": 9,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 13,
+   "z": 23,
+   "to": "rota1",
+   "tx": 10,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 12,
+   "z": 0,
+   "to": "floresta",
+   "tx": 12,
+   "tz": 32,
+   "dir": "up"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "guarda",
+   "x": 12,
+   "z": 2,
+   "dir": "down",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.hasBadge('rocha')",
+    "talk": "async G => {\r\n        await G.say('Alto lá! A FLORESTA SUSSURRO é perigosa. Só deixo passar quem tem a INSÍGNIA ROCHA do Ginásio daqui.', 'Guarda');\r\n      }"
+   }
+  },
+  {
+   "id": "guarda2",
+   "x": 11,
+   "z": 2,
+   "dir": "right",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.hasBadge('rocha')",
+    "talk": "async G => {\r\n        await G.say('Uma Insígnia Rocha! Pode passar. Cuidado com uns tipos estranhos de preto que andam pela floresta...', 'Guarda');\r\n      }"
+   }
+  },
+  {
+   "id": "velho",
+   "x": 7,
+   "z": 10,
+   "dir": "down",
+   "look": "velho",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('O Líder BASALTO usa criaturas de tipo PEDRA. Golpes de ÁGUA e PLANTA funcionam muito bem contra eles!', 'Seu Joaquim');\r\n        await G.say('Se seu parceiro for de FOGO... treine bastante na Rota 1 antes, hein!', 'Seu Joaquim');\r\n      }"
+   }
+  },
+  {
+   "id": "pvkid",
+   "x": 19,
+   "z": 18,
+   "dir": "left",
+   "look": "garota",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Quando uma criatura desmaia, você precisa levá-la ao CENTRO DE CRIATURAS. É o prédio de telhado vermelho!');\r\n      }"
+   }
+  },
+  {
+   "id": "rival_pv",
+   "x": 12,
+   "z": 0,
+   "dir": "down",
+   "look": "rival",
+   "hidden": true
+  },
+  {
+   "id": "pvgrunt",
+   "x": 15,
+   "z": 9,
+   "dir": "left",
+   "look": "sombra",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "ratitu",
+      7
+     ],
+     [
+      "morcegote",
+      8
+     ]
+    ],
+    "money": 160,
+    "intro": "Ei, você! Esta cidade está sendo vigiada pela EQUIPE SOMBRA. Esqueça que me viu... depois de perder!",
+    "lose": "Grr! O Chefe Breu não vai gostar nada disso..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  }
+ ],
+ "triggers": [
+  {
+   "x": 12,
+   "z": 3,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => G.hasBadge('rocha') && !G.flag('rival2')",
+    "run": "async function rivalBattle2(G) {\r\n  await G.say('Ei! {N}!', 'Gael');\r\n  await G.player.face('up');\r\n  const rv = G.npc('rival_pv');\r\n  rv.place(12, 0, 'down');\r\n  rv.show();\r\n  await rv.walk(['down', 'down']);\r\n  await G.say('Você também pegou a Insígnia Rocha? Hah, eu venci o Basalto primeiro! Deixa eu ver o quanto você cresceu!', 'Gael');\r\n  const won = await G.trainerBattle({\r\n    name: 'Rival Gael', look: 'rival', party: [['pardalito', 9], [G.state.rivalStarter, 11]], money: 400, rival: true,\r\n    intro: '', lose: 'O quê?! Eu estava pegando leve com você!', winText: 'Hah! Continuo na frente!',\r\n  });\r\n  G.set('rival2');\r\n  if (won) {\r\n    await G.say('Tá bom, tá bom. Você é forte. Mas eu vou chegar na Liga antes de você! Tchau!', 'Gael');\r\n    await rv.walk(['up', 'up'], true);\r\n    rv.hide();\r\n  }\r\n}"
+   }
+  }
+ ]
+}

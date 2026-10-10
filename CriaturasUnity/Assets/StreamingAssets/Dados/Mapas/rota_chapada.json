@@ -1,0 +1,178 @@
+{
+ "id": "rota_chapada",
+ "sky": "chapada",
+ "name": "Rota da Chapada",
+ "music": "route",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTTTTTT",
+  "TTTT..TTTT....TTTT..TTTT",
+  "TT...GGGG.R.R..GGGGG..TT",
+  "TT.R.GGGG..R...GGGGG.RTT",
+  "TT...GGGGR.....GGGGG..TT",
+  "TT....................TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,",
+  "TT....S...............TT",
+  "TT..GGGGG...TT........TT",
+  "TT..GGGGG.R...GGGGGG..TT",
+  "TT..GGGGG..R..GGGGGG..TT",
+  "TT..GGGGG...R.GGGGGG.RTT",
+  "TT.R..........GGGGGG..TT",
+  "TT....................TT",
+  "TTTT..TTTT....TTTT..TTTT",
+  "TTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 6,
+   "to": "mandacaru",
+   "tx": 24,
+   "tz": 12,
+   "dir": "left"
+  },
+  {
+   "x": 23,
+   "z": 6,
+   "to": "relampago",
+   "tx": 1,
+   "tz": 12,
+   "dir": "right"
+  }
+ ],
+ "signs": [
+  {
+   "x": 6,
+   "z": 7,
+   "text": "ROTA DA CHAPADA — Leste: CIDADE RELÂMPAGO. Não fique debaixo das árvores durante as tempestades!"
+  }
+ ],
+ "items": [
+  {
+   "id": "rc1",
+   "x": 20,
+   "z": 13,
+   "item": "superorbe",
+   "n": 3
+  }
+ ],
+ "npcs": [
+  {
+   "id": "rcalp",
+   "x": 10,
+   "z": 5,
+   "dir": "down",
+   "look": "campista",
+   "sight": 3,
+   "trainer": {
+    "name": "Alpinista Beto",
+    "party": [
+     [
+      "pedrolho",
+      25
+     ],
+     [
+      "ourizito",
+      25
+     ],
+     [
+      "ararinha",
+      26
+     ]
+    ],
+    "money": 520,
+    "intro": "Escalei cada pedra desta chapada! Agora é a sua vez de subir... na batalha!",
+    "lose": "Escorreguei feio...",
+    "after": "Quando os raios caem, os OURIZITOS acendem os espinhos. É lindo de ver!"
+   }
+  },
+  {
+   "id": "rcele",
+   "x": 16,
+   "z": 7,
+   "dir": "up",
+   "look": "eletricista",
+   "sight": 3,
+   "trainer": {
+    "name": "Eletricista Duda",
+    "party": [
+     [
+      "besourito",
+      26
+     ],
+     [
+      "bugiozap",
+      26
+     ],
+     [
+      "poraquinho",
+      26
+     ]
+    ],
+    "money": 540,
+    "intro": "Estou consertando a torre de energia. Uma batalha para esquentar os fios!",
+    "lose": "Deu curto-circuito!",
+    "after": "O Líder TIÃO inventou metade das máquinas de Cidade Relâmpago."
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.13,
+  "list": [
+   [
+    "ourizito",
+    23,
+    26,
+    12
+   ],
+   [
+    "bugiozap",
+    23,
+    26,
+    10
+   ],
+   [
+    "besourito",
+    23,
+    26,
+    12
+   ],
+   [
+    "ararinha",
+    23,
+    26,
+    10
+   ],
+   [
+    "faiscatu",
+    23,
+    26,
+    8
+   ],
+   [
+    "pedrolho",
+    23,
+    26,
+    8
+   ],
+   [
+    "cristalito",
+    24,
+    26,
+    6
+   ],
+   [
+    "poraquinho",
+    24,
+    26,
+    6
+   ],
+   [
+    "seriemito",
+    23,
+    25,
+    8
+   ]
+  ]
+ }
+}

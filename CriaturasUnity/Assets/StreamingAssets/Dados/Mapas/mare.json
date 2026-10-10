@@ -1,0 +1,283 @@
+{
+ "id": "mare",
+ "sky": "beach",
+ "name": "Cidade Maré",
+ "music": "city",
+ "bg": "beach",
+ "rows": [
+  "TTTTTTTTTTTT,TTTTTTT==WWWW",
+  "TTTTTTTTTTTT,TTTTTTT==WWWW",
+  "TT..........,.......==WWWW",
+  "TT..........,,......==WWWW",
+  "TT..........,,......==WWWW",
+  "TT..........,,......==WWWW",
+  "TT..........,,......==WWWW",
+  "TT..........,,......==WWWW",
+  "TT..,,,,,,,,,,,,,,,,===WWW",
+  "TT..,.......,,..f...===WWW",
+  "TT..,..S....,,......==WWWW",
+  "TT..,.......,,..GGGG==WWWW",
+  "TT..........,,..GGGG==WWWW",
+  "TT..........,,..GGGG==WWWW",
+  "TT..........,,..GGGG==WWWW",
+  "TT..........,,......==WWWW",
+  "TT..,,,,,,,,,,..f...==WWWW",
+  "TT......f..,,.......==WWWW",
+  "TT.........,,.......==WWWW",
+  "TTF........,,.......==WWWW",
+  "TT.........,,.......==WWWW",
+  "TTTTTTTTTTT,TTTTTTTTTTWWWW"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 3,
+   "w": 7,
+   "d": 5,
+   "style": "gym",
+   "door": 3,
+   "to": "ginasio2",
+   "label": "GINÁSIO",
+   "roof": "#3a8ad0"
+  },
+  {
+   "x": 14,
+   "z": 3,
+   "w": 5,
+   "d": 5,
+   "style": "center",
+   "door": 2,
+   "to": "centro2",
+   "label": "CENTRO"
+  },
+  {
+   "x": 3,
+   "z": 12,
+   "w": 4,
+   "d": 4,
+   "style": "shop",
+   "door": 1,
+   "to": "loja2",
+   "label": "LOJA"
+  },
+  {
+   "x": 15,
+   "z": 17,
+   "w": 4,
+   "d": 3,
+   "style": "cave",
+   "door": 1,
+   "to": "gruta"
+  }
+ ],
+ "signs": [
+  {
+   "x": 7,
+   "z": 10,
+   "text": "CIDADE MARÉ — Onde o mar encontra a coragem. Líder do Ginásio: MARINA."
+  }
+ ],
+ "warps": [
+  {
+   "x": 11,
+   "z": 21,
+   "to": "floresta",
+   "tx": 11,
+   "tz": 1,
+   "dir": "down"
+  },
+  {
+   "x": 12,
+   "z": 0,
+   "to": "rotavitoria",
+   "tx": 8,
+   "tz": 30,
+   "dir": "up"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "mguarda",
+   "x": 12,
+   "z": 2,
+   "dir": "down",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.hasBadge('mare')",
+    "talk": "async G => {\r\n        await G.say('A ROTA VITÓRIA leva à LIGA DAS CRIATURAS. Só treinadores com 2 insígnias podem seguir!', 'Guarda');\r\n      }"
+   }
+  },
+  {
+   "id": "mguarda2",
+   "x": 13,
+   "z": 2,
+   "dir": "left",
+   "look": "guarda",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => G.hasBadge('mare')",
+    "talk": "async G => {\r\n        await G.say('Duas insígnias! Pode seguir pela Rota Vitória. A Liga fica lá, mas só aceita quem tem 6 insígnias: os outros ginásios ficam a leste. E dizem que o chefe da Equipe Sombra foi visto por lá...', 'Guarda');\r\n      }"
+   }
+  },
+  {
+   "id": "nyx",
+   "x": 13,
+   "z": 10,
+   "dir": "left",
+   "look": "nyx",
+   "sight": 3,
+   "trainer": {
+    "name": "Admin Nyx",
+    "party": [
+     [
+      "aguaviva",
+      15
+     ],
+     [
+      "jiboinha",
+      16
+     ],
+     [
+      "morcegote",
+      17
+     ]
+    ],
+    "money": 900,
+    "intro": "Hmm? Uma criança atrapalhando meus planos? Sou NYX, Admin da EQUIPE SOMBRA. Estamos procurando a entrada da GRUTA ABISSAL... e você não vai nos impedir.",
+    "lose": "Que irritante... Você tem talento, admito.",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => {\r\n          await G.say('A gruta está selada por enquanto. Mas quando a Rainha acordar... nenhum lendário vai escapar.', 'Admin Nyx');\r\n          await G.say('Rainha? O Chefe Breu não é o líder? Hmph. Você não sabe de nada.', 'Admin Nyx');\r\n        }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('tr_nyx')"
+   }
+  },
+  {
+   "id": "pescador",
+   "x": 16,
+   "z": 20,
+   "dir": "up",
+   "look": "nadador",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('campeao')",
+    "talk": "async G => {\r\n        await G.say('Esta é a GRUTA ABISSAL. Dizem que uma serpente lendária dorme lá dentro. É perigoso demais... só deixo o campeão da Liga entrar.', 'Pescador');\r\n      }"
+   }
+  },
+  {
+   "id": "nadador1",
+   "x": 21,
+   "z": 13,
+   "dir": "left",
+   "look": "nadador",
+   "sight": 4,
+   "trainer": {
+    "name": "Nadador Rui",
+    "party": [
+     [
+      "lambarito",
+      13
+     ],
+     [
+      "estrelito",
+      14
+     ]
+    ],
+    "money": 280,
+    "intro": "A praia é o meu território! Bora uma batalha?",
+    "lose": "Fui levado pela correnteza...",
+    "after": "A Marina é a melhor nadadora da cidade. E a treinadora mais forte também."
+   }
+  },
+  {
+   "id": "mmoca",
+   "x": 8,
+   "z": 18,
+   "dir": "up",
+   "look": "garota",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Criaturas de ÁGUA são fracas contra PLANTA e ELÉTRICO. Faiscatu, o tatu elétrico da floresta, seria ótimo contra a Marina!');\r\n      }"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.12,
+  "list": [
+   [
+    "sirito",
+    11,
+    14,
+    22
+   ],
+   [
+    "estrelito",
+    11,
+    14,
+    22
+   ],
+   [
+    "pardalito",
+    11,
+    13,
+    10
+   ],
+   [
+    "lambarito",
+    11,
+    13,
+    8
+   ],
+   [
+    "sapito",
+    11,
+    14,
+    14
+   ],
+   [
+    "aguaviva",
+    11,
+    13,
+    10
+   ],
+   [
+    "ariranhito",
+    12,
+    14,
+    10
+   ],
+   [
+    "papagaia",
+    12,
+    14,
+    8
+   ],
+   [
+    "manatino",
+    12,
+    13,
+    5
+   ]
+  ]
+ }
+}

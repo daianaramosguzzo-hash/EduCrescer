@@ -1130,6 +1130,16 @@ export function makeCreature(spec, variant = null) {
   addOutline(root, 0.02);
   root.traverse(o => { if (o.isMesh) o.castShadow = !o.userData.noOutline; });
 
+  // nomes das peças animadas (usados pela versão Unity ao exportar os modelos)
+  inner.name = anim.float ? 'interno_flutua' : 'interno';
+  anim.flames.forEach(f => { f.name = 'chama'; });
+  anim.wings.forEach(w => { w.g.name = (w.claw ? 'garra' : w.butterfly ? 'borboleta' : 'asa') + (w.side > 0 ? '_d' : '_e'); });
+  if (anim.tail) anim.tail.name = 'cauda';
+  if (anim.spin) anim.spin.name = 'giro';
+  if (anim.segs) anim.segs.forEach(sg => { sg.name = 'segmento_' + sg.userData.i; });
+  if (anim.glow) anim.glow.name = 'brilho';
+  if (anim.whirls) anim.whirls.forEach((w, i) => { w.name = 'redemoinho_' + i; });
+
   let t = Math.random() * 10;
   const baseY = anim.float ? 0.12 : 0;
   return {

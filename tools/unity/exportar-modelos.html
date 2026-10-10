@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Exportar modelos para a Unity</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; background: #1a1420; color: #eee; padding: 16px; }
+    button { font-size: 16px; padding: 8px 16px; margin-right: 8px; }
+    #log { white-space: pre-wrap; font-family: monospace; font-size: 12px; margin-top: 12px; }
+  </style>
+  <!-- o jogo carrega os arquivos a partir da raiz do projeto (assets/models/...) -->
+  <base href="/">
+  <script type="importmap">{ "imports": { "three": "/lib/three.module.min.js" } }</script>
+</head>
+<body>
+  <h1>Exportar modelos para a Unity</h1>
+  <p>Gera arquivos .glb dos personagens, criaturas e cenários do jogo e grava em
+    <code>CriaturasUnity/Assets/StreamingAssets/Modelos</code>. Precisa do servidor
+    <code>node tools/unity/servidor.cjs</code>.</p>
+  <button id="tudo">Exportar tudo</button>
+  <button id="pers">Só personagens e criaturas</button>
+  <button id="mapas">Só mapas</button>
+  <div id="log"></div>
+  <script type="module" src="/tools/unity/exportar-modelos.js"></script>
+</body>
+</html>

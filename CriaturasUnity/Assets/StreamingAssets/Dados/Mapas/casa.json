@@ -1,0 +1,94 @@
+{
+ "id": "casa",
+ "name": "Sua Casa",
+ "interior": true,
+ "floor": "wood",
+ "music": "home",
+ "rows": [
+  "#########",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "####_####"
+ ],
+ "exit": {
+  "x": 4,
+  "z": 7,
+  "to": "aurora",
+  "tx": 5,
+  "tz": 7
+ },
+ "furniture": [
+  {
+   "type": "table",
+   "x": 4,
+   "z": 3,
+   "w": 2,
+   "d": 1
+  },
+  {
+   "type": "tv",
+   "x": 1,
+   "z": 1,
+   "w": 1,
+   "d": 1
+  },
+  {
+   "type": "bed",
+   "x": 7,
+   "z": 1,
+   "w": 1,
+   "d": 2
+  },
+  {
+   "type": "shelf",
+   "x": 3,
+   "z": 1,
+   "w": 2,
+   "d": 1
+  },
+  {
+   "type": "plant",
+   "x": 1,
+   "z": 6
+  },
+  {
+   "type": "plant",
+   "x": 7,
+   "z": 6
+  },
+  {
+   "type": "rug",
+   "x": 3,
+   "z": 5,
+   "w": 3,
+   "d": 1,
+   "walk": true
+  }
+ ],
+ "signs": [
+  {
+   "x": 1,
+   "z": 1,
+   "text": "Está passando um programa sobre criaturas na TV. Um treinador atravessa uma ponte com seu parceiro... Parece a hora de você começar a sua jornada!"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "mae",
+   "x": 6,
+   "z": 3,
+   "dir": "left",
+   "look": "mae",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        if (G.flag('campeao')) {\r\n          await G.say('Meu filho, o CAMPEÃO da Liga! Eu sempre soube. Descanse um pouco...', 'Mãe');\r\n          G.healParty();\r\n          await G.say('Suas criaturas estão descansadas!');\r\n        } else if (!G.flag('starter')) {\r\n          await G.say('Bom dia, {N}! Todo mundo sai de casa algum dia. É o que dizem na TV.', 'Mãe');\r\n          await G.say('O Prof. Ipê, aqui do lado, estava procurando você. Vá lá!', 'Mãe');\r\n        } else {\r\n          await G.say('{N}, você está com uma carinha cansada. Descanse um pouco!', 'Mãe');\r\n          G.healParty();\r\n          await G.say('Suas criaturas estão totalmente recuperadas!');\r\n          await G.say('Tome cuidado lá fora. E lembre-se: crescer é um passo de cada vez!', 'Mãe');\r\n        }\r\n      }"
+   }
+  }
+ ]
+}

@@ -1,0 +1,147 @@
+{
+ "id": "mandacaru",
+ "sky": "caatinga",
+ "name": "Vila Mandacaru",
+ "music": "city",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT",
+  "TT......................TT",
+  "TTT....................TTT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..........TT",
+  "TT........S.,,..======R.TT",
+  "TT.R........,,..======..TT",
+  "TT..........,,..........TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,,,",
+  "TT.======...,,..........TT",
+  "TT.======...,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,S.........TT",
+  "TT.......R..,,..........TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..........TT",
+  "TTT....................TTT",
+  "TT.R.................R..TT",
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 2,
+   "w": 7,
+   "d": 5,
+   "style": "gym",
+   "door": 3,
+   "to": "ginasio3",
+   "label": "GINÁSIO",
+   "roof": "#c8502a"
+  },
+  {
+   "x": 16,
+   "z": 2,
+   "w": 5,
+   "d": 5,
+   "style": "center",
+   "door": 2,
+   "to": "centro3",
+   "label": "CENTRO"
+  },
+  {
+   "x": 4,
+   "z": 15,
+   "w": 4,
+   "d": 4,
+   "style": "shop",
+   "door": 1,
+   "to": "loja3",
+   "label": "LOJA"
+  },
+  {
+   "x": 16,
+   "z": 15,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "roof": "#c87a4a"
+  }
+ ],
+ "signs": [
+  {
+   "x": 10,
+   "z": 9,
+   "text": "VILA MANDACARU — Onde o sol do sertão aquece os corações."
+  },
+  {
+   "x": 14,
+   "z": 16,
+   "text": "GINÁSIO DE MANDACARU — Líder: JANDIRA, a vaqueira das chamas."
+  }
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 12,
+   "to": "rota_sertao",
+   "tx": 22,
+   "tz": 6,
+   "dir": "left"
+  },
+  {
+   "x": 25,
+   "z": 12,
+   "to": "rota_chapada",
+   "tx": 1,
+   "tz": 6,
+   "dir": "right"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "mdvelha",
+   "x": 8,
+   "z": 10,
+   "dir": "down",
+   "look": "velho",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Aqui chove pouco, mas quando chove o sertão inteiro fica verde. As criaturas daqui aprenderam a esperar.', 'Seu Chico');\r\n      }"
+   }
+  },
+  {
+   "id": "mdkid",
+   "x": 19,
+   "z": 13,
+   "dir": "left",
+   "look": "garoto",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('A JANDIRA doma até carcará! Criaturas de ÁGUA e PEDRA aguentam bem o fogo dela.');\r\n      }"
+   }
+  },
+  {
+   "id": "mdmoca",
+   "x": 15,
+   "z": 20,
+   "dir": "up",
+   "look": "garota",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Depois do ginásio, siga para o leste. A ROTA DA CHAPADA vive coberta de tempestades!');\r\n      }"
+   }
+  }
+ ]
+}

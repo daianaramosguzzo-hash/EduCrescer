@@ -775,6 +775,7 @@ const VARIANTS = { pine: 3, round: 3, birch: 1, palm: 2, cactus: 3, dead: 2, jun
 // list: [{ x, y, z, s, r, kind, lo }]  (lo = versão simplificada para longe)
 export function plantTrees(list, p, { shadows = true } = {}) {
   const g = new THREE.Group();
+  g.name = 'arvores'; // nome usado pela versão Unity (troca pelas árvores do Ultimate Nature)
   const groups = {};
   // parte das árvores redondas vira a árvore laranja do BlenderKit (onde o clima pede)
   if (p.autumn && PROPS.tree) {
@@ -1047,6 +1048,7 @@ export function plantPropGrass(list, color, { push = 0, amp = 0.35, fade = 30 } 
 // árvore laranja (bordo de outono); list: [{ x, y, z, s, r, lo }]
 export function plantAutumnTrees(list, { shadows = true } = {}) {
   const g = new THREE.Group();
+  g.name = 'arvores_outono'; // nome usado pela versão Unity
   if (!PROPS.tree || !list.length) return g;
   const trunk = propMat('autumnTrunk', () => windify(new THREE.MeshToonMaterial({ map: PROPS.tree.trunkMap, color: '#e8dcd0', gradientMap: GRADIENT }), { base: 0.9, amp: 0.02 }));
   const leaves = propMat('autumnLeaves', () => windify(new THREE.MeshToonMaterial({ map: PROPS.tree.leafMap, alphaTest: 0.5, side: THREE.DoubleSide, gradientMap: GRADIENT }), { base: 0.6, amp: 0.03 }));

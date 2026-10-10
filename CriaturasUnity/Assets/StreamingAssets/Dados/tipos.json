@@ -1,0 +1,72 @@
+{
+ "types": {
+  "normal": {
+   "name": "Normal",
+   "color": "#a8a878"
+  },
+  "fogo": {
+   "name": "Fogo",
+   "color": "#f08030"
+  },
+  "agua": {
+   "name": "Água",
+   "color": "#6890f0"
+  },
+  "planta": {
+   "name": "Planta",
+   "color": "#78c850"
+  },
+  "inseto": {
+   "name": "Inseto",
+   "color": "#a8b820"
+  },
+  "voador": {
+   "name": "Voador",
+   "color": "#a890f0"
+  },
+  "pedra": {
+   "name": "Pedra",
+   "color": "#b8a038"
+  },
+  "eletrico": {
+   "name": "Elétrico",
+   "color": "#e8c020"
+  },
+  "sombra": {
+   "name": "Sombra",
+   "color": "#705898"
+  }
+ },
+ "badges": [
+  {
+   "id": "rocha",
+   "name": "Insígnia Rocha",
+   "color": "#9a8a70"
+  },
+  {
+   "id": "mare",
+   "name": "Insígnia Maré",
+   "color": "#4a9fd8"
+  },
+  {
+   "id": "chama",
+   "name": "Insígnia Chama",
+   "color": "#f06a2a"
+  },
+  {
+   "id": "raio",
+   "name": "Insígnia Raio",
+   "color": "#f0c830"
+  },
+  {
+   "id": "folha",
+   "name": "Insígnia Folha",
+   "color": "#4ab04a"
+  },
+  {
+   "id": "lua",
+   "name": "Insígnia Lua",
+   "color": "#8a5ad0"
+  }
+ ]
+}

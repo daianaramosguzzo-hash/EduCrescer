@@ -1,0 +1,197 @@
+{
+ "id": "rota_pantano",
+ "sky": "pantano",
+ "name": "Rota do Pantanal",
+ "music": "forest",
+ "bg": "grass",
+ "dark": true,
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTTTTTT",
+  "TTTT..TTTT....TTTT..TTTT",
+  "TT..GGGG.WWWWW.GGGGG..TT",
+  "TT.TGGGG.WWWWW.GGGGGWWTT",
+  "TT..GGGG.WWWWW......WWTT",
+  "TT....................TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,",
+  "TT....S...............TT",
+  "TT.GGGGG.WWWWW.......TTT",
+  "TT.GGGGG.WWWWW.GGGGGG.TT",
+  "TT.GGGGG.WWWWW.GGGGGG.TT",
+  "TT.GGGGG.WWWWW.GGGGGG.TT",
+  "TT......T.....TGGGGGG.TT",
+  "TT....................TT",
+  "TTTT..TTTT....TTTT..TTTT",
+  "TTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 6,
+   "to": "igarape",
+   "tx": 24,
+   "tz": 12,
+   "dir": "left"
+  },
+  {
+   "x": 23,
+   "z": 6,
+   "to": "neblina",
+   "tx": 1,
+   "tz": 12,
+   "dir": "right"
+  }
+ ],
+ "signs": [
+  {
+   "x": 6,
+   "z": 7,
+   "text": "ROTA DO PANTANAL — Leste: VILA NEBLINA. À noite, os olhos brilhando no brejo podem ser de jacaré..."
+  }
+ ],
+ "items": [
+  {
+   "id": "rp1",
+   "x": 20,
+   "z": 13,
+   "item": "ultraorbe",
+   "n": 1
+  }
+ ],
+ "npcs": [
+  {
+   "id": "rpgrunt1",
+   "x": 9,
+   "z": 5,
+   "dir": "down",
+   "look": "sombra2",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "jiboiao",
+      32
+     ],
+     [
+      "morcegao",
+      33
+     ]
+    ],
+    "money": 700,
+    "intro": "A Equipe Sombra voltou! Estamos atrás do BOITATÁ, a cobra de fogo do pantanal!",
+    "lose": "O quê?! Mas a Rainha disse que seria fácil..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "rpgrunt2",
+   "x": 16,
+   "z": 7,
+   "dir": "up",
+   "look": "sombra",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "boitatinha",
+      33
+     ],
+     [
+      "medusombra",
+      33
+     ],
+     [
+      "sombrino",
+      33
+     ]
+    ],
+    "money": 720,
+    "intro": "Ninguém atrapalha a caçada da Equipe Sombra. Nem uma criança!",
+    "lose": "Vou avisar a Admin Nyx... ela não vai gostar."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.13,
+  "list": [
+   [
+    "jacarezito",
+    31,
+    34,
+    10
+   ],
+   [
+    "piranhinha",
+    31,
+    34,
+    10
+   ],
+   [
+    "corujito",
+    31,
+    34,
+    10
+   ],
+   [
+    "boitatinha",
+    32,
+    34,
+    6
+   ],
+   [
+    "curupirito",
+    32,
+    34,
+    6
+   ],
+   [
+    "urutau",
+    33,
+    34,
+    4
+   ],
+   [
+    "sapito",
+    31,
+    34,
+    8
+   ],
+   [
+    "morcegote",
+    31,
+    34,
+    8
+   ],
+   [
+    "sombrino",
+    31,
+    34,
+    8
+   ],
+   [
+    "orquidinha",
+    31,
+    34,
+    6
+   ],
+   [
+    "jiboinha",
+    31,
+    34,
+    6
+   ]
+  ]
+ }
+}

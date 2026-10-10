@@ -1,0 +1,125 @@
+{
+ "id": "liga",
+ "name": "Liga das Criaturas",
+ "interior": true,
+ "floor": "liga",
+ "music": "liga",
+ "bg": "liga",
+ "rows": [
+  "#############",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#CC_________#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "#___________#",
+  "######_######"
+ ],
+ "exit": {
+  "x": 6,
+  "z": 13,
+  "to": "rotavitoria",
+  "tx": 9,
+  "tz": 6
+ },
+ "furniture": [
+  {
+   "type": "statue",
+   "x": 3,
+   "z": 3
+  },
+  {
+   "type": "statue",
+   "x": 9,
+   "z": 3
+  },
+  {
+   "type": "plant",
+   "x": 1,
+   "z": 11
+  },
+  {
+   "type": "plant",
+   "x": 11,
+   "z": 11
+  },
+  {
+   "type": "carpet",
+   "x": 5,
+   "z": 1,
+   "w": 3,
+   "d": 12,
+   "walk": true
+  },
+  {
+   "type": "machine",
+   "x": 1,
+   "z": 6,
+   "w": 1,
+   "d": 1
+  }
+ ],
+ "signs": [
+  {
+   "x": 3,
+   "z": 3,
+   "text": "LIGA DAS CRIATURAS — \"Crescer é nunca desistir.\""
+  },
+  {
+   "x": 9,
+   "z": 3,
+   "text": "Salão dos Campeões: aqui ficam os nomes de quem venceu a Liga."
+  }
+ ],
+ "npcs": [
+  {
+   "id": "ligaenf",
+   "x": 1,
+   "z": 8,
+   "dir": "up",
+   "look": "enfermeira",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Esta é a última parada antes do campeão. Vou curar suas criaturas.', 'Enfermeira Clara');\r\n        G.state.lastCenter = { map: 'liga', x: 6, z: 11 };\r\n        await G.healScene();\r\n        await G.say('Boa sorte, {N}!', 'Enfermeira Clara');\r\n      }"
+   }
+  },
+  {
+   "id": "campeao",
+   "x": 6,
+   "z": 2,
+   "dir": "down",
+   "look": "rival",
+   "sight": 4,
+   "trainer": {
+    "name": "Campeão Gael",
+    "party": "rivalFinal",
+    "money": 5000,
+    "intro": "Finalmente, {N}! Eu cheguei aqui primeiro e virei o CAMPEÃO! Enquanto você andava por aí, eu treinei sem parar. Agora eu sou o mais forte do mundo! Vamos decidir isso de uma vez!",
+    "lose": "NÃO! Como assim?! Depois de tudo... eu perdi?",
+    "after": "Da próxima vez eu venço. Pode apostar!",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async function championEnding(G) {\r\n  await G.say('...', 'Gael');\r\n  await G.say('Eu treinei tanto... Por que eu perdi?', 'Gael');\r\n  const p = G.npc('prof_liga');\r\n  p.place(6, 11, 'up');\r\n  p.show();\r\n  await p.walk(['up', 'up', 'up', 'up']);\r\n  await G.say('{N}! Parabéns! Você é o novo CAMPEÃO da Liga das Criaturas!', 'Prof. Ipê');\r\n  await G.say('Gael... Você perdeu porque esqueceu de confiar e cuidar das suas criaturas. Sem isso, ninguém cresce de verdade.', 'Prof. Ipê');\r\n  await G.say('...Eu entendi, vô. {N}, da próxima vez eu vou vencer do jeito certo.', 'Gael');\r\n  await G.say('{N}, venha comigo. Vamos registrar você e suas criaturas no SALÃO DOS CAMPEÕES!', 'Prof. Ipê');\r\n  G.set('campeao');\r\n  G.healParty();\r\n  await G.credits();\r\n  await G.say('{N}, notícias urgentes! A Equipe Sombra voltou, agora comandada pela misteriosa RAINHA ECLIPSE!', 'Prof. Ipê');\r\n  await G.say('Ela quer capturar as 4 criaturas LENDÁRIAS para cobrir o mundo com uma noite sem fim!', 'Prof. Ipê');\r\n  await G.say('IPÊRION, no Santuário da Floresta, a leste da Floresta Sussurro. ABISSAL, na Gruta Abissal, na praia de Cidade Maré.', 'Prof. Ipê');\r\n  await G.say('TROVONÇA, no Pico Trovão, a oeste da Rota Vitória. E SOLARIS, aqui mesmo na Rota Vitória!', 'Prof. Ipê');\r\n  await G.say('Os guardas liberaram os caminhos para você. Leve estas ULTRA ORBES. Conto com você!', 'Prof. Ipê');\r\n  G.giveItem('ultraorbe', 5);\r\n  await G.say('{N} recebeu 5 ULTRA ORBES!', null, 'fanfare');\r\n  G.set('posjogo');\r\n  p.hide();\r\n}"
+    }
+   }
+  },
+  {
+   "id": "prof_liga",
+   "x": 6,
+   "z": 11,
+   "dir": "up",
+   "look": "prof",
+   "hidden": true
+  }
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "id": "loja5",
+ "name": "Loja de Vila Igarapé",
+ "interior": true,
+ "floor": "wood",
+ "music": "center",
+ "rows": [
+  "#########",
+  "#_______#",
+  "#_______#",
+  "#CCC____#",
+  "#_______#",
+  "#_______#",
+  "#_______#",
+  "####_####"
+ ],
+ "exit": {
+  "x": 4,
+  "z": 7,
+  "to": "igarape",
+  "tx": 5,
+  "tz": 19
+ },
+ "furniture": [
+  {
+   "type": "shelf",
+   "x": 5,
+   "z": 1,
+   "w": 3,
+   "d": 1
+  },
+  {
+   "type": "shelf",
+   "x": 6,
+   "z": 4,
+   "w": 2,
+   "d": 1
+  },
+  {
+   "type": "plant",
+   "x": 7,
+   "z": 6
+  }
+ ],
+ "npcs": [
+  {
+   "id": "vend",
+   "x": 2,
+   "z": 2,
+   "dir": "down",
+   "look": "vendedor",
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        if (id === 'loja1' && !G.flag('encomenda')) {\r\n          await G.say('Olá! Você veio de Vila Aurora? Que sorte!', 'Vendedor');\r\n          await G.say('Chegou uma encomenda para o Prof. Ipê. Pode levar para ele, por favor?', 'Vendedor');\r\n          G.set('encomenda');\r\n          G.giveItem('encomenda', 1);\r\n          await G.say('{N} recebeu a ENCOMENDA do Prof. Ipê!');\r\n          return;\r\n        }\r\n        await G.say('Bem-vindo! Posso ajudar?', 'Vendedor');\r\n        const list = ['pocao'];\r\n        if (G.flag('dex')) list.push('orbe');\r\n        if (G.hasBadge('rocha')) list.push('superpocao', 'superorbe');\r\n        if (G.hasBadge('mare') || G.flag('floresta_ok')) list.push('reviver', 'elixir');\r\n        if (G.flag('campeao')) list.push('ultraorbe');\r\n        await G.shop(list);\r\n        await G.say('Obrigado! Volte sempre!', 'Vendedor');\r\n      }"
+   }
+  }
+ ]
+}

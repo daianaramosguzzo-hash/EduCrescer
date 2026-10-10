@@ -1,0 +1,185 @@
+{
+ "id": "relampago",
+ "sky": "chapada",
+ "name": "Cidade Relâmpago",
+ "music": "city",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT......................TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..........TT",
+  "TT.RR.....S.,,..GGGGG...TT",
+  "TT..........,,..GGGGGRR.TT",
+  "TT..........,,..........TT",
+  ",,,,,,,,,,,,,,,,,,,,,,,,,,",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..........,,S.........TT",
+  "TT..........,,..........TT",
+  "TT..........,,..........TT",
+  "TT..,,,,,,,,,,,,,,,,,,..TT",
+  "TT..........,,..........TT",
+  "TT......R........R......TT",
+  "TT......................TT",
+  "TTTTTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 2,
+   "w": 7,
+   "d": 5,
+   "style": "gym",
+   "door": 3,
+   "to": "ginasio4",
+   "label": "GINÁSIO",
+   "roof": "#e0b020"
+  },
+  {
+   "x": 16,
+   "z": 2,
+   "w": 5,
+   "d": 5,
+   "style": "center",
+   "door": 2,
+   "to": "centro4",
+   "label": "CENTRO"
+  },
+  {
+   "x": 4,
+   "z": 15,
+   "w": 4,
+   "d": 4,
+   "style": "shop",
+   "door": 1,
+   "to": "loja4",
+   "label": "LOJA"
+  },
+  {
+   "x": 16,
+   "z": 15,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "roof": "#5a6aa0"
+  }
+ ],
+ "signs": [
+  {
+   "x": 10,
+   "z": 9,
+   "text": "CIDADE RELÂMPAGO — A cidade que nunca fica sem energia."
+  },
+  {
+   "x": 14,
+   "z": 16,
+   "text": "GINÁSIO DE RELÂMPAGO — Líder: TIÃO, o inventor dos trovões."
+  }
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "z": 12,
+   "to": "rota_chapada",
+   "tx": 22,
+   "tz": 6,
+   "dir": "left"
+  },
+  {
+   "x": 25,
+   "z": 12,
+   "to": "rota_igarape",
+   "tx": 1,
+   "tz": 6,
+   "dir": "right"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "rlprof",
+   "x": 8,
+   "z": 10,
+   "dir": "down",
+   "look": "vendedor",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Os raios da chapada carregam as baterias da cidade inteira. Até as criaturas daqui vivem eletrizadas!', 'Engenheira Sol');\r\n      }"
+   }
+  },
+  {
+   "id": "rlkid",
+   "x": 19,
+   "z": 13,
+   "dir": "left",
+   "look": "garoto",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Criaturas ELÉTRICAS são fracas contra PEDRA e aguentam pouco golpe de PLANTA. O Tião odeia quando alguém descobre isso!');\r\n      }"
+   }
+  },
+  {
+   "id": "rival_rl",
+   "x": 12,
+   "z": 10,
+   "dir": "down",
+   "look": "rival",
+   "sight": 3,
+   "trainer": {
+    "name": "Rival Gael",
+    "rival": true,
+    "money": 1500,
+    "intro": "Ei, {N}! Você também veio atrás das novas insígnias? Eu já tenho a Chama! Vamos ver quem cresceu mais desde a última vez!",
+    "lose": "Hmpf... Você está ficando forte demais. Mas o campeão vai ser EU!",
+    "after": "Nos vemos na Liga, {N}. Vou treinar como nunca!",
+    "_fn": [
+     "party"
+    ],
+    "_src": {
+     "party": "G => [['gavialto', 28], ['rochedao', 28], ['trovatu', 28], [STARTER_LINE[G.state.rivalStarter || 'pingolote'][1], 30]]"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => G.hasBadge('chama') && !G.flag('tr_rival_rl')"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.1,
+  "list": [
+   [
+    "ourizito",
+    24,
+    26,
+    10
+   ],
+   [
+    "besourito",
+    24,
+    26,
+    10
+   ],
+   [
+    "bugiozap",
+    24,
+    26,
+    8
+   ]
+  ]
+ }
+}

@@ -1,0 +1,230 @@
+{
+ "id": "gruta",
+ "name": "Gruta Abissal",
+ "interior": true,
+ "floor": "cave",
+ "music": "forest",
+ "bg": "cave",
+ "rows": [
+  "###############",
+  "#____WWWWW____#",
+  "#___WWWWWWW___#",
+  "#___WWWWWWW___#",
+  "#____WWWWW____#",
+  "#_____________#",
+  "#_____________#",
+  "#_____________#",
+  "#_____________#",
+  "#_____________#",
+  "#_____________#",
+  "#_____________#",
+  "#_____________#",
+  "#######_#######"
+ ],
+ "exit": {
+  "x": 7,
+  "z": 13,
+  "to": "mare",
+  "tx": 16,
+  "tz": 20
+ },
+ "furniture": [
+  {
+   "type": "boulder",
+   "x": 1,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 2,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 3,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 4,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 5,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 6,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 8,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 9,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 10,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 11,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 12,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 13,
+   "z": 7
+  },
+  {
+   "type": "boulder",
+   "x": 1,
+   "z": 1
+  },
+  {
+   "type": "boulder",
+   "x": 13,
+   "z": 1
+  },
+  {
+   "type": "boulder",
+   "x": 1,
+   "z": 12
+  },
+  {
+   "type": "boulder",
+   "x": 13,
+   "z": 12
+  }
+ ],
+ "npcs": [
+  {
+   "id": "ggrunt1",
+   "x": 3,
+   "z": 10,
+   "dir": "right",
+   "look": "sombra2",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "medusombra",
+      42
+     ],
+     [
+      "poraquao",
+      43
+     ]
+    ],
+    "money": 900,
+    "intro": "A Admin Nyx está acordando a serpente! Não atrapalhe!",
+    "lose": "Glub... perdi..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "ggrunt2",
+   "x": 11,
+   "z": 10,
+   "dir": "left",
+   "look": "sombra",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "assombrado",
+      43
+     ],
+     [
+      "ariranhao",
+      43
+     ]
+    ],
+    "money": 900,
+    "intro": "Você chegou tarde, campeão!",
+    "lose": "Eu devia ter ficado na praia..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "nyx2",
+   "x": 7,
+   "z": 7,
+   "dir": "down",
+   "look": "nyx",
+   "sight": 4,
+   "trainer": {
+    "name": "Admin Nyx",
+    "party": [
+     [
+      "medusombra",
+      45
+     ],
+     [
+      "assombrado",
+      46
+     ],
+     [
+      "poraquao",
+      47
+     ]
+    ],
+    "money": 3200,
+    "intro": "Você de novo... Desta vez a gruta está aberta, e ABISSAL será da Rainha. As profundezas vão engolir você!",
+    "lose": "Outra vez... Por que você sempre vence?",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => { await G.say('A Rainha Eclipse espera na Rota Vitória, perto de Solaris. Vá, se tiver coragem.', 'Admin Nyx'); }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('tr_nyx2')"
+   }
+  },
+  {
+   "id": "abissal",
+   "x": 7,
+   "z": 5,
+   "dir": "down",
+   "creature": "abissal",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('lend_abissal')",
+    "talk": "async G => {\r\n    if (need && !G.flag(need.flag)) { await G.say(need.msg); return; }\r\n    await G.say(intro);\r\n    await G.cry(sp);\r\n    const r = await G.wildBattle(sp, lvl, { legendary: true });\r\n    if (r === 'caught') {\r\n      G.set('lend_' + sp);\r\n      await G.say(`Incrível! ${G.speciesName(sp)} decidiu seguir você!`, null, 'fanfare');\r\n      const all = ['solaris', 'abissal', 'iperion', 'trovonca'].every(k => G.flag('lend_' + k));\r\n      if (all && !G.flag('lendas4')) {\r\n        G.set('lendas4');\r\n        await G.say('As 4 criaturas lendárias estão com você! Sol, mar, floresta e trovão, finalmente em paz.');\r\n      }\r\n    } else if (r !== 'lose') {\r\n      await G.say(`${G.speciesName(sp)} recuou para recuperar as forças... Volte para tentar de novo!`);\r\n    }\r\n  }"
+   }
+  }
+ ]
+}

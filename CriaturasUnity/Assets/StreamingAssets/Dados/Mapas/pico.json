@@ -1,0 +1,230 @@
+{
+ "id": "pico",
+ "sky": "storm",
+ "name": "Pico Trovão",
+ "music": "route",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTTTTTTTT",
+  "TTTTRR....RRTTTT",
+  "TTTR........RTTT",
+  "TTTR...,,...RTTT",
+  "TTTTR..,,..RTTTT",
+  "TTTTTR.,,.RTTTTT",
+  "TTTTTTR,,RTTTTTT",
+  "TTTTTTR,,RTTTTTT",
+  "TTTTRR.,,..RRTTT",
+  "TTTR...,,....RTT",
+  "TTR..GG,,GGG..TT",
+  "TTR..GG,,GGG..TT",
+  "TT...GG,,GGG..TT",
+  "TT.....,,.....TT",
+  "TTRR...,,...RRTT",
+  "TTR....,,,,,..TT",
+  "TT..GGG....,..TT",
+  "TT..GGG....,..TT",
+  "TT..GGG....,..TT",
+  "TTR........,..TT",
+  "TT.........,,,,,",
+  "TTRR..........TT",
+  "TTTTRRR....RRRTT",
+  "TTTTTTTTTTTTTTTT"
+ ],
+ "warps": [
+  {
+   "x": 15,
+   "z": 20,
+   "to": "rotavitoria",
+   "tx": 1,
+   "tz": 21,
+   "dir": "right"
+  }
+ ],
+ "items": [
+  {
+   "id": "pi1",
+   "x": 3,
+   "z": 21,
+   "item": "elixir",
+   "n": 2
+  }
+ ],
+ "npcs": [
+  {
+   "id": "pgrunt2",
+   "x": 3,
+   "z": 13,
+   "dir": "right",
+   "look": "sombra",
+   "sight": 3,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "cristalito",
+      42
+     ],
+     [
+      "poraquinho",
+      43
+     ],
+     [
+      "trovatu",
+      43
+     ]
+    ],
+    "money": 900,
+    "intro": "A máquina do Dr. Vulto vai sugar toda a energia dos raios!",
+    "lose": "Levei um choque de derrota..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "pgrunt1",
+   "x": 8,
+   "z": 7,
+   "dir": "down",
+   "look": "sombra2",
+   "sight": 4,
+   "trainer": {
+    "name": "Recruta Sombra",
+    "party": [
+     [
+      "colibrilho",
+      43
+     ],
+     [
+      "magmarocha",
+      44
+     ]
+    ],
+    "money": 950,
+    "intro": "O cume está interditado pela Equipe Sombra!",
+    "lose": "Brr... que frio aqui em cima..."
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => (!extraCond || extraCond(G)) && !G.flag('tr_' + id)"
+   }
+  },
+  {
+   "id": "vulto",
+   "x": 7,
+   "z": 7,
+   "dir": "down",
+   "look": "vulto",
+   "sight": 4,
+   "trainer": {
+    "name": "Dr. Vulto",
+    "party": [
+     [
+      "cristalord",
+      46
+     ],
+     [
+      "trovatu",
+      46
+     ],
+     [
+      "colibrilho",
+      47
+     ],
+     [
+      "poraquao",
+      48
+     ]
+    ],
+    "money": 3400,
+    "intro": "Fascinante! Um campeão no meu laboratório a céu aberto. Sou o DR. VULTO, cientista da Equipe Sombra. Com a energia de TROVONÇA, minha máquina vai escurecer o céu. Vamos testar você primeiro!",
+    "lose": "Os cálculos... estavam errados?",
+    "_fn": [
+     "onWin"
+    ],
+    "_src": {
+     "onWin": "async G => { await G.say('Minha máquina queimou... Ciência sem coração não leva a lugar nenhum, afinal.', 'Dr. Vulto'); }"
+    }
+   },
+   "_fn": [
+    "cond"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('tr_vulto')"
+   }
+  },
+  {
+   "id": "trovonca",
+   "x": 8,
+   "z": 2,
+   "dir": "down",
+   "creature": "trovonca",
+   "_fn": [
+    "cond",
+    "talk"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('lend_trovonca')",
+    "talk": "async G => {\r\n    if (need && !G.flag(need.flag)) { await G.say(need.msg); return; }\r\n    await G.say(intro);\r\n    await G.cry(sp);\r\n    const r = await G.wildBattle(sp, lvl, { legendary: true });\r\n    if (r === 'caught') {\r\n      G.set('lend_' + sp);\r\n      await G.say(`Incrível! ${G.speciesName(sp)} decidiu seguir você!`, null, 'fanfare');\r\n      const all = ['solaris', 'abissal', 'iperion', 'trovonca'].every(k => G.flag('lend_' + k));\r\n      if (all && !G.flag('lendas4')) {\r\n        G.set('lendas4');\r\n        await G.say('As 4 criaturas lendárias estão com você! Sol, mar, floresta e trovão, finalmente em paz.');\r\n      }\r\n    } else if (r !== 'lose') {\r\n      await G.say(`${G.speciesName(sp)} recuou para recuperar as forças... Volte para tentar de novo!`);\r\n    }\r\n  }"
+   }
+  }
+ ],
+ "encounters": {
+  "rate": 0.12,
+  "list": [
+   [
+    "cristalito",
+    42,
+    45,
+    18
+   ],
+   [
+    "poraquinho",
+    42,
+    45,
+    14
+   ],
+   [
+    "trovatu",
+    43,
+    46,
+    14
+   ],
+   [
+    "carvaozinho",
+    42,
+    45,
+    14
+   ],
+   [
+    "gavialto",
+    43,
+    46,
+    12
+   ],
+   [
+    "rochedao",
+    44,
+    46,
+    10
+   ],
+   [
+    "guaralobo",
+    44,
+    47,
+    10
+   ],
+   [
+    "colibrilho",
+    43,
+    46,
+    8
+   ]
+  ]
+ }
+}

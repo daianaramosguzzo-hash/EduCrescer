@@ -1,0 +1,155 @@
+{
+ "id": "aurora",
+ "sky": "day",
+ "name": "Vila Aurora",
+ "music": "town",
+ "bg": "grass",
+ "rows": [
+  "TTTTTTTTTT,,TTTTTTTTTT",
+  "TTTTTTTTTT,,TTTTTTTTTT",
+  "TT..f.....,,.....f..TT",
+  "TT........,,........TT",
+  "TT........,,........TT",
+  "TT........,,........TT",
+  "TT........,,........TT",
+  "TT..,,,,,,,,,,,,,,..TT",
+  "TT......S.,,........TT",
+  "TT........,,........TT",
+  "TT.f......,,........TT",
+  "TT........,,........TT",
+  "TT........,,........TT",
+  "TT.......,,,,,,,,.S.TT",
+  "TT..f....,,.....f...TT",
+  "TTFFFFF..,,.........TT",
+  "TTWWWWF..,,...f.....TT",
+  "TTWWWWF.............TT",
+  "TTWWWWW....f........TT",
+  "TTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "buildings": [
+  {
+   "x": 3,
+   "z": 3,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "door": 2,
+   "to": "casa",
+   "roof": "#d84a3a"
+  },
+  {
+   "x": 13,
+   "z": 3,
+   "w": 5,
+   "d": 4,
+   "style": "house",
+   "door": 2,
+   "to": "casa_rival",
+   "roof": "#3a6ad0"
+  },
+  {
+   "x": 12,
+   "z": 9,
+   "w": 7,
+   "d": 4,
+   "style": "lab",
+   "door": 2,
+   "to": "lab",
+   "label": "LAB"
+  }
+ ],
+ "signs": [
+  {
+   "x": 8,
+   "z": 8,
+   "text": "VILA AURORA — Onde tudo começa a crescer."
+  },
+  {
+   "x": 18,
+   "z": 13,
+   "text": "LABORATÓRIO DE CRIATURAS do Prof. Ipê."
+  }
+ ],
+ "warps": [
+  {
+   "x": 10,
+   "z": 0,
+   "to": "rota1",
+   "tx": 10,
+   "tz": 28,
+   "dir": "up"
+  },
+  {
+   "x": 11,
+   "z": 0,
+   "to": "rota1",
+   "tx": 11,
+   "tz": 28,
+   "dir": "up"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "moca",
+   "x": 6,
+   "z": 11,
+   "dir": "down",
+   "look": "garota",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Estou aprendendo sobre tecnologia! Sabia que as criaturas ficam mais fortes quanto mais batalham juntos com seu treinador?');\r\n      }"
+   }
+  },
+  {
+   "id": "gordo",
+   "x": 16,
+   "z": 15,
+   "dir": "left",
+   "look": "garoto",
+   "wander": true,
+   "_fn": [
+    "talk"
+   ],
+   "_src": {
+    "talk": "async G => {\r\n        await G.say('Tipos importam! FOGO vence PLANTA, PLANTA vence ÁGUA e ÁGUA vence FOGO. Nunca esqueça!');\r\n      }"
+   }
+  },
+  {
+   "id": "prof_fora",
+   "x": 10,
+   "z": 9,
+   "dir": "up",
+   "look": "prof",
+   "hidden": true
+  }
+ ],
+ "triggers": [
+  {
+   "x": 10,
+   "z": 2,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('starter')",
+    "run": "async function profStop(G) {\r\n  G.set('metProf');\r\n  await G.say('Ei! Espere! Não vá!', '???');\r\n  await G.player.emote('!');\r\n  await G.player.face('down');\r\n  const p = G.npc('prof_fora');\r\n  const px = G.player.x;\r\n  p.place(px, 9, 'up');\r\n  p.show();\r\n  await p.walk(Array(5).fill('up'));\r\n  await G.say('Ufa! Foi por pouco! É perigoso! Criaturas selvagens vivem no MATO ALTO!', 'Prof. Ipê');\r\n  await G.say('Você precisa de uma criatura parceira para se proteger. Venha comigo até o laboratório!', 'Prof. Ipê');\r\n  await G.fade(async () => {\r\n    p.hide();\r\n    await G.warp('lab', 5, 4, 'up', true);\r\n  });\r\n  await G.say('Vô! Cansei de esperar!', 'Gael');\r\n  await G.say('Gael? Ah, é mesmo, pedi para você vir. Espere um pouco.', 'Prof. Ipê');\r\n  await G.say('{N}, ali naquela mesa há três criaturas dentro de orbes.', 'Prof. Ipê');\r\n  await G.say('Quando eu era jovem, fui um treinador sério. Hoje só tenho esses três. Pode escolher um! Vá em frente!', 'Prof. Ipê');\r\n  await G.say('Ei! Vô! E eu?', 'Gael');\r\n  await G.say('Calma, Gael. Você também vai poder escolher. Deixe {N} escolher primeiro.', 'Prof. Ipê');\r\n}"
+   }
+  },
+  {
+   "x": 11,
+   "z": 2,
+   "_fn": [
+    "cond",
+    "run"
+   ],
+   "_src": {
+    "cond": "G => !G.flag('starter')",
+    "run": "async function profStop(G) {\r\n  G.set('metProf');\r\n  await G.say('Ei! Espere! Não vá!', '???');\r\n  await G.player.emote('!');\r\n  await G.player.face('down');\r\n  const p = G.npc('prof_fora');\r\n  const px = G.player.x;\r\n  p.place(px, 9, 'up');\r\n  p.show();\r\n  await p.walk(Array(5).fill('up'));\r\n  await G.say('Ufa! Foi por pouco! É perigoso! Criaturas selvagens vivem no MATO ALTO!', 'Prof. Ipê');\r\n  await G.say('Você precisa de uma criatura parceira para se proteger. Venha comigo até o laboratório!', 'Prof. Ipê');\r\n  await G.fade(async () => {\r\n    p.hide();\r\n    await G.warp('lab', 5, 4, 'up', true);\r\n  });\r\n  await G.say('Vô! Cansei de esperar!', 'Gael');\r\n  await G.say('Gael? Ah, é mesmo, pedi para você vir. Espere um pouco.', 'Prof. Ipê');\r\n  await G.say('{N}, ali naquela mesa há três criaturas dentro de orbes.', 'Prof. Ipê');\r\n  await G.say('Quando eu era jovem, fui um treinador sério. Hoje só tenho esses três. Pode escolher um! Vá em frente!', 'Prof. Ipê');\r\n  await G.say('Ei! Vô! E eu?', 'Gael');\r\n  await G.say('Calma, Gael. Você também vai poder escolher. Deixe {N} escolher primeiro.', 'Prof. Ipê');\r\n}"
+   }
+  }
+ ]
+}
