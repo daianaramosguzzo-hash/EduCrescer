@@ -3,14 +3,14 @@
 //  Depois de salvar, faça o commit e o GitHub Pages atualiza a página.
 // ============================================================
 window.RIFA_CONFIG = {
-  titulo: 'Rifa Solidária',
-  premio: 'Descreva aqui o prêmio (ex.: uma cesta de chocolates)',
+  titulo: 'Rifa do Açougue do Anderson',
+  premio: 'Prêmio: carnes para churrasco',
   descricao: 'Escolha seus números, reserve com seu nome e pague pelo PIX. Seu número só é confirmado depois que o pagamento for conferido.',
 
   // Como o ganhador será conhecido (o site não faz sorteio).
   resultado: 'O resultado sai pela Loteria Federal. Data a definir.',
 
-  valorNumero: 10.0, // preço de cada número, em reais
+  valorNumero: 15.0, // preço de cada número, em reais
 
   numeroInicial: 0,
   numeroFinal: 100, // se mudar, mude também NUMERO_FINAL no planilha.gs
