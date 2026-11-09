@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d7a5f">
+  <title>Rifa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap">
+  <link rel="stylesheet" href="rifa.css">
+</head>
+<body>
+  <main class="pagina">
+    <header class="topo">
+      <p class="selo">Rifa · números de <span id="faixa">00 a 100</span></p>
+      <h1 id="titulo">Rifa</h1>
+      <p class="premio" id="premio"></p>
+      <p class="descricao" id="descricao"></p>
+      <div class="info">
+        <div class="info-item">
+          <span class="info-rotulo">Cada número</span>
+          <strong id="preco">R$ 0,00</strong>
+        </div>
+        <div class="info-item">
+          <span class="info-rotulo">Disponíveis</span>
+          <strong id="disponiveis">–</strong>
+        </div>
+      </div>
+      <div class="progresso" aria-hidden="true"><span id="barra"></span></div>
+      <p class="resultado" id="resultado"></p>
+    </header>
+
+    <div id="aviso-local" class="aviso hidden">
+      <strong>Modo de teste.</strong> As escolhas ficam salvas só neste aparelho.
+      Para registrar as escolhas de todo mundo, ligue a planilha (veja o <code>LEIAME.md</code>).
+    </div>
+
+    <div id="ultima" class="ultima hidden">
+      <span>Sua reserva: <strong id="ultima-nums"></strong></span>
+      <button type="button" class="btn btn-claro" id="ver-pix">Ver PIX</button>
+    </div>
+
+    <section class="painel" aria-labelledby="escolha-titulo">
+      <div class="painel-topo">
+        <h2 id="escolha-titulo">Escolha seus números</h2>
+        <button type="button" class="link" id="atualizar">Atualizar</button>
+      </div>
+      <ul class="legenda">
+        <li><span class="ponto livre"></span>Livre</li>
+        <li><span class="ponto sel"></span>Sua escolha</li>
+        <li><span class="ponto res"></span>Reservado</li>
+        <li><span class="ponto pago"></span>Pago</li>
+      </ul>
+      <div id="grade" class="grade" role="group" aria-label="Números da rifa"></div>
+      <p id="status" class="status" role="status"></p>
+    </section>
+
+    <footer class="rodape">
+      <p id="rodape-pix"></p>
+    </footer>
+  </main>
+
+  <!-- barra com a seleção -->
+  <div id="carrinho" class="carrinho" hidden>
+    <div class="carrinho-texto">
+      <span id="carrinho-qtd">0 números</span>
+      <strong id="carrinho-total">R$ 0,00</strong>
+    </div>
+    <button type="button" class="btn btn-claro" id="limpar">Limpar</button>
+    <button type="button" class="btn" id="continuar">Reservar</button>
+  </div>
+
+  <!-- janela de reserva e pagamento -->
+  <dialog id="janela" aria-labelledby="janela-titulo">
+    <button type="button" class="fechar" id="fechar" aria-label="Fechar">×</button>
+
+    <form id="form" class="passo" novalidate>
+      <h2 id="janela-titulo">Reservar números</h2>
+      <div class="resumo">
+        <div id="resumo-nums" class="chips"></div>
+        <p>Total: <strong id="resumo-total"></strong></p>
+      </div>
+      <label>Seu nome
+        <input name="nome" id="nome" autocomplete="name" required minlength="2" maxlength="80" placeholder="Nome e sobrenome">
+      </label>
+      <label>WhatsApp com DDD
+        <input name="telefone" id="telefone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="(27) 99999-9999">
+      </label>
+      <p id="erro" class="erro" role="alert"></p>
+      <button type="submit" class="btn btn-grande" id="reservar">Reservar e ir para o PIX</button>
+    </form>
+
+    <div id="pagar" class="passo hidden">
+      <h2>Pague pelo PIX</h2>
+      <p class="ok">Reservado para <strong id="pg-nome"></strong>: <span id="pg-nums" class="chips"></span></p>
+      <p class="valor" id="pg-valor"></p>
+      <div id="qr" class="qr"></div>
+      <label class="copia">PIX copia e cola
+        <textarea id="pg-codigo" readonly rows="3"></textarea>
+      </label>
+      <button type="button" class="btn btn-grande" id="copiar">Copiar código PIX</button>
+      <a id="whats" class="btn btn-claro btn-grande hidden" target="_blank" rel="noopener">Enviar comprovante no WhatsApp</a>
+      <p class="dica">No app do banco, escolha <strong>PIX → Pix copia e cola</strong> (ou leia o QR Code).
+        O número fica reservado e é confirmado quando o pagamento for conferido.</p>
+      <p id="sem-chave" class="erro hidden">A chave PIX ainda não foi configurada no <code>config.js</code>.</p>
+    </div>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="lib/qrcode.js"></script>
+  <script src="pix.js"></script>
+  <script src="rifa.js"></script>
+</body>
+</html>

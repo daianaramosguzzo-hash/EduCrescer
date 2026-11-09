@@ -133,6 +133,10 @@ Cada lendário tem um golpe exclusivo. Se ele não for capturado, continua no lu
 - Músicas e efeitos chiptune sintetizados com Web Audio
 - Controles de toque e layout adaptado para celular
 
+## Rifa (página separada)
+
+A pasta `rifa/` tem uma rifa de 00 a 100 para o GitHub Pages: escolha de números, reserva com nome e WhatsApp e pagamento por PIX (QR Code e copia e cola). Não faz sorteio. Veja `rifa/LEIAME.md` para configurar.
+
 ## Estrutura
 
 ```
