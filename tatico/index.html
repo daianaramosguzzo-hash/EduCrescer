@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14161a">
+  <title>Força Tática</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/tatico.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="flashbang"></div>
+    <div id="hurt"></div>
+    <div id="scope" class="hidden"><div class="ring"></div><div class="h"></div><div class="v"></div></div>
+    <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="dot"></i></div>
+    <div id="dmg-dirs"></div>
+
+    <div id="radar-box">
+      <canvas id="radar" width="200" height="200"></canvas>
+      <div id="place"></div>
+    </div>
+
+    <div id="top">
+      <div class="side atk"><span class="name">ATAQUE</span><span id="score-atk">0</span><div class="alive" id="alive-atk"></div></div>
+      <div id="timer">1:55</div>
+      <div class="side def"><span id="score-def">0</span><span class="name">DEFESA</span><div class="alive" id="alive-def"></div></div>
+    </div>
+    <div id="round-no"></div>
+
+    <div id="killfeed"></div>
+    <div id="center-msg" class="hidden"><div class="big"></div><div class="small"></div></div>
+    <div id="hint" class="hidden"></div>
+    <div id="progress" class="hidden"><div class="label"></div><div class="bar"><i></i></div></div>
+    <div id="spectating" class="hidden"></div>
+
+    <div id="bottom-left">
+      <div class="stat"><span class="ico">✚</span><span id="hp">100</span></div>
+      <div class="stat"><span class="ico" id="armor-ico">⛨</span><span id="armor">0</span></div>
+      <div id="extras"></div>
+    </div>
+    <div id="money-box"><span id="money">$800</span><span id="money-delta"></span><div id="buy-hint">B: comprar</div></div>
+    <div id="bottom-right">
+      <div id="slots"></div>
+      <div id="ammo"><span id="mag">20</span><span class="sep">/</span><span id="reserve">120</span></div>
+      <div id="wname"></div>
+    </div>
+  </div>
+
+  <!-- compra -->
+  <div id="buy" class="hidden">
+    <div class="buy-head"><span>COMPRAR</span><span id="buy-money">$800</span><span id="buy-time"></span></div>
+    <div class="buy-body">
+      <div id="buy-cats"></div>
+      <div id="buy-items"></div>
+    </div>
+    <div id="buy-msg"></div>
+    <div class="buy-foot">Clique ou use os números · B ou Esc para fechar</div>
+  </div>
+
+  <!-- placar -->
+  <div id="scoreboard" class="hidden"></div>
+
+  <!-- menu principal -->
+  <div id="menu" class="screen">
+    <div class="menu-inner">
+      <h1>FORÇA <b>TÁTICA</b></h1>
+      <p class="tag">Ataque planta a bomba · Defesa protege os bombs · 5 contra 5 com bots</p>
+      <div class="opts">
+        <label>Seu nome <input id="opt-name" maxlength="14" value="Você" autocomplete="off"></label>
+        <div class="opt"><span>Time</span>
+          <div class="seg" data-opt="team">
+            <button data-v="atk">Ataque</button><button data-v="def">Defesa</button><button data-v="auto">Automático</button><button data-v="spec">Só assistir</button>
+          </div>
+        </div>
+        <div class="opt"><span>Bots</span>
+          <div class="seg" data-opt="difficulty">
+            <button data-v="facil">Fácil</button><button data-v="normal">Normal</button><button data-v="dificil">Difícil</button>
+          </div>
+        </div>
+        <div class="opt"><span>Jogadores por time</span>
+          <div class="seg" data-opt="teamSize">
+            <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
+          </div>
+        </div>
+        <div class="opt"><span>Partida</span>
+          <div class="seg" data-opt="halfRounds">
+            <button data-v="4">Rápida (até 5)</button><button data-v="8">Curta (até 9)</button><button data-v="12">Competitiva (até 13)</button>
+          </div>
+        </div>
+        <label class="range">Sensibilidade do mouse <input type="range" id="opt-sens" min="0.3" max="6" step="0.1" value="2"><output id="sens-val">2.0</output></label>
+        <label class="range">Volume <input type="range" id="opt-vol" min="0" max="1" step="0.05" value="0.7"><output id="vol-val">70%</output></label>
+        <label class="check"><input type="checkbox" id="opt-voice" checked> Voz do rádio ("Bomba plantada!")</label>
+      </div>
+      <div class="menu-buttons">
+        <button id="btn-play" class="primary">JOGAR</button>
+        <button id="btn-full">Tela cheia</button>
+      </div>
+      <details class="controls">
+        <summary>Controles e regras</summary>
+        <table>
+          <tr><td>WASD</td><td>Andar</td><td>Mouse</td><td>Mirar</td></tr>
+          <tr><td>Botão esquerdo</td><td>Atirar · plantar (com a bomba)</td><td>Botão direito</td><td>Mira telescópica · facada forte · granada fraca</td></tr>
+          <tr><td>Shift</td><td>Andar devagar (sem barulho)</td><td>C ou Ctrl</td><td>Agachar (mais precisão)</td></tr>
+          <tr><td>Espaço</td><td>Pular (pulo agachado sobe mais)</td><td>R</td><td>Recarregar</td></tr>
+          <tr><td>1 2 3 4 5</td><td>Principal · pistola · faca · granadas · bomba</td><td>Q / rodinha</td><td>Última arma / trocar</td></tr>
+          <tr><td>E</td><td>Desarmar a bomba (segurar) · pegar arma</td><td>G</td><td>Largar arma ou bomba</td></tr>
+          <tr><td>B</td><td>Comprar (na base, no começo da rodada)</td><td>Tab</td><td>Placar</td></tr>
+        </table>
+        <ul>
+          <li><b>Ataque</b> vence se plantar a bomba no <b>A</b> ou no <b>B</b> e ela explodir (40 s), ou se eliminar a Defesa.</li>
+          <li><b>Defesa</b> vence se eliminar o Ataque antes da bomba, se o tempo acabar (1:55) ou se desarmar a bomba (10 s, ou 5 s com kit).</li>
+          <li>Dinheiro por vitória, derrota (cresce a cada derrota seguida) e abate. Quem sobrevive guarda as armas.</li>
+          <li>O primeiro tiro parado é preciso. Correndo, pulando ou no spray, a bala espalha: segure o mouse para baixo para compensar o recuo.</li>
+          <li>Cabeça = 4× dano. Capacete protege a cabeça e o colete o corpo. Balas de fuzil atravessam caixas de madeira.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- pausa -->
+  <div id="pause" class="screen hidden">
+    <div class="menu-inner small">
+      <h2>PAUSA</h2>
+      <label class="range">Sensibilidade <input type="range" id="pause-sens" min="0.3" max="6" step="0.1" value="2"><output id="pause-sens-val">2.0</output></label>
+      <label class="range">Volume <input type="range" id="pause-vol" min="0" max="1" step="0.05" value="0.7"><output id="pause-vol-val">70%</output></label>
+      <div class="menu-buttons">
+        <button id="btn-resume" class="primary">CONTINUAR</button>
+        <button id="btn-quit">Sair para o menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- fim de partida -->
+  <div id="end" class="screen hidden">
+    <div class="menu-inner">
+      <h2 id="end-title"></h2>
+      <div id="end-score"></div>
+      <div id="end-board"></div>
+      <div class="menu-buttons">
+        <button id="btn-again" class="primary">JOGAR DE NOVO</button>
+        <button id="btn-menu">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="hidden">Carregando…</div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+name: Instalador Windows (Força Tática)
+
+# Gera o instalador .exe do Força Tática numa máquina Windows.
+# Rode manualmente pela aba Actions ou crie uma tag tatico-v<versão> (ex.: tatico-v1.0.0).
+# Também roda a cada push na branch do jogo que mexa nele, publicando a Release
+# da versão em tatico/desktop/builder.json (a tag é criada pelo próprio fluxo).
+on:
+  workflow_dispatch:
+  push:
+    tags: ['tatico-v*']
+    branches: ['claude/counter-strike-game-3l82ix']
+    paths: ['tatico/**', 'lib/**', '.github/workflows/windows-tatico.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx electron-builder --config tatico/desktop/builder.json --win nsis --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Forca-Tatica-Windows
+          path: dist-tatico/*.exe
+      - name: Versão do jogo
+        id: ver
+        shell: bash
+        run: echo "v=$(node -p "require('./tatico/desktop/builder.json').extraMetadata.version")" >> "$GITHUB_OUTPUT"
+      - name: Publicar na Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/tatico-v') && github.ref_name || format('tatico-v{0}', steps.ver.outputs.v) }}
+          target_commitish: ${{ github.sha }}
+          name: Força Tática ${{ steps.ver.outputs.v }}
+          body: |
+            Instalador do **Força Tática** (tiro tático em primeira pessoa contra bots) para Windows (64 bits).
+
+            1. Baixe `Forca-Tatica-Setup-${{ steps.ver.outputs.v }}.exe` abaixo.
+            2. Dê dois cliques para instalar e escolha a pasta.
+            3. Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais informações → Executar assim mesmo** (o instalador não é assinado digitalmente).
+
+            O jogo fica no menu Iniciar e na área de trabalho. F11 alterna a tela cheia. Precisa de teclado e mouse.
+          files: dist-tatico/*.exe
